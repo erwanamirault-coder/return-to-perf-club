@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon programme — Bilan de tes capacités</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000', white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="bg-brand-black text-brand-white min-h-screen">
+
+  <header class="flex items-center justify-between px-6 sm:px-10 py-5 border-b border-white/10">
+    <span class="font-heading uppercase font-bold text-sm tracking-wide">Bilan de tes capacités</span>
+    <div class="flex items-center gap-4 text-sm">
+      <a href="dashboard.html" class="text-white/60 hover:text-white transition-colors">Mon espace</a>
+      <button id="logout-btn" class="underline underline-offset-4 text-white/60 hover:text-white transition-colors">Se déconnecter</button>
+    </div>
+  </header>
+
+  <main class="px-6 py-12 max-w-3xl mx-auto">
+    <h1 class="font-heading uppercase text-2xl font-bold mb-8 text-center">Ma programmation</h1>
+
+    <div id="content"></div>
+  </main>
+
+  <script src="supabase-config.js"></script>
+  <script>
+    const content = document.getElementById('content');
+
+    async function load() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) { window.location.href = 'login.html'; return; }
+
+      const { data: seances, error } = await supabaseClient
+        .from('programmes')
+        .select('*')
+        .order('ordre', { ascending: true });
+
+      if (error || !seances || seances.length === 0) {
+        content.innerHTML = `
+          <div class="text-center py-16">
+            <p class="text-white/50">Aucune programmation n'est encore disponible pour toi.</p>
+            <p class="text-white/30 text-sm mt-2">Reviens bientôt, ton coach y travaille.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Regroupe les séances par jour
+      const parJour = {};
+      seances.forEach(s => {
+        if (!parJour[s.jour]) parJour[s.jour] = [];
+        parJour[s.jour].push(s);
+      });
+
+      content.innerHTML = Object.entries(parJour).map(([jour, exos]) => `
+        <div class="mb-8">
+          <h2 class="font-heading uppercase text-lg font-bold mb-3 text-brand-blue-light">${jour}</h2>
+          <div class="rounded-xl border border-white/10 overflow-hidden">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-white/5 text-white/50 text-xs uppercase tracking-wide">
+                  <th class="text-left px-4 py-3">Exercice</th>
+                  <th class="text-left px-4 py-3">Séries</th>
+                  <th class="text-left px-4 py-3">Répétitions</th>
+                  <th class="text-left px-4 py-3">Repos</th>
+                  <th class="text-left px-4 py-3">Vidéo</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${exos.map(e => `
+                  <tr class="border-t border-white/10">
+                    <td class="px-4 py-3 font-medium">${e.exercice}</td>
+                    <td class="px-4 py-3 text-white/70">${e.series}</td>
+                    <td class="px-4 py-3 text-white/70">${e.repetitions}</td>
+                    <td class="px-4 py-3 text-white/70">${e.temps_repos || '—'}</td>
+                    <td class="px-4 py-3">
+                      ${e.lien_video ? `<a href="${e.lien_video}" target="_blank" class="text-brand-blue-light underline underline-offset-4">Voir</a>` : '—'}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await supabaseClient.auth.signOut();
+      window.location.href = 'index.html';
+    });
+
+    load();
+  </script>
+
+</body>
+</html>
