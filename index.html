@@ -12,7 +12,6 @@
             theme: {
                 extend: {
                     colors: {
-                        // Intégration exacte de votre palette de couleurs
                         'brand-black': '#000000',
                         'brand-white': '#FFFFFF',
                         'brand-blue-light': '#69A0F2',
@@ -20,8 +19,7 @@
                         'brand-blue-dark': '#0F4CA9',
                     },
                     fontFamily: {
-                        // Configuration de vos typographies
-                        'title': ['Racing Sans One', 'sans-serif'],
+                        'title': ['Oswald', 'sans-serif'],
                         'body': ['Poppins', 'sans-serif'],
                         'subtitle': ['Hero Bold', 'Montserrat', 'Arial Black', 'sans-serif']
                     }
@@ -30,49 +28,48 @@
         }
     </script>
 
-    <!-- Importation des polices Google Fonts disponibles -->
+    <!-- Importation des polices Google Fonts (Oswald + Poppins) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Racing+Sans+One&family=Montserrat:wght@800&display=swap" rel="stylesheet">
-
-    <style>
-        /* Si vous avez le fichier de votre police Hero Bold, vous pourrez décommenter ce bloc :
-        @font-face {
-            font-family: 'Hero Bold';
-            src: url('chemin/vers/votre/police/Hero-Bold.woff2') format('woff2');
-            font-weight: bold;
-            font-style: normal;
-        }
-        */
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Oswald:wght@600;700&family=Montserrat:wght@800&display=swap" rel="stylesheet">
 </head>
 <body class="min-h-full flex flex-col font-body bg-brand-white text-brand-black">
 
-    <!-- Section principale -->
     <main class="flex-1 flex flex-col items-center justify-center px-6 py-16">
         
-        <!-- ZONE LOGO SVG (Placé en haut du bloc de contenu) -->
-        <div class="mb-8 flex justify-center text-brand-blue-dark">
-            <!-- Remplacer les balises <svg> ci-dessous par le code complet de votre logo SVG -->
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 text-brand-blue-main">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+        <!-- ZONE LOGO INTEGRÉE -->
+        <div class="mb-8 flex justify-center text-brand-black">
+            <!-- Ton logo SVG personnalisé (redimensionné proprement à l'aide des classes Tailwind w-28 h-28) -->
+            <svg class="w-28 h-28" viewBox="0 0 5000 5000" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+                <g transform="matrix(1.25751,0,0,1.17094,-1134.3,-532.252)">
+                    <path d="M2889.91,962.858L2889.91,962.858C2891.23,962.858 2892.55,962.86 2893.87,962.863C3055.16,963.307 3210.56,990.88 3356.33,1041.56C3954.74,1251.03 4385.67,1853.49 4404.64,2566.03C4404.74,2573.17 4404.79,2580.32 4404.8,2587.48C4404.12,3245.32 4037.25,3812.01 3510.99,4066.01L3249.07,1440.78L2705.76,1431.67L1742.7,3645.04C1514.18,3361.38 1375.7,2992.2 1375.01,2588.65C1378.47,1919.9 1753.81,1344.97 2290.68,1095.29C2474.5,1010.08 2677.11,962.859 2889.91,962.858ZM2009.35,3905.93C2182.45,3486.61 2568.73,2561.83 2813.68,1992.8C2874.39,2708.89 2958.67,3458.49 2994.18,4204.65C2974.65,4206.07 2955.02,4207.1 2935.29,4207.72C2888.63,4206.38 2823.47,4204.9 2768.14,4203.26C2486.57,4179.23 2226.58,4072.56 2009.35,3905.93Z" fill="currentColor"/>
+                </g>
+                <g transform="matrix(1.05018,0.123149,-0.123149,1.05018,269.988,-435.763)">
+                    <g transform="matrix(14.3046,-3.31189,3.61677,15.6214,-199.404,160.469)">
+                        <g>
+                            <path d="M199.805,172.035L199.609,172.254C199.219,172.895 199.875,173.977 201.582,175.5L225.32,193.125L233.672,206.809C240.609,223.789 244.926,234.895 246.629,240.133C247.449,241.918 248.238,242.258 248.992,241.156C249.73,240.285 250.926,237.938 252.57,234.125C261.375,212.273 266.273,199.98 267.273,197.25C272.617,182.715 275.34,175.023 275.445,174.172C275.996,172.465 275.895,171 275.133,169.773C274.246,168.949 273.031,168.59 271.484,168.695C261.918,169.586 252.164,170.277 242.223,170.77C223.797,171.516 209.82,171.852 200.293,171.777C200.129,171.828 199.965,171.914 199.805,172.035" style="fill:rgb(45,122,237);fill-rule:nonzero;"/>
+                        </g>
+                    </g>
+                    <g transform="matrix(14.3011,-3.32692,3.63318,15.6176,-252.871,174.952)">
+                        <path d="M34.316,96.129L33.504,100.387C32.246,109.445 33.164,121.766 36.254,137.348C39.492,154.395 44.027,168.152 49.859,178.613C51.875,182.461 54.086,186.18 56.484,189.777C57.445,191.73 61.48,196.844 68.59,205.105C78.625,214.953 89.543,222.648 101.336,228.191C107.234,230.961 113.352,233.195 119.691,234.891L129.363,237.031C142.887,239.301 156.473,239.512 170.129,237.656C184.145,235.863 198.949,232.121 214.543,226.43C234.379,218.465 246.516,213.102 250.957,210.34L224.715,182.859C214.969,189.805 205.41,195.566 196.031,200.141C186.652,204.715 177.457,208.102 168.445,210.305L155.063,212.715C146.234,213.73 137.586,213.563 129.121,212.207L116.563,209.281L104.273,204.578L98.098,201.379C82.547,193.309 68.875,180.176 57.078,161.988C53.105,155.949 49.125,147.289 45.133,136.004C42.148,127.195 38.883,114.469 35.328,97.832C35.051,96.816 34.715,96.25 34.316,96.129" style="fill:rgb(45,122,237);fill-rule:nonzero;"/>
+                    </g>
+                </g>
             </svg>
-            <!-- Fin de votre zone SVG -->
         </div>
 
         <div class="max-w-2xl text-center">
             
-            <!-- 1. Le Badge (Utilise la police Hero Bold / Subtitle) -->
+            <!-- 1. Le Badge -->
             <span class="inline-block bg-brand-blue-dark text-brand-white text-xs font-subtitle uppercase tracking-widest px-5 py-2 rounded-full mb-6 font-bold">
                 Bilan Mobilité
             </span>
             
-            <!-- 2. Le Titre d'impact (Utilise Racing Sans One) -->
-            <h1 class="font-title text-5xl md:text-7xl tracking-wide uppercase leading-tight mb-8 text-brand-black italic">
+            <!-- 2. Le Titre d'impact (Modifié avec Oswald, droit et mieux proportionné) -->
+            <h1 class="font-title text-4xl md:text-5xl tracking-wide uppercase leading-tight mb-8 text-brand-black font-bold">
                 Ta mobilité fait la différence dans ton sport.
             </h1>
             
-            <!-- 3. Paragraphes descriptifs (Utilisent Poppins) -->
+            <!-- 3. Paragraphes descriptifs -->
             <div class="space-y-4 mb-10 text-left">
                 <p class="text-[15px] text-neutral-600 leading-relaxed">
                     Épaules, hanches, chevilles, dos : chaque articulation limitée oblige ton corps à compenser ailleurs. Voilà pourquoi tu te blesses, tu n’arrives pas à progresser et tu traînes des douleurs sans explication.
@@ -82,7 +79,7 @@
                 </p>
             </div>
             
-            <!-- 4. Boutons d'action (Utilisent Hero Bold / Subtitle) -->
+            <!-- 4. Boutons d'action -->
             <div class="flex flex-wrap items-center justify-center gap-4">
                 <a class="font-subtitle font-bold text-lg tracking-wider bg-brand-blue-main text-brand-white px-12 py-4 rounded-lg hover:bg-brand-blue-dark transition duration-300 shadow-lg shadow-brand-blue-light/20 inline-block" href="/signup">
                     CRÉER MON COMPTE
