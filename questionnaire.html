@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ton bilan — Bilan de tes capacités</title>
@@ -8,6 +9,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -30,77 +32,70 @@
   h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
 </style>
 </head>
-<body class="bg-brand-black text-brand-white min-h-screen">
+<body class="min-h-screen">
 
-  <!-- HEADER -->
-  <header class="flex items-center justify-between px-6 sm:px-10 py-5 border-b border-white/10">
-    <div class="flex items-center gap-3">
-      <span class="font-heading uppercase font-bold text-sm tracking-wide">Bilan de tes capacités</span>
-    </div>
+  <button id="theme-toggle" class="fixed top-5 right-5 z-10 w-10 h-10 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors"></button>
+
+  <header class="flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
+    <span class="font-heading uppercase font-bold text-sm tracking-wide">Bilan de tes capacités</span>
     <div class="flex items-center gap-4 text-sm">
-      <span id="user-name" class="text-white/40"></span>
-      <button id="logout-btn" class="underline underline-offset-4 text-white/60 hover:text-white transition-colors">Se déconnecter</button>
+      <span id="user-name" class="text-[color:var(--fg-40)]"></span>
+      <button id="logout-btn" class="underline underline-offset-4 text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Se déconnecter</button>
     </div>
   </header>
 
-  <!-- Barre de progression -->
-  <div class="w-full h-1 bg-white/10">
+  <div class="w-full h-1 bg-[color:var(--card)]">
     <div id="progress-bar" class="h-1 bg-brand-blue transition-all duration-300" style="width: 0%"></div>
   </div>
 
   <main class="flex flex-col items-center px-6 py-10">
     <div class="w-full max-w-lg">
 
-      <p id="step-label" class="text-xs text-white/40 mb-4"></p>
+      <p id="step-label" class="text-xs text-[color:var(--fg-40)] mb-4"></p>
 
-      <span id="joint-badge" class="inline-block mb-3 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold text-brand-blue-light border border-brand-blue-dark"></span>
+      <span id="joint-badge" class="inline-block mb-3 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold text-[color:var(--accent)] border border-brand-blue-dark"></span>
 
       <h1 id="test-title" class="font-heading uppercase text-2xl sm:text-3xl font-bold mb-1"></h1>
-      <p id="test-type" class="text-xs uppercase tracking-widest text-brand-blue-light font-semibold mb-5"></p>
+      <p id="test-type" class="text-xs uppercase tracking-widest text-[color:var(--accent)] font-semibold mb-5"></p>
 
-      <!-- Vidéo -->
-      <div class="aspect-[3/4] w-full max-w-xs mx-auto rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-5 overflow-hidden">
+      <div class="aspect-[3/4] w-full max-w-xs mx-auto rounded-xl bg-[color:var(--card)] border border-[color:var(--border)] flex items-center justify-center mb-5 overflow-hidden">
         <video id="test-video" class="w-full h-full object-cover hidden" controls></video>
-        <p id="video-placeholder" class="text-white/40 text-sm px-6 text-center">
+        <p id="video-placeholder" class="text-[color:var(--fg-40)] text-sm px-6 text-center">
           Vidéo de démonstration à venir
         </p>
       </div>
 
-      <p id="instructions" class="text-white/70 text-sm leading-relaxed mb-6"></p>
+      <p id="instructions" class="text-[color:var(--fg-70)] text-sm leading-relaxed mb-6"></p>
 
-      <!-- 3 photos de référence -->
-      <div class="grid grid-cols-3 gap-2 mb-8" id="reference-images">
-        <!-- rempli par JS -->
-      </div>
+      <div class="grid grid-cols-3 gap-2 mb-8" id="reference-images"></div>
 
-      <!-- Notation gauche / droite -->
       <div class="grid grid-cols-2 gap-4 mb-10">
         <div>
-          <p class="text-xs uppercase tracking-widest text-white/50 font-semibold mb-2">Côté gauche</p>
+          <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-2">Côté gauche</p>
           <div class="flex flex-col gap-2" id="left-buttons">
-            <button data-side="left" data-value="1" class="rating-btn px-4 py-2.5 rounded-lg border border-white/15 hover:border-brand-blue transition-colors text-sm text-left">Limité</button>
-            <button data-side="left" data-value="2" class="rating-btn px-4 py-2.5 rounded-lg border border-white/15 hover:border-brand-blue transition-colors text-sm text-left">Satisfaisant</button>
-            <button data-side="left" data-value="3" class="rating-btn px-4 py-2.5 rounded-lg border border-white/15 hover:border-brand-blue transition-colors text-sm text-left">Excellent</button>
+            <button data-side="left" data-value="1" class="rating-btn px-4 py-2.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors text-sm text-left">Limité</button>
+            <button data-side="left" data-value="2" class="rating-btn px-4 py-2.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors text-sm text-left">Satisfaisant</button>
+            <button data-side="left" data-value="3" class="rating-btn px-4 py-2.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors text-sm text-left">Excellent</button>
           </div>
         </div>
         <div>
-          <p class="text-xs uppercase tracking-widest text-white/50 font-semibold mb-2">Côté droit</p>
+          <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-2">Côté droit</p>
           <div class="flex flex-col gap-2" id="right-buttons">
-            <button data-side="right" data-value="1" class="rating-btn px-4 py-2.5 rounded-lg border border-white/15 hover:border-brand-blue transition-colors text-sm text-left">Limité</button>
-            <button data-side="right" data-value="2" class="rating-btn px-4 py-2.5 rounded-lg border border-white/15 hover:border-brand-blue transition-colors text-sm text-left">Satisfaisant</button>
-            <button data-side="right" data-value="3" class="rating-btn px-4 py-2.5 rounded-lg border border-white/15 hover:border-brand-blue transition-colors text-sm text-left">Excellent</button>
+            <button data-side="right" data-value="1" class="rating-btn px-4 py-2.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors text-sm text-left">Limité</button>
+            <button data-side="right" data-value="2" class="rating-btn px-4 py-2.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors text-sm text-left">Satisfaisant</button>
+            <button data-side="right" data-value="3" class="rating-btn px-4 py-2.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors text-sm text-left">Excellent</button>
           </div>
         </div>
       </div>
 
       <div class="flex justify-between items-center mb-6">
-        <a href="choix-bilan.html" class="text-sm text-white/50 hover:text-white transition-colors underline underline-offset-4">Changer de bilan</a>
-        <button id="next-btn" disabled class="px-8 py-3 rounded-lg bg-brand-blue disabled:bg-white/10 disabled:text-white/30 hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-sm">
+        <a href="choix-bilan.html" class="text-sm text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">Changer de bilan</a>
+        <button id="next-btn" disabled class="px-8 py-3 rounded-lg bg-brand-blue disabled:bg-[color:var(--card)] disabled:text-[color:var(--fg-30)] hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-sm text-white">
           Suivant
         </button>
       </div>
 
-      <p class="text-center text-xs text-white/30">
+      <p class="text-center text-xs text-[color:var(--fg-30)]">
         Reprendre plus tard — ta progression est déjà enregistrée
       </p>
 
@@ -108,13 +103,8 @@
   </main>
 
   <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
   <script>
-    // ============================================
-    // TESTS PAR ARTICULATION
-    // Remplace videoUrl et les 3 images par les tiennes pour chaque test.
-    // Pour ajouter plusieurs tests par articulation, ajoute d'autres objets
-    // dans le tableau correspondant (ex: epaules: [ {...}, {...} ])
-    // ============================================
     const testsByJoint = {
       epaules: [{
         joint: "Épaules", badge: "ÉPAULE", title: "Rotation interne", testType: "Test passif",
@@ -148,7 +138,6 @@
       }]
     };
 
-    // Détermine la liste de tests selon l'URL (?mode=complet ou ?zone=epaules)
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('mode');
     const zone = params.get('zone');
@@ -159,9 +148,127 @@
     } else if (zone && testsByJoint[zone]) {
       tests = [...testsByJoint[zone]];
     } else {
-      // Sécurité : si aucun paramètre valide, retour au choix
       window.location.href = 'choix-bilan.html';
     }
 
     let currentStep = 0;
-    const answers =
+    const answers = tests.map(() => ({ left: null, right: null }));
+
+    const stepLabel = document.getElementById('step-label');
+    const jointBadge = document.getElementById('joint-badge');
+    const testTitle = document.getElementById('test-title');
+    const testType = document.getElementById('test-type');
+    const instructions = document.getElementById('instructions');
+    const video = document.getElementById('test-video');
+    const videoPlaceholder = document.getElementById('video-placeholder');
+    const referenceImages = document.getElementById('reference-images');
+    const progressBar = document.getElementById('progress-bar');
+    const nextBtn = document.getElementById('next-btn');
+    const allRatingButtons = document.querySelectorAll('.rating-btn');
+
+    function renderStep() {
+      const t = tests[currentStep];
+      stepLabel.textContent = `Étape ${currentStep + 1} / ${tests.length}`;
+      jointBadge.textContent = t.badge;
+      testTitle.textContent = t.title;
+      testType.textContent = t.testType;
+      instructions.textContent = t.instructions;
+      progressBar.style.width = `${(currentStep / tests.length) * 100}%`;
+
+      if (t.videoUrl) {
+        video.src = t.videoUrl;
+        video.classList.remove('hidden');
+        videoPlaceholder.classList.add('hidden');
+      } else {
+        video.classList.add('hidden');
+        videoPlaceholder.classList.remove('hidden');
+      }
+
+      referenceImages.innerHTML = '';
+      t.images.forEach(img => {
+        const div = document.createElement('div');
+        div.className = 'text-center';
+        div.innerHTML = img.url
+          ? `<img src="${img.url}" class="w-full aspect-square object-cover rounded-lg border border-[color:var(--border)] mb-1">`
+          : `<div class="w-full aspect-square rounded-lg border border-[color:var(--border)] bg-[color:var(--card)] flex items-center justify-center mb-1"><span class="text-[color:var(--fg-30)] text-[10px] px-1 text-center">Photo à venir</span></div>`;
+        div.innerHTML += `<span class="text-[11px] text-[color:var(--fg-50)]">${img.label}</span>`;
+        referenceImages.appendChild(div);
+      });
+
+      allRatingButtons.forEach(btn => {
+        const side = btn.dataset.side;
+        const value = Number(btn.dataset.value);
+        const selected = answers[currentStep][side] === value;
+        btn.classList.toggle('border-brand-blue', selected);
+        btn.classList.toggle('bg-brand-blue/10', selected);
+      });
+
+      const bothAnswered = answers[currentStep].left !== null && answers[currentStep].right !== null;
+      nextBtn.disabled = !bothAnswered;
+      nextBtn.textContent = currentStep === tests.length - 1 ? 'Voir mon bilan' : 'Suivant';
+    }
+
+    allRatingButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const side = btn.dataset.side;
+        const value = Number(btn.dataset.value);
+        answers[currentStep][side] = value;
+        renderStep();
+      });
+    });
+
+    nextBtn.addEventListener('click', async () => {
+      if (currentStep < tests.length - 1) {
+        currentStep++;
+        renderStep();
+        window.scrollTo(0, 0);
+      } else {
+        await finishBilan();
+      }
+    });
+
+    async function finishBilan() {
+      nextBtn.disabled = true;
+      nextBtn.textContent = 'Enregistrement...';
+
+      const scores = {};
+      tests.forEach((t, i) => {
+        const avg = (answers[i].left + answers[i].right) / 2;
+        scores[t.joint] = Math.round(avg * 10) / 10;
+      });
+
+      const allValues = answers.flatMap(a => [a.left, a.right]);
+      const globalScore = Math.round((allValues.reduce((a, b) => a + b, 0) / (allValues.length * 3)) * 100);
+
+      const result = { scores, globalScore, date: new Date().toISOString() };
+      const { data: { user } } = await supabaseClient.auth.getUser();
+
+      if (user) {
+        await supabaseClient.from('bilans').insert({
+          user_id: user.id,
+          scores: scores,
+          score_global: globalScore
+        });
+      }
+
+      sessionStorage.setItem('dernier_bilan', JSON.stringify(result));
+      window.location.href = 'results.html';
+    }
+
+    async function load() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) { window.location.href = 'login.html'; return; }
+      document.getElementById('user-name').textContent = user.user_metadata?.full_name || '';
+      renderStep();
+    }
+
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await supabaseClient.auth.signOut();
+      window.location.href = 'index.html';
+    });
+
+    load();
+  </script>
+
+</body>
+</html>
