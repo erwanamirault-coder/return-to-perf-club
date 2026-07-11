@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mon espace — Bilan de tes capacités</title>
@@ -8,6 +9,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -30,7 +32,9 @@
   h1, .font-heading { font-family: 'Oswald', sans-serif; }
 </style>
 </head>
-<body class="bg-brand-black text-brand-white min-h-screen flex flex-col items-center justify-center px-6 text-center">
+<body class="min-h-screen flex flex-col items-center justify-center px-6 text-center">
+
+  <button id="theme-toggle" class="fixed top-5 right-5 z-10 w-10 h-10 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors"></button>
 
   <div class="flex justify-center mb-8">
     <svg width="56" height="56" viewBox="0 0 5000 5000" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
@@ -53,26 +57,27 @@
     </svg>
   </div>
 
-  <p id="welcome-msg" class="text-xs uppercase tracking-widest text-brand-blue-light mb-3 font-semibold"></p>
+  <p id="welcome-msg" class="text-xs uppercase tracking-widest text-[color:var(--accent)] mb-3 font-semibold"></p>
   <h1 class="font-heading uppercase text-2xl font-bold mb-10">Que veux-tu faire ?</h1>
 
   <div class="w-full max-w-sm flex flex-col gap-4">
-    <a href="choix-bilan.html" class="block w-full px-8 py-5 rounded-xl border border-white/15 hover:border-brand-blue transition-colors text-left">
+    <a href="choix-bilan.html" class="block w-full px-8 py-5 rounded-xl border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors text-left">
       <span class="block font-heading uppercase font-semibold mb-1">Faire mon bilan</span>
-      <span class="block text-sm text-white/50">Évalue tes 5 articulations en moins de 10 min</span>
+      <span class="block text-sm text-[color:var(--fg-50)]">Évalue tes 5 articulations en moins de 10 min</span>
     </a>
 
-    <a href="programme.html" class="block w-full px-8 py-5 rounded-xl border border-white/15 hover:border-brand-blue transition-colors text-left">
+    <a href="programme.html" class="block w-full px-8 py-5 rounded-xl border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors text-left">
       <span class="block font-heading uppercase font-semibold mb-1">Ma programmation</span>
-      <span class="block text-sm text-white/50">Accède à tes séances d'entraînement</span>
+      <span class="block text-sm text-[color:var(--fg-50)]">Accède à tes séances d'entraînement</span>
     </a>
   </div>
 
-  <button id="logout-btn" class="mt-10 text-xs text-white/40 hover:text-white/70 transition-colors">
+  <button id="logout-btn" class="mt-10 text-xs text-[color:var(--fg-40)] hover:text-[color:var(--fg-70)] transition-colors">
     Se déconnecter
   </button>
 
   <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
   <script>
     async function load() {
       const { data: { user } } = await supabaseClient.auth.getUser();
