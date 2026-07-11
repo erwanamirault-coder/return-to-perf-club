@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mon programme — Bilan de tes capacités</title>
@@ -8,6 +9,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -30,13 +32,15 @@
   h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
 </style>
 </head>
-<body class="bg-brand-black text-brand-white min-h-screen">
+<body class="min-h-screen">
 
-  <header class="flex items-center justify-between px-6 sm:px-10 py-5 border-b border-white/10">
+  <button id="theme-toggle" class="fixed top-5 right-5 z-10 w-10 h-10 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors"></button>
+
+  <header class="flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
     <span class="font-heading uppercase font-bold text-sm tracking-wide">Bilan de tes capacités</span>
     <div class="flex items-center gap-4 text-sm">
-      <a href="dashboard.html" class="text-white/60 hover:text-white transition-colors">Mon espace</a>
-      <button id="logout-btn" class="underline underline-offset-4 text-white/60 hover:text-white transition-colors">Se déconnecter</button>
+      <a href="dashboard.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Mon espace</a>
+      <button id="logout-btn" class="underline underline-offset-4 text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Se déconnecter</button>
     </div>
   </header>
 
@@ -47,6 +51,7 @@
   </main>
 
   <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
   <script>
     const content = document.getElementById('content');
     const ordreJours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
@@ -63,8 +68,8 @@
       if (error || !seances || seances.length === 0) {
         content.innerHTML = `
           <div class="text-center py-16">
-            <p class="text-white/50">Aucune programmation n'est encore disponible pour toi.</p>
-            <p class="text-white/30 text-sm mt-2">Reviens bientôt, ton coach y travaille.</p>
+            <p class="text-[color:var(--fg-50)]">Aucune programmation n'est encore disponible pour toi.</p>
+            <p class="text-[color:var(--fg-30)] text-sm mt-2">Reviens bientôt, ton coach y travaille.</p>
           </div>
         `;
         return;
@@ -82,32 +87,32 @@
 
       content.innerHTML = joursTries.map(jour => `
         <div class="mb-8">
-          <h2 class="font-heading uppercase text-lg font-bold mb-3 text-brand-blue-light">${jour}</h2>
-          <div class="rounded-xl border border-white/10 overflow-x-auto">
-            <table class="w-full text-sm min-w-[600px]">
+          <h2 class="font-heading uppercase text-lg font-bold mb-3 text-[color:var(--accent)]">${jour}</h2>
+          <div class="rounded-xl border border-[color:var(--border)] overflow-x-auto">
+            <table class="w-full text-sm min-w-[500px]">
               <thead>
-                <tr class="bg-white/5 text-white/50 text-xs uppercase tracking-wide">
+                <tr class="bg-[color:var(--card)] text-[color:var(--fg-50)] text-xs uppercase tracking-wide">
                   <th class="text-left px-4 py-3">Exercice</th>
                   <th class="text-left px-4 py-3">Séries</th>
                   <th class="text-left px-4 py-3">Répétitions</th>
                   <th class="text-left px-4 py-3">Repos</th>
                   <th class="text-left px-4 py-3">RPE</th>
                   <th class="text-left px-4 py-3">Tempo</th>
-                  <th class="text-left px-4 py-3">Vidéo</th>
                 </tr>
               </thead>
               <tbody>
                 ${parJour[jour].map(e => `
-                  <tr class="border-t border-white/10">
-                    <td class="px-4 py-3 font-medium">${e.exercice}</td>
-                    <td class="px-4 py-3 text-white/70">${e.series}</td>
-                    <td class="px-4 py-3 text-white/70">${e.repetitions}</td>
-                    <td class="px-4 py-3 text-white/70">${e.temps_repos || '—'}</td>
-                    <td class="px-4 py-3 text-white/70">${e.rpe || '—'}</td>
-                    <td class="px-4 py-3 text-white/70">${e.tempo || '—'}</td>
-                    <td class="px-4 py-3">
-                      ${e.lien_video ? `<a href="${e.lien_video}" target="_blank" class="text-brand-blue-light underline underline-offset-4">Voir</a>` : '—'}
+                  <tr class="border-t border-[color:var(--border)]">
+                    <td class="px-4 py-3 font-medium">
+                      ${e.lien_video
+                        ? `<a href="${e.lien_video}" target="_blank" class="text-[color:var(--accent)] underline underline-offset-4">${e.exercice}</a>`
+                        : e.exercice}
                     </td>
+                    <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.series}</td>
+                    <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.repetitions}</td>
+                    <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.temps_repos || '—'}</td>
+                    <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.rpe || '—'}</td>
+                    <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.tempo || '—'}</td>
                   </tr>
                 `).join('')}
               </tbody>
