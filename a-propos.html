@@ -99,6 +99,12 @@
     </div>
   </section>
 
+  <!-- FAQ -->
+  <section class="px-6 py-14 max-w-2xl mx-auto border-t border-[color:var(--border)]">
+    <h2 class="font-heading uppercase text-2xl font-bold mb-8">Des questions auxquelles je n'ai pas répondu ?</h2>
+    <div id="faq-list" class="flex flex-col gap-3"></div>
+  </section>
+
   <!-- CITATION -->
   <section class="px-6 py-16 text-center max-w-xl mx-auto border-t border-[color:var(--border)]">
     <p class="font-heading uppercase text-xl sm:text-2xl font-bold leading-snug">
@@ -163,5 +169,63 @@
   </footer>
 
   <script src="theme.js"></script>
+  <script>
+    const faqs = [
+      {
+        q: "Comment se déroule un accompagnement avec toi ?",
+        a: "Tu réserves un appel visio gratuit. On échange sur tes besoins et ton historique. Je t'évalue complètement afin de savoir d'où on part. Je te propose un plan d'action et un suivi adapté. Tu progresses, étape par étape."
+      },
+      {
+        q: "Tout se fait à distance ?",
+        a: "Oui, mes suivis et bilans se font entièrement en visio et via une application dédiée. Tu peux donc être accompagné où que tu sois, tout en profitant d'un suivi personnalisé, précis et réactif."
+      },
+      {
+        q: "A qui s'adresse ton accompagnement ? Est-ce fait pour moi ?",
+        a: "Mon accompagnement s'adresse à tous les sportifs ou personnes actives qui souhaitent retrouver confort, confiance et performance après une blessure, une douleur persistante ou une période d'arrêt. Je travaille aussi bien avec des athlètes confirmés, des amateurs passionnés, que des coachs souhaitant avoir un regard extérieur sur une problématique précise."
+      },
+      {
+        q: "Est-ce que tu t'adresses uniquement aux sportifs blessés ?",
+        a: "Non. J'accompagne aussi bien les sportifs en phase de reprise après blessure, que ceux qui veulent développer une qualité physique précise (force, mobilité, explosivité, endurance, stabilité...) ou simplement retrouver de meilleures sensations de mouvement. J'aide également les sportifs qui souhaitent préparer physiquement une saison, une compétition ou un objectif spécifique."
+      },
+      {
+        q: "Je ne sais pas quelle offre est faite pour moi, comment choisir ?",
+        a: "C'est normal ! Le plus simple est de réserver un Bilan : il nous permet d'échanger, de comprendre ta situation et d'identifier ce dont tu as vraiment besoin. À la fin de ce rendez-vous, je te dirai en toute transparence si un suivi est pertinent, ou si quelques ajustements suffisent déjà."
+      },
+      {
+        q: "Proposes-tu des facilités de paiement ?",
+        a: "Oui, selon la formule choisie, il est possible d'étaler le paiement sur plusieurs fois. L'objectif est que tu puisses accéder à un suivi de qualité sans contrainte."
+      },
+      {
+        q: "Combien de temps dure un accompagnement ?",
+        a: "La durée dépend de ton objectif et de ta situation. Certaines problématiques se règlent en quelques semaines, d'autres nécessitent un suivi plus long. Lors du bilan initial, on définit ensemble la durée et le rythme les plus adaptés à ton profil."
+      }
+    ];
+
+    const faqList = document.getElementById('faq-list');
+
+    faqList.innerHTML = faqs.map((item, i) => `
+      <div class="rounded-xl border border-[color:var(--border)] overflow-hidden">
+        <button class="faq-toggle w-full flex items-center justify-between text-left px-5 py-4" data-index="${i}">
+          <span class="font-medium text-sm sm:text-base pr-4">${item.q}</span>
+          <span class="faq-icon text-[color:var(--accent)] text-lg shrink-0 transition-transform">+</span>
+        </button>
+        <div class="faq-answer hidden px-5 pb-4">
+          <p class="text-sm text-[color:var(--fg-60)] leading-relaxed">${item.a}</p>
+        </div>
+      </div>
+    `).join('');
+
+    document.querySelectorAll('.faq-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('.rounded-xl');
+        const answer = card.querySelector('.faq-answer');
+        const icon = card.querySelector('.faq-icon');
+        const isOpen = !answer.classList.contains('hidden');
+
+        answer.classList.toggle('hidden');
+        icon.textContent = isOpen ? '+' : '–';
+      });
+    });
+  </script>
 </body>
 </html>
