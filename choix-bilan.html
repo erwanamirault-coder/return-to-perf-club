@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Quel bilan veux-tu faire ? — Bilan de tes capacités</title>
@@ -8,6 +9,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -30,10 +32,11 @@
   h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
 </style>
 </head>
-<body class="bg-brand-black text-brand-white min-h-screen">
+<body class="min-h-screen">
 
-  <!-- HEADER -->
-  <header class="flex items-center justify-between px-6 sm:px-10 py-5 border-b border-white/10">
+  <button id="theme-toggle" class="fixed top-5 right-5 z-10 w-10 h-10 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors"></button>
+
+  <header class="flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
     <div class="flex items-center gap-3">
       <svg width="28" height="28" viewBox="0 0 5000 5000" xmlns="http://www.w3.org/2000/svg" style="fill-rule:evenodd;clip-rule:evenodd;">
         <g transform="matrix(1.49977,0,0,1.36765,-875.914,-643.774)"><ellipse cx="2258.65" cy="2294.96" rx="1278.02" ry="1389.04" style="fill:white;"/></g>
@@ -46,9 +49,9 @@
       <span class="font-heading uppercase font-bold text-sm tracking-wide">Bilan de tes capacités</span>
     </div>
     <div class="flex items-center gap-4 text-sm">
-      <a href="dashboard.html" class="text-white/60 hover:text-white transition-colors">Mon espace</a>
-      <span id="user-name" class="text-white/40"></span>
-      <button id="logout-btn" class="underline underline-offset-4 text-white/60 hover:text-white transition-colors">Se déconnecter</button>
+      <a href="dashboard.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Mon espace</a>
+      <span id="user-name" class="text-[color:var(--fg-40)]"></span>
+      <button id="logout-btn" class="underline underline-offset-4 text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Se déconnecter</button>
     </div>
   </header>
 
@@ -57,23 +60,21 @@
 
     <div class="w-full max-w-3xl grid sm:grid-cols-2 gap-6">
 
-      <!-- Bilan complet -->
-      <a href="questionnaire.html?mode=complet" class="rounded-xl border border-white/15 hover:border-brand-blue transition-colors p-8">
+      <a href="questionnaire.html?mode=complet" class="rounded-xl border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors p-8">
         <h2 class="font-heading uppercase text-lg font-bold mb-3">Bilan complet</h2>
-        <p class="text-sm text-white/60 leading-relaxed">
+        <p class="text-sm text-[color:var(--fg-60)] leading-relaxed">
           Toutes les zones du corps : épaules, hanches, chevilles, colonne, genoux.
         </p>
       </a>
 
-      <!-- Bilan par zone -->
-      <div class="rounded-xl border border-white/15 p-8">
+      <div class="rounded-xl border border-[color:var(--border-strong)] p-8">
         <h2 class="font-heading uppercase text-lg font-bold mb-4">Bilan par zone</h2>
         <div class="flex flex-col gap-2">
-          <a href="questionnaire.html?zone=epaules" class="px-4 py-3 rounded-lg border border-white/15 hover:border-brand-blue transition-colors text-sm">Épaules</a>
-          <a href="questionnaire.html?zone=hanches" class="px-4 py-3 rounded-lg border border-white/15 hover:border-brand-blue transition-colors text-sm">Hanches</a>
-          <a href="questionnaire.html?zone=chevilles" class="px-4 py-3 rounded-lg border border-white/15 hover:border-brand-blue transition-colors text-sm">Chevilles</a>
-          <a href="questionnaire.html?zone=colonne" class="px-4 py-3 rounded-lg border border-white/15 hover:border-brand-blue transition-colors text-sm">Colonne</a>
-          <a href="questionnaire.html?zone=genoux" class="px-4 py-3 rounded-lg border border-white/15 hover:border-brand-blue transition-colors text-sm">Genoux</a>
+          <a href="questionnaire.html?zone=epaules" class="px-4 py-3 rounded-lg border border-[color:var(--border)] hover:border-brand-blue transition-colors text-sm">Épaules</a>
+          <a href="questionnaire.html?zone=hanches" class="px-4 py-3 rounded-lg border border-[color:var(--border)] hover:border-brand-blue transition-colors text-sm">Hanches</a>
+          <a href="questionnaire.html?zone=chevilles" class="px-4 py-3 rounded-lg border border-[color:var(--border)] hover:border-brand-blue transition-colors text-sm">Chevilles</a>
+          <a href="questionnaire.html?zone=colonne" class="px-4 py-3 rounded-lg border border-[color:var(--border)] hover:border-brand-blue transition-colors text-sm">Colonne</a>
+          <a href="questionnaire.html?zone=genoux" class="px-4 py-3 rounded-lg border border-[color:var(--border)] hover:border-brand-blue transition-colors text-sm">Genoux</a>
         </div>
       </div>
 
@@ -81,6 +82,7 @@
   </main>
 
   <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
   <script>
     async function load() {
       const { data: { user } } = await supabaseClient.auth.getUser();
