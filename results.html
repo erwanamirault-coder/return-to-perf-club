@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ton bilan — Résultats</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000', white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="bg-brand-black text-brand-white min-h-screen flex flex-col items-center px-6 py-16">
+
+  <div class="w-full max-w-lg text-center">
+
+    <p class="text-xs uppercase tracking-widest text-brand-blue-light mb-3 font-semibold">Ton bilan est prêt</p>
+    <h1 class="font-heading uppercase text-3xl font-bold mb-2">Score global</h1>
+
+    <div class="my-8">
+      <span id="global-score" class="font-heading text-6xl font-bold text-brand-blue">--%</span>
+    </div>
+
+    <div id="joint-list" class="flex flex-col gap-3 text-left mb-12"></div>
+
+    <div class="rounded-xl border border-brand-blue-dark bg-brand-blue/5 p-6 mb-8">
+      <h2 class="font-heading uppercase text-lg font-bold mb-2">Va plus loin</h2>
+      <p class="text-sm text-white/70 mb-4">
+        Découvre un programme personnalisé pour travailler tes points faibles et progresser sans te blesser.
+      </p>
+      <a href="#" class="inline-block px-8 py-3 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-sm">
+        Découvrir le programme
+      </a>
+    </div>
+
+    <a href="dashboard.html" class="text-sm text-white/50 hover:text-white transition-colors underline underline-offset-4">
+      Retour à mon espace
+    </a>
+  </div>
+
+  <script src="supabase-config.js"></script>
+  <script>
+    const raw = sessionStorage.getItem('dernier_bilan');
+    const globalScoreEl = document.getElementById('global-score');
+    const jointList = document.getElementById('joint-list');
+
+    function labelFor(score) {
+      if (score >= 90) return { text: "Excellent", color: "text-brand-blue-light" };
+      if (score >= 60) return { text: "Correct", color: "text-white/70" };
+      return { text: "À travailler", color: "text-red-400" };
+    }
+
+    function render(result) {
+      globalScoreEl.textContent = `${result.globalScore}%`;
+      Object.entries(result.scores).forEach(([joint, score]) => {
+        const pct = Math.round((score / 3) * 100);
+        const info = labelFor(pct);
+        const row = document.createElement('div');
+        row.className = "rounded-lg border border-white/10 p-4";
+        row.innerHTML = `
+          <div class="flex justify-between items-center mb-2">
+            <span class="font-medium">${joint}</span>
+            <span class="text-sm font-semibold ${info.color}">${info.text}</span>
+          </div>
+          <div class="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+            <div class="h-2 bg-brand-blue rounded-full" style="width:${pct}%"></div>
+          </div>
+        `;
+        jointList.appendChild(row);
+      });
+    }
+
+    async function load() {
+      if (raw) {
+        render(JSON.parse(raw));
+        return;
+      }
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) { window.location.href = 'login.html'; return; }
+
+      const { data, error } = await supabaseClient
+        .from('bilans')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error || !data) { window.location.href = 'questionnaire.html'; return; }
+
+      render({ scores: data.scores, globalScore: data.score_global });
+    }
+
+    load();
+  </script>
+
+</body>
+</html>
