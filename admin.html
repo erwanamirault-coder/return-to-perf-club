@@ -45,10 +45,8 @@
   <main id="main-content" class="px-6 py-10 max-w-3xl mx-auto hidden">
     <h1 class="font-heading uppercase text-2xl font-bold mb-6 text-center">Gérer les séances</h1>
 
-    <!-- Onglets clients -->
     <div id="client-tabs" class="flex flex-wrap gap-2 mb-8"></div>
 
-    <!-- Ajouter un nouveau client -->
     <div id="add-client-form" class="hidden rounded-xl border border-[color:var(--border)] p-4 mb-8">
       <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-3">Ajouter un client en suivi</p>
       <div class="grid sm:grid-cols-3 gap-2">
@@ -59,19 +57,28 @@
     </div>
 
     <div id="client-workspace" class="hidden">
-      <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center justify-between mb-6">
         <p id="selected-client-label" class="text-sm text-[color:var(--fg-60)]"></p>
         <button id="remove-client-btn" class="text-xs text-red-400 hover:text-red-300">Retirer ce client du suivi</button>
       </div>
 
-      <div class="mb-6">
-        <label class="block text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-2">N'importe quel jour de la semaine</label>
+      <!-- Navigation semaine -->
+      <div class="flex items-center justify-between mb-2">
+        <button id="prev-week-btn" class="w-8 h-8 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors text-sm">‹</button>
         <input type="date" id="week-picker"
-          class="w-full sm:w-64 px-4 py-3 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] focus:border-brand-blue outline-none">
+          class="px-4 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] focus:border-brand-blue outline-none text-sm">
+        <button id="next-week-btn" class="w-8 h-8 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors text-sm">›</button>
       </div>
 
-      <p id="week-info" class="text-sm text-[color:var(--fg-50)] mb-6"></p>
-      <p class="text-xs text-[color:var(--fg-40)] mb-6">💡 Clique sur un exercice déjà ajouté ci-dessous pour le modifier.</p>
+      <p id="week-info" class="text-sm text-[color:var(--fg-50)] mb-4 text-center"></p>
+
+      <div class="flex justify-center mb-8">
+        <button id="duplicate-week-btn" class="text-sm px-4 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] hover:bg-brand-blue/5 transition-colors font-medium">
+          📋 Dupliquer cette semaine → semaine suivante
+        </button>
+      </div>
+
+      <p class="text-xs text-[color:var(--fg-40)] mb-6 text-center">💡 Clique sur un exercice déjà ajouté ci-dessous pour le modifier.</p>
 
       <div id="days-container" class="flex flex-col gap-4"></div>
     </div>
@@ -84,8 +91,8 @@
   <script src="theme.js"></script>
   <script>
     const ADMIN_EMAIL = "erwan20b@gmail.com";
-
     const jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+
     const clientTabs = document.getElementById('client-tabs');
     const addClientForm = document.getElementById('add-client-form');
     const clientWorkspace = document.getElementById('client-workspace');
@@ -98,7 +105,7 @@
     let selectedClientEmail = null;
     let currentMonday = null;
 
-    function getMonday(dateStr) {
+    function getMondayFromDateStr(dateStr) {
       const [y, m, d] = dateStr.split('-').map(Number);
       const date = new Date(y, m - 1, d);
       const day = date.getDay();
@@ -112,6 +119,16 @@
       const m = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
       return `${y}-${m}-${day}`;
+    }
+
+    function setWeek(mondayDate) {
+      currentMonday = mondayDate;
+      weekPicker.value = formatDateKey(currentMonday);
+      const sunday = new Date(currentMonday);
+      sunday.setDate(currentMonday.getDate() + 6);
+      weekInfo.textContent = `Semaine du ${currentMonday.toLocaleDateString('fr-FR')} au ${sunday.toLocaleDateString('fr-FR')}`;
+      buildDaysUI();
+      loadExistingForWeek();
     }
 
     async function loadClients() {
@@ -143,14 +160,12 @@
       selectedClientLabel.textContent = `Client sélectionné : ${client.nom ? client.nom + ' — ' : ''}${email}`;
       addClientForm.classList.add('hidden');
       clientWorkspace.classList.remove('hidden');
-      weekPicker.value = '';
-      weekInfo.textContent = '';
-      daysContainer.innerHTML = '';
       renderTabs();
+      setWeek(getMondayFromDateStr(formatDateKey(new Date())));
     }
 
     document.getElementById('confirm-add-client').addEventListener('click', async () => {
-      const email = document.getElementById('new-client-email').value.trim();
+      const email = document.getElementById('new-client-email').value.trim().toLowerCase();
       const nom = document.getElementById('new-client-nom').value.trim();
       if (!email) { alert("L'email est obligatoire."); return; }
 
@@ -170,6 +185,62 @@
       selectedClientEmail = null;
       clientWorkspace.classList.add('hidden');
       await loadClients();
+    });
+
+    document.getElementById('prev-week-btn').addEventListener('click', () => {
+      const d = new Date(currentMonday);
+      d.setDate(d.getDate() - 7);
+      setWeek(d);
+    });
+    document.getElementById('next-week-btn').addEventListener('click', () => {
+      const d = new Date(currentMonday);
+      d.setDate(d.getDate() + 7);
+      setWeek(d);
+    });
+    weekPicker.addEventListener('change', () => {
+      if (!weekPicker.value) return;
+      setWeek(getMondayFromDateStr(weekPicker.value));
+    });
+
+    document.getElementById('duplicate-week-btn').addEventListener('click', async () => {
+      if (!selectedClientEmail || !currentMonday) return;
+      if (!confirm("Dupliquer tous les exercices de cette semaine vers la semaine suivante ?")) return;
+
+      const { data: exosActuels } = await supabaseClient
+        .from('programmes')
+        .select('*')
+        .eq('client_email', selectedClientEmail)
+        .eq('semaine_debut', formatDateKey(currentMonday));
+
+      if (!exosActuels || exosActuels.length === 0) {
+        alert("Aucun exercice à dupliquer cette semaine.");
+        return;
+      }
+
+      const nextMonday = new Date(currentMonday);
+      nextMonday.setDate(nextMonday.getDate() + 7);
+      const nextMondayKey = formatDateKey(nextMonday);
+
+      const copies = exosActuels.map(e => ({
+        client_email: e.client_email,
+        jour: e.jour,
+        semaine_debut: nextMondayKey,
+        exercice: e.exercice,
+        series: e.series,
+        repetitions: e.repetitions,
+        temps_repos: e.temps_repos,
+        rpe: e.rpe,
+        tempo: e.tempo,
+        lien_video: e.lien_video,
+        description: e.description,
+        ordre: e.ordre
+      }));
+
+      const { error } = await supabaseClient.from('programmes').insert(copies);
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      alert(`${copies.length} exercice(s) dupliqué(s) vers la semaine suivante.`);
+      setWeek(nextMonday);
     });
 
     function buildDaysUI() {
@@ -290,11 +361,13 @@
     async function loadExistingForWeek() {
       if (!selectedClientEmail || !currentMonday) return;
 
-      const { data } = await supabaseClient
+      const { data, error } = await supabaseClient
         .from('programmes')
         .select('*')
         .eq('client_email', selectedClientEmail)
         .eq('semaine_debut', formatDateKey(currentMonday));
+
+      if (error) { console.error(error); return; }
 
       document.querySelectorAll('.existing-list').forEach(el => el.innerHTML = '');
 
@@ -303,13 +376,20 @@
         if (!card) return;
         const list = card.querySelector('.existing-list');
 
-        const row = document.createElement('div');
-        row.className = "flex items-center justify-between text-sm bg-[color:var(--card)] rounded-lg px-3 py-2";
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = "edit-row-btn text-left w-full text-sm bg-[color:var(--card)] hover:bg-[color:var(--card-hover)] transition-colors rounded-lg px-3 py-2";
         row.innerHTML = `
-          <button class="edit-row-btn text-left hover:text-[color:var(--accent)] transition-colors">${exo.exercice} — ${exo.series}x${exo.repetitions}</button>
-          <button class="delete-btn text-red-400 hover:text-red-300 text-xs ml-3 shrink-0" data-id="${exo.id}">Supprimer</button>
+          <div class="flex items-center justify-between">
+            <span class="font-medium">${exo.exercice}</span>
+            <span class="delete-btn text-red-400 hover:text-red-300 text-xs ml-3 shrink-0" data-id="${exo.id}">Supprimer</span>
+          </div>
+          <div class="text-xs text-[color:var(--fg-50)] mt-0.5">
+            ${exo.series}x${exo.repetitions}${exo.temps_repos ? ` · repos ${exo.temps_repos}` : ''}${exo.rpe ? ` · RPE ${exo.rpe}` : ''}${exo.tempo ? ` · tempo ${exo.tempo}` : ''}
+          </div>
+          ${exo.description ? `<div class="text-xs text-[color:var(--fg-40)] mt-1 italic">${exo.description}</div>` : ''}
         `;
-        row.querySelector('.edit-row-btn').addEventListener('click', () => editExercise(exo, card));
+        row.addEventListener('click', () => editExercise(exo, card));
         row.querySelector('.delete-btn').addEventListener('click', async (e) => {
           e.stopPropagation();
           await supabaseClient.from('programmes').delete().eq('id', exo.id);
@@ -319,16 +399,6 @@
         list.appendChild(row);
       });
     }
-
-    weekPicker.addEventListener('change', () => {
-      if (!weekPicker.value) return;
-      currentMonday = getMonday(weekPicker.value);
-      const sunday = new Date(currentMonday);
-      sunday.setDate(currentMonday.getDate() + 6);
-      weekInfo.textContent = `Semaine du ${currentMonday.toLocaleDateString('fr-FR')} au ${sunday.toLocaleDateString('fr-FR')}`;
-      buildDaysUI();
-      loadExistingForWeek();
-    });
 
     async function checkAccess() {
       const { data: { user } } = await supabaseClient.auth.getUser();
