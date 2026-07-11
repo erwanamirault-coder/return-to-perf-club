@@ -43,19 +43,18 @@
     </div>
   </header>
 
-  <main class="px-6 py-12 max-w-3xl mx-auto">
+  <main class="px-6 py-12 max-w-2xl mx-auto">
     <h1 class="font-heading uppercase text-2xl font-bold mb-8 text-center">Ma programmation</h1>
 
-    <div class="flex items-center justify-between mb-6">
-      <button id="prev-month" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors">‹</button>
-      <h2 id="month-label" class="font-heading uppercase font-bold text-lg"></h2>
-      <button id="next-month" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors">›</button>
+    <!-- Navigation semaine -->
+    <div class="flex items-center justify-between mb-5">
+      <button id="prev-week" class="w-8 h-8 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors text-sm">‹</button>
+      <h2 id="week-label" class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold"></h2>
+      <button id="next-week" class="w-8 h-8 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors text-sm">›</button>
     </div>
 
-    <div class="grid grid-cols-7 gap-1 text-center text-xs text-[color:var(--fg-40)] mb-2">
-      <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
-    </div>
-    <div id="calendar-grid" class="grid grid-cols-7 gap-1 mb-10"></div>
+    <!-- Vue semaine discrète -->
+    <div id="week-strip" class="grid grid-cols-7 gap-1.5 mb-10"></div>
 
     <div id="day-detail"></div>
 
@@ -65,17 +64,24 @@
   <script src="theme.js"></script>
   <script>
     let seancesParDate = {};
-    let currentMonth = new Date();
-    currentMonth.setDate(1);
+    let currentWeekStart = getMonday(new Date());
     let selectedDate = null;
 
-    const monthLabel = document.getElementById('month-label');
-    const calendarGrid = document.getElementById('calendar-grid');
+    const weekLabel = document.getElementById('week-label');
+    const weekStrip = document.getElementById('week-strip');
     const dayDetail = document.getElementById('day-detail');
-    const moisNoms = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+    const moisNoms = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+    const joursLettres = ["L","M","M","J","V","S","D"];
     const offsetJour = { "Lundi": 0, "Mardi": 1, "Mercredi": 2, "Jeudi": 3, "Vendredi": 4, "Samedi": 5, "Dimanche": 6 };
 
-    // CORRIGÉ : formate une date en gardant l'heure locale (plus de décalage UTC)
+    function getMonday(d) {
+      const day = d.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      const monday = new Date(d);
+      monday.setDate(d.getDate() + diff);
+      return monday;
+    }
+
     function formatDateKey(d) {
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -94,45 +100,51 @@
       return null;
     }
 
-    function renderCalendar() {
-      monthLabel.textContent = `${moisNoms[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
-      calendarGrid.innerHTML = '';
+    function renderWeek() {
+      const days = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(currentWeekStart);
+        d.setDate(currentWeekStart.getDate() + i);
+        days.push(d);
+      }
 
-      const year = currentMonth.getFullYear();
-      const month = currentMonth.getMonth();
-      const firstDay = new Date(year, month, 1);
-      const startOffset = (firstDay.getDay() + 6) % 7;
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const first = days[0], last = days[6];
+      weekLabel.textContent = first.getMonth() === last.getMonth()
+        ? `${first.getDate()} – ${last.getDate()} ${moisNoms[first.getMonth()]} ${first.getFullYear()}`
+        : `${first.getDate()} ${moisNoms[first.getMonth()]} – ${last.getDate()} ${moisNoms[last.getMonth()]} ${last.getFullYear()}`;
+
       const today = formatDateKey(new Date());
+      weekStrip.innerHTML = '';
 
-      for (let i = 0; i < startOffset; i++) calendarGrid.appendChild(document.createElement('div'));
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        const dateObj = new Date(year, month, day);
-        const key = formatDateKey(dateObj);
+      days.forEach((d, i) => {
+        const key = formatDateKey(d);
         const hasSeance = !!seancesParDate[key];
         const isToday = key === today;
         const isSelected = key === selectedDate;
 
         const btn = document.createElement('button');
-        btn.className = `aspect-square rounded-lg text-sm flex items-center justify-center relative border transition-colors ${
-          isToday ? 'bg-brand-blue text-white border-brand-blue font-semibold' :
+        btn.className = `flex flex-col items-center gap-1 py-3 rounded-lg border transition-colors ${
+          isToday ? 'bg-brand-blue text-white border-brand-blue' :
           isSelected ? 'border-brand-blue bg-brand-blue/10' :
           'border-[color:var(--border)]'
         } hover:border-brand-blue`;
-        btn.innerHTML = `${day}${hasSeance && !isToday ? '<span class="absolute bottom-1 w-1 h-1 rounded-full bg-brand-blue"></span>' : ''}`;
+        btn.innerHTML = `
+          <span class="text-[10px] uppercase ${isToday ? 'text-white/70' : 'text-[color:var(--fg-40)]'}">${joursLettres[i]}</span>
+          <span class="text-sm font-semibold">${d.getDate()}</span>
+          ${hasSeance ? `<span class="w-1 h-1 rounded-full ${isToday ? 'bg-white' : 'bg-brand-blue'}"></span>` : '<span class="w-1 h-1"></span>'}
+        `;
         btn.addEventListener('click', () => {
           selectedDate = key;
-          renderCalendar();
+          renderWeek();
           renderDayDetail();
         });
-        calendarGrid.appendChild(btn);
-      }
+        weekStrip.appendChild(btn);
+      });
     }
 
     function renderDayDetail() {
       if (!selectedDate) {
-        dayDetail.innerHTML = `<p class="text-center text-sm text-[color:var(--fg-40)]">Sélectionne un jour dans le calendrier pour voir la séance.</p>`;
+        dayDetail.innerHTML = `<p class="text-center text-sm text-[color:var(--fg-40)]">Sélectionne un jour pour voir la séance.</p>`;
         return;
       }
 
@@ -204,17 +216,17 @@
       const today = formatDateKey(new Date());
       selectedDate = seancesParDate[today] ? today : null;
 
-      renderCalendar();
+      renderWeek();
       renderDayDetail();
     }
 
-    document.getElementById('prev-month').addEventListener('click', () => {
-      currentMonth.setMonth(currentMonth.getMonth() - 1);
-      renderCalendar();
+    document.getElementById('prev-week').addEventListener('click', () => {
+      currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+      renderWeek();
     });
-    document.getElementById('next-month').addEventListener('click', () => {
-      currentMonth.setMonth(currentMonth.getMonth() + 1);
-      renderCalendar();
+    document.getElementById('next-week').addEventListener('click', () => {
+      currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+      renderWeek();
     });
 
     document.getElementById('logout-btn').addEventListener('click', async () => {
