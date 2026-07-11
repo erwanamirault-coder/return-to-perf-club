@@ -40,7 +40,7 @@
     </div>
   </header>
 
-  <main class="px-6 py-12 max-w-3xl mx-auto">
+  <main class="px-6 py-12 max-w-4xl mx-auto">
     <h1 class="font-heading uppercase text-2xl font-bold mb-8 text-center">Ma programmation</h1>
 
     <div id="content"></div>
@@ -49,6 +49,7 @@
   <script src="supabase-config.js"></script>
   <script>
     const content = document.getElementById('content');
+    const ordreJours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
     async function load() {
       const { data: { user } } = await supabaseClient.auth.getUser();
@@ -69,34 +70,41 @@
         return;
       }
 
-      // Regroupe les séances par jour
       const parJour = {};
       seances.forEach(s => {
         if (!parJour[s.jour]) parJour[s.jour] = [];
         parJour[s.jour].push(s);
       });
 
-      content.innerHTML = Object.entries(parJour).map(([jour, exos]) => `
+      const joursTries = Object.keys(parJour).sort(
+        (a, b) => ordreJours.indexOf(a) - ordreJours.indexOf(b)
+      );
+
+      content.innerHTML = joursTries.map(jour => `
         <div class="mb-8">
           <h2 class="font-heading uppercase text-lg font-bold mb-3 text-brand-blue-light">${jour}</h2>
-          <div class="rounded-xl border border-white/10 overflow-hidden">
-            <table class="w-full text-sm">
+          <div class="rounded-xl border border-white/10 overflow-x-auto">
+            <table class="w-full text-sm min-w-[600px]">
               <thead>
                 <tr class="bg-white/5 text-white/50 text-xs uppercase tracking-wide">
                   <th class="text-left px-4 py-3">Exercice</th>
                   <th class="text-left px-4 py-3">Séries</th>
                   <th class="text-left px-4 py-3">Répétitions</th>
                   <th class="text-left px-4 py-3">Repos</th>
+                  <th class="text-left px-4 py-3">RPE</th>
+                  <th class="text-left px-4 py-3">Tempo</th>
                   <th class="text-left px-4 py-3">Vidéo</th>
                 </tr>
               </thead>
               <tbody>
-                ${exos.map(e => `
+                ${parJour[jour].map(e => `
                   <tr class="border-t border-white/10">
                     <td class="px-4 py-3 font-medium">${e.exercice}</td>
                     <td class="px-4 py-3 text-white/70">${e.series}</td>
                     <td class="px-4 py-3 text-white/70">${e.repetitions}</td>
                     <td class="px-4 py-3 text-white/70">${e.temps_repos || '—'}</td>
+                    <td class="px-4 py-3 text-white/70">${e.rpe || '—'}</td>
+                    <td class="px-4 py-3 text-white/70">${e.tempo || '—'}</td>
                     <td class="px-4 py-3">
                       ${e.lien_video ? `<a href="${e.lien_video}" target="_blank" class="text-brand-blue-light underline underline-offset-4">Voir</a>` : '—'}
                     </td>
