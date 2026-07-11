@@ -75,16 +75,19 @@
     const moisNoms = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
     const offsetJour = { "Lundi": 0, "Mardi": 1, "Mercredi": 2, "Jeudi": 3, "Vendredi": 4, "Samedi": 5, "Dimanche": 6 };
 
+    // CORRIGÉ : formate une date en gardant l'heure locale (plus de décalage UTC)
     function formatDateKey(d) {
-      return d.toISOString().split('T')[0];
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
     }
 
-    // Calcule la vraie date d'une séance : soit via date_seance directe,
-    // soit via semaine_debut (lundi) + jour (ex: "Mercredi" -> +2 jours)
     function calculerDate(s) {
       if (s.date_seance) return s.date_seance;
       if (s.semaine_debut && s.jour && offsetJour[s.jour] !== undefined) {
-        const lundi = new Date(s.semaine_debut + 'T00:00:00');
+        const [y, m, d] = s.semaine_debut.split('-').map(Number);
+        const lundi = new Date(y, m - 1, d);
         lundi.setDate(lundi.getDate() + offsetJour[s.jour]);
         return formatDateKey(lundi);
       }
@@ -134,7 +137,8 @@
       }
 
       const exos = seancesParDate[selectedDate];
-      const dateObj = new Date(selectedDate + 'T00:00:00');
+      const [y, m, d] = selectedDate.split('-').map(Number);
+      const dateObj = new Date(y, m - 1, d);
       const dateLabel = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
       if (!exos) {
