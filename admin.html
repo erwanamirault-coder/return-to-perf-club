@@ -62,7 +62,6 @@
         <button id="remove-client-btn" class="text-xs text-red-400 hover:text-red-300">Retirer ce client du suivi</button>
       </div>
 
-      <!-- Navigation semaine -->
       <div class="flex items-center justify-between mb-2">
         <button id="prev-week-btn" class="w-8 h-8 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors text-sm">‹</button>
         <input type="date" id="week-picker"
@@ -157,7 +156,7 @@
     function selectClient(email) {
       selectedClientEmail = email;
       const client = clientsActifs.find(c => c.email === email);
-      selectedClientLabel.textContent = `Client sélectionné : ${client.nom ? client.nom + ' — ' : ''}${email}`;
+      selectedClientLabel.textContent = `Client sélectionné : ${client?.nom ? client.nom + ' — ' : ''}${email}`;
       addClientForm.classList.add('hidden');
       clientWorkspace.classList.remove('hidden');
       renderTabs();
@@ -272,6 +271,7 @@
               <button class="cancel-edit-btn hidden text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
                 Annuler la modification
               </button>
+              <span class="save-confirm hidden text-xs text-[color:var(--accent)] font-medium">Enregistré ✓</span>
             </div>
           </div>
         `;
@@ -318,6 +318,7 @@
       };
 
       const editingId = btn.dataset.editingId;
+      const confirmSpan = card.querySelector('.save-confirm');
       btn.disabled = true;
       btn.textContent = editingId ? 'Mise à jour...' : 'Ajout...';
 
@@ -335,6 +336,9 @@
         btn.textContent = editingId ? 'Mettre à jour cet exercice' : '+ Ajouter cet exercice';
         return;
       }
+
+      confirmSpan.classList.remove('hidden');
+      setTimeout(() => confirmSpan.classList.add('hidden'), 2500);
 
       resetForm(card);
       loadExistingForWeek();
