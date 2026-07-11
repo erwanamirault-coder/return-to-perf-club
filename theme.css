@@ -1,0 +1,35 @@
+:root {
+  --bg: #000000;
+  --fg: #ffffff;
+  --fg-70: rgba(255,255,255,0.7);
+  --fg-60: rgba(255,255,255,0.6);
+  --fg-50: rgba(255,255,255,0.5);
+  --fg-40: rgba(255,255,255,0.4);
+  --fg-30: rgba(255,255,255,0.3);
+  --border: rgba(255,255,255,0.1);
+  --border-strong: rgba(255,255,255,0.15);
+  --card: rgba(255,255,255,0.05);
+  --card-hover: rgba(255,255,255,0.08);
+  --accent: #69A0F2;
+}
+
+html.light {
+  --bg: #ffffff;
+  --fg: #000000;
+  --fg-70: rgba(0,0,0,0.7);
+  --fg-60: rgba(0,0,0,0.6);
+  --fg-50: rgba(0,0,0,0.5);
+  --fg-40: rgba(0,0,0,0.4);
+  --fg-30: rgba(0,0,0,0.3);
+  --border: rgba(0,0,0,0.1);
+  --border-strong: rgba(0,0,0,0.15);
+  --card: rgba(0,0,0,0.04);
+  --card-hover: rgba(0,0,0,0.07);
+  --accent: #0F4CA9;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
