@@ -253,6 +253,17 @@
             <div class="flex items-center justify-between mb-3">
               <h3 class="font-heading uppercase font-bold text-sm">${jour} <span class="text-[color:var(--fg-40)] font-normal normal-case">— ${dateLabel}</span></h3>
             </div>
+
+            <!-- Commentaire général de la séance -->
+            <div class="mb-4">
+              <label class="block text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-1.5">Commentaire sur la composition de cette séance</label>
+              <textarea class="jour-commentaire w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" rows="2" placeholder="Ex : cette semaine on insiste sur le haut du corps, garde de la marge sur le squat..."></textarea>
+              <div class="flex items-center gap-2 mt-1.5">
+                <button class="save-comment-btn text-xs px-3 py-1.5 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">Enregistrer le commentaire</button>
+                <span class="comment-confirm hidden text-xs text-[color:var(--accent)] font-medium">Enregistré ✓</span>
+              </div>
+            </div>
+
             <div class="existing-list flex flex-col gap-2 mb-3"></div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
               <input type="text" placeholder="Exercice" class="ex-exercice px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
@@ -283,10 +294,41 @@
       document.querySelectorAll('.cancel-edit-btn').forEach(btn => {
         btn.addEventListener('click', () => resetForm(btn.closest('[data-jour]')));
       });
+      document.querySelectorAll('.save-comment-btn').forEach(btn => {
+        btn.addEventListener('click', () => saveComment(btn));
+      });
+    }
+
+    async function saveComment(btn) {
+      const card = btn.closest('[data-jour]');
+      const jour = card.dataset.jour;
+      if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
+
+      const commentaire = card.querySelector('.jour-commentaire').value.trim();
+      const confirmSpan = card.querySelector('.comment-confirm');
+
+      btn.disabled = true;
+      btn.textContent = 'Enregistrement...';
+
+      const { error } = await supabaseClient.from('notes_jour').upsert({
+        client_email: selectedClientEmail,
+        semaine_debut: formatDateKey(currentMonday),
+        jour: jour,
+        commentaire: commentaire,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'client_email,semaine_debut,jour' });
+
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer le commentaire';
+
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      confirmSpan.classList.remove('hidden');
+      setTimeout(() => confirmSpan.classList.add('hidden'), 2500);
     }
 
     function resetForm(card) {
-      card.querySelectorAll('input, textarea').forEach(input => input.value = '');
+      card.querySelectorAll('.ex-exercice, .ex-series, .ex-repetitions, .ex-repos, .ex-rpe, .ex-tempo, .ex-video, .ex-description').forEach(input => input.value = '');
       const btn = card.querySelector('.save-exercise-btn');
       btn.dataset.editingId = '';
       btn.textContent = '+ Ajouter cet exercice';
@@ -365,17 +407,28 @@
     async function loadExistingForWeek() {
       if (!selectedClientEmail || !currentMonday) return;
 
-      const { data, error } = await supabaseClient
+      const { data: exos } = await supabaseClient
         .from('programmes')
         .select('*')
         .eq('client_email', selectedClientEmail)
         .eq('semaine_debut', formatDateKey(currentMonday));
 
-      if (error) { console.error(error); return; }
+      const { data: notes } = await supabaseClient
+        .from('notes_jour')
+        .select('*')
+        .eq('client_email', selectedClientEmail)
+        .eq('semaine_debut', formatDateKey(currentMonday));
 
       document.querySelectorAll('.existing-list').forEach(el => el.innerHTML = '');
+      document.querySelectorAll('.jour-commentaire').forEach(el => el.value = '');
 
-      (data || []).forEach(exo => {
+      (notes || []).forEach(note => {
+        const card = document.querySelector(`[data-jour="${note.jour}"]`);
+        if (!card) return;
+        card.querySelector('.jour-commentaire').value = note.commentaire || '';
+      });
+
+      (exos || []).forEach(exo => {
         const card = document.querySelector(`[data-jour="${exo.jour}"]`);
         if (!card) return;
         const list = card.querySelector('.existing-list');
