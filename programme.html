@@ -46,20 +46,17 @@
   <main class="px-6 py-12 max-w-3xl mx-auto">
     <h1 class="font-heading uppercase text-2xl font-bold mb-8 text-center">Ma programmation</h1>
 
-    <!-- Navigation mois -->
     <div class="flex items-center justify-between mb-6">
       <button id="prev-month" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors">‹</button>
       <h2 id="month-label" class="font-heading uppercase font-bold text-lg"></h2>
       <button id="next-month" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors">›</button>
     </div>
 
-    <!-- Grille calendrier -->
     <div class="grid grid-cols-7 gap-1 text-center text-xs text-[color:var(--fg-40)] mb-2">
       <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
     </div>
     <div id="calendar-grid" class="grid grid-cols-7 gap-1 mb-10"></div>
 
-    <!-- Séance du jour sélectionné -->
     <div id="day-detail"></div>
 
   </main>
@@ -75,11 +72,23 @@
     const monthLabel = document.getElementById('month-label');
     const calendarGrid = document.getElementById('calendar-grid');
     const dayDetail = document.getElementById('day-detail');
-
     const moisNoms = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+    const offsetJour = { "Lundi": 0, "Mardi": 1, "Mercredi": 2, "Jeudi": 3, "Vendredi": 4, "Samedi": 5, "Dimanche": 6 };
 
     function formatDateKey(d) {
       return d.toISOString().split('T')[0];
+    }
+
+    // Calcule la vraie date d'une séance : soit via date_seance directe,
+    // soit via semaine_debut (lundi) + jour (ex: "Mercredi" -> +2 jours)
+    function calculerDate(s) {
+      if (s.date_seance) return s.date_seance;
+      if (s.semaine_debut && s.jour && offsetJour[s.jour] !== undefined) {
+        const lundi = new Date(s.semaine_debut + 'T00:00:00');
+        lundi.setDate(lundi.getDate() + offsetJour[s.jour]);
+        return formatDateKey(lundi);
+      }
+      return null;
     }
 
     function renderCalendar() {
@@ -89,13 +98,11 @@
       const year = currentMonth.getFullYear();
       const month = currentMonth.getMonth();
       const firstDay = new Date(year, month, 1);
-      const startOffset = (firstDay.getDay() + 6) % 7; // Lundi = 0
+      const startOffset = (firstDay.getDay() + 6) % 7;
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const today = formatDateKey(new Date());
 
-      for (let i = 0; i < startOffset; i++) {
-        calendarGrid.appendChild(document.createElement('div'));
-      }
+      for (let i = 0; i < startOffset; i++) calendarGrid.appendChild(document.createElement('div'));
 
       for (let day = 1; day <= daysInMonth; day++) {
         const dateObj = new Date(year, month, day);
@@ -106,10 +113,11 @@
 
         const btn = document.createElement('button');
         btn.className = `aspect-square rounded-lg text-sm flex items-center justify-center relative border transition-colors ${
+          isToday ? 'bg-brand-blue text-white border-brand-blue font-semibold' :
           isSelected ? 'border-brand-blue bg-brand-blue/10' :
-          isToday ? 'border-brand-blue' : 'border-[color:var(--border)]'
+          'border-[color:var(--border)]'
         } hover:border-brand-blue`;
-        btn.innerHTML = `${day}${hasSeance ? '<span class="absolute bottom-1 w-1 h-1 rounded-full bg-brand-blue"></span>' : ''}`;
+        btn.innerHTML = `${day}${hasSeance && !isToday ? '<span class="absolute bottom-1 w-1 h-1 rounded-full bg-brand-blue"></span>' : ''}`;
         btn.addEventListener('click', () => {
           selectedDate = key;
           renderCalendar();
@@ -126,7 +134,7 @@
       }
 
       const exos = seancesParDate[selectedDate];
-      const dateObj = new Date(selectedDate);
+      const dateObj = new Date(selectedDate + 'T00:00:00');
       const dateLabel = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
       if (!exos) {
@@ -183,12 +191,12 @@
 
       seancesParDate = {};
       (seances || []).forEach(s => {
-        if (!s.date_seance) return;
-        if (!seancesParDate[s.date_seance]) seancesParDate[s.date_seance] = [];
-        seancesParDate[s.date_seance].push(s);
+        const key = calculerDate(s);
+        if (!key) return;
+        if (!seancesParDate[key]) seancesParDate[key] = [];
+        seancesParDate[key].push(s);
       });
 
-      // Sélectionne aujourd'hui par défaut s'il y a une séance, sinon rien
       const today = formatDateKey(new Date());
       selectedDate = seancesParDate[today] ? today : null;
 
