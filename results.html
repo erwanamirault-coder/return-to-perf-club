@@ -12,6 +12,16 @@
 <link rel="stylesheet" href="theme.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<!-- MailerLite Universal -->
+<script>
+    (function(w,d,e,u,f,l,n){w[f]=w[f]||function(){(w[f].q=w[f].q||[])
+    .push(arguments);},l=d.createElement(e),l.async=1,l.src=u,
+    n=d.getElementsByTagName(e)[0],n.parentNode.insertBefore(l,n);})
+    (window,document,'script','https://assets.mailerlite.com/js/universal.js','ml');
+    ml('account', '1850719');
+</script>
+<!-- End MailerLite Universal -->
+
 <script>
   tailwind.config = {
     theme: {
@@ -60,6 +70,16 @@
     <a href="dashboard.html" class="text-sm text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
       Retour à mon espace
     </a>
+
+    <!-- Newsletter -->
+    <div class="mt-16 pt-10 border-t border-[color:var(--border)]">
+      <h2 class="font-heading uppercase text-lg font-bold mb-2">Reçois mes conseils gratuits</h2>
+      <p class="text-sm text-[color:var(--fg-60)] mb-6">
+        Mobilité, réathlétisation, prévention des blessures — directement dans ta boîte mail.
+      </p>
+      <div class="ml-embedded" data-form="qQKB42"></div>
+    </div>
+
   </div>
 
   <script src="supabase-config.js"></script>
