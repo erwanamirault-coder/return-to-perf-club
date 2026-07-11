@@ -1,173 +1,72 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="h-full antialiased">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bilan de Mobilité Express - Erwan Amirault</title>
-    <!-- Intégration de Tailwind CSS pour un design pro et moderne -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <style>
-        .step { display: none; }
-        .step.active { display: block; }
-    </style>
+    <title>Bilan Mobilité - Accueil</title>
+    
+    <!-- Lien vers le framework CSS Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Configuration des polices et des couleurs personnalisées du modèle
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-green': '#10b981',   /* Remplace par ton vert exact si besoin */
+                        'brand-orange': '#f97316'  /* Remplace par ton orange exact si besoin */
+                    },
+                    fontFamily: {
+                        'display': ['Bebas Neue', 'sans-serif'],
+                        'sans': ['Poppins', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Importation des polices Google Fonts (Bebas Neue et Poppins) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col justify-between">
+<body class="min-h-full flex flex-col font-sans bg-white">
 
-    <!-- Navbar / Header -->
-    <header class="border-b border-gray-800 bg-gray-950 p-4 text-center">
-        <h1 class="text-xl font-extrabold tracking-tight text-amber-500 uppercase">EA Performance</h1>
-        <p class="text-xs text-gray-400">Bilan de Mobilité Express</p>
-    </header>
-
-    <!-- Contenu Principal -->
-    <main class="flex-grow flex items-center justify-center p-4 max-w-md mx-auto w-full">
-        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-6 w-full shadow-2xl">
+    <!-- Section principale centrée verticalement et horizontalement -->
+    <main class="flex-1 flex items-center justify-center px-6 py-20">
+        <div class="max-w-2xl text-center">
             
-            <!-- ÉTAPE 1 : Accueil -->
-            <div id="step-1" class="step active text-center space-y-6">
-                <div class="w-16 h-16 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto text-2xl font-bold border border-amber-500/20">⚡</div>
-                <h2 class="text-2xl font-bold">Évalue ta mobilité en 60 secondes</h2>
-                <p class="text-gray-400 text-sm leading-relaxed">
-                    Découvre instantanément tes blocages anatomiques cachés qui freinent tes performances ou causent tes douleurs.
-                </p>
-                <button onclick="nextStep(2)" class="w-full bg-amber-500 hover:bg-amber-600 text-gray-950 font-bold py-4 rounded-xl transition duration-300 shadow-lg shadow-amber-500/10 cursor-pointer">
-                    Démarrer le test gratuit
-                </button>
-            </div>
-
-            <!-- ÉTAPE 2 : Test 1 (Squat) -->
-            <div id="step-2" class="step space-y-6">
-                <span class="text-xs font-bold text-amber-500 tracking-widest uppercase">Test 1 sur 3 • Bas du corps</span>
-                <h2 class="text-xl font-bold">Descends en squat complet (pieds largeur d'épaules). Que se passe-t-il ?</h2>
-                <div class="space-y-3">
-                    <button onclick="selectAnswer(3, 3)" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 p-4 rounded-xl font-medium transition cursor-pointer">A) Je descends fesses aux talons, à plat et sans douleur.</button>
-                    <button onclick="selectAnswer(3, 2)" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 p-4 rounded-xl font-medium transition cursor-pointer">B) Mes talons se décollent ou je bascule en arrière.</button>
-                    <button onclick="selectAnswer(3, 1)" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 p-4 rounded-xl font-medium transition cursor-pointer">C) Ça bloque très haut ou j'ai des raideurs/douleurs.</button>
-                </div>
-            </div>
-
-            <!-- ÉTAPE 3 : Test 2 (Chaîne Postérieure) -->
-            <div id="step-3" class="step space-y-6">
-                <span class="text-xs font-bold text-amber-500 tracking-widest uppercase">Test 2 sur 3 • Souplesse</span>
-                <h2 class="text-xl font-bold">Jambes tendues, penche-toi en avant pour toucher le sol. Jusqu'où vas-tu ?</h2>
-                <div class="space-y-3">
-                    <button onclick="selectAnswer(4, 3)" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 p-4 rounded-xl font-medium transition cursor-pointer">A) Je touche le sol facilement avec les mains à plat.</button>
-                    <button onclick="selectAnswer(4, 2)" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 p-4 rounded-xl font-medium transition cursor-pointer">B) Je touche le bout de mes doigts ou mes chevilles.</button>
-                    <button onclick="selectAnswer(4, 1)" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 p-4 rounded-xl font-medium transition cursor-pointer">C) Je bloque au niveau des genoux ou des tibias.</button>
-                </div>
-            </div>
-
-            <!-- ÉTAPE 4 : Test 3 (Épaules) -->
-            <div id="step-4" class="step space-y-6">
-                <span class="text-xs font-bold text-amber-500 tracking-widest uppercase">Test 3 sur 3 • Haut du corps</span>
-                <h2 class="text-xl font-bold">Dos collé au mur, lève les bras tendus au-dessus de la tête. Les mains touchent-elles le mur ?</h2>
-                <div class="space-y-3">
-                    <button onclick="selectAnswer(5, 3)" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 p-4 rounded-xl font-medium transition cursor-pointer">A) Oui, mes bras et mes mains touchent sans cambrer le dos.</button>
-                    <button onclick="selectAnswer(5, 2)" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 p-4 rounded-xl font-medium transition cursor-pointer">B) Ça touche, mais je suis obligé de cambrer ou décoller le dos.</button>
-                    <button onclick="selectAnswer(5, 1)" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 p-4 rounded-xl font-medium transition cursor-pointer">C) Impossible de toucher le mur sans plier les coudes.</button>
-                </div>
-            </div>
-
-            <!-- ÉTAPE 5 : Capture de lead (Le Tunnel) -->
-            <div id="step-5" class="step space-y-6 text-center">
-                <div class="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-2xl font-bold border border-emerald-500/20">🔒</div>
-                <h2 class="text-2xl font-bold">Ton score est prêt !</h2>
-                <p class="text-gray-400 text-sm">Entre tes informations pour recevoir ton analyse personnalisée et tes axes de correction immédiatement.</p>
-                
-                <form id="leadForm" onsubmit="generateResult(event)" class="space-y-3 text-left">
-                    <div>
-                        <label class="block text-xs text-gray-400 mb-1 font-medium">Prénom</label>
-                        <input type="text" required class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500 text-sm" placeholder="Ex: Jean">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-400 mb-1 font-medium">Adresse Email</label>
-                        <input type="email" required class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500 text-sm" placeholder="Ex: jean@gmail.com">
-                    </div>
-                    <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-gray-950 font-bold py-4 rounded-xl transition duration-300 mt-2 shadow-lg cursor-pointer">
-                        Voir mon score de mobilité
-                    </button>
-                </form>
-            </div>
-
-            <!-- ÉTAPE 6 : Page de Résultats & Offres -->
-            <div id="step-6" class="step space-y-6 text-center">
-                <span class="text-xs font-bold text-emerald-500 tracking-widest uppercase">Analyse Terminée</span>
-                <h2 class="text-2xl font-black">Ton Score : <span id="scoreDisplay" class="text-amber-500">0</span>/20</h2>
-                
-                <div id="profilAnalyse" class="text-gray-400 text-sm bg-gray-900 border border-gray-800 p-4 rounded-xl leading-relaxed text-left">
-                    <!-- Rempli dynamiquement par le script -->
-                </div>
-
-                <div class="border-t border-gray-800 my-4 pt-4 text-left">
-                    <p class="text-xs font-bold text-amber-500 uppercase tracking-wider mb-2">Prochaine étape recommandée :</p>
-                    <h3 id="ctaTitle" class="text-lg font-bold text-white mb-2"></h3>
-                    <p id="ctaDesc" class="text-gray-400 text-xs mb-4 leading-relaxed"></p>
-                    
-                    <!-- Remplace le # par ton lien d'offre final (Calendly, page de vente, etc.) -->
-                    <a id="ctaButton" href="#" target="_blank" class="block text-center w-full bg-gradient-to-r from-amber-500 to-orange-500 text-gray-950 font-extrabold py-4 rounded-xl transition duration-300 shadow-lg shadow-orange-500/10">
-                        Clique ici pour passer à l'action
-                    </a>
-                </div>
+            <!-- 1. Le Badge du haut -->
+            <span class="inline-block bg-brand-green text-white text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">
+                Bilan Mobilité
+            </span>
+            
+            <!-- 2. Le Titre d'impact (Police Display / Bebas Neue) -->
+            <h1 class="font-display text-5xl md:text-6xl tracking-wide leading-tight mb-6">
+                Ta mobilité fait la différence dans ton sport.
+            </h1>
+            
+            <!-- 3. Blocs de texte descriptifs (Alignés à gauche pour la lisibilité) -->
+            <p class="text-[15px] text-neutral-600 leading-relaxed mb-6 text-left">
+                Épaules, hanches, chevilles, dos : chaque articulation limitée oblige ton corps à compenser ailleurs. Voilà pourquoi tu te blesses, tu n’arrives pas à progresser et tu traînes des douleurs sans explication.
+            </p>
+            
+            <p class="text-[15px] text-neutral-600 leading-relaxed mb-10 text-left">
+                Crée ton compte pour effectuer ton bilan.
+            </p>
+            
+            <!-- 4. Zone des Boutons d'action (Appels à l'action / CTA) -->
+            <div class="flex flex-wrap items-center justify-center gap-4">
+                <a class="font-display text-xl tracking-wide bg-brand-orange text-white px-14 py-4 rounded-lg hover:brightness-95 transition inline-block" href="/signup">
+                    CRÉER MON COMPTE
+                </a>
+                <a class="text-sm font-semibold text-neutral-500 underline hover:text-neutral-800 transition inline-block" href="/login">
+                    J’ai déjà un compte
+                </a>
             </div>
 
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="text-center p-4 text-xs text-gray-600 border-t border-gray-800 bg-gray-950">
-        &copy; 2026 EA Performance. Tous droits réservés.
-    </footer>
-
-    <!-- Logique JavaScript de l'application -->
-    <script>
-        let totalPoints = 0;
-
-        function nextStep(stepNumber) {
-            document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
-            document.getElementById(`step-${stepNumber}`).classList.add('active');
-        }
-
-        function selectAnswer(next, points) {
-            totalPoints += points;
-            nextStep(next);
-        }
-
-        function generateResult(event) {
-            event.preventDefault();
-            
-            // Calcul d'un score fictif sur 20 basé sur les points accumulés (max 9 points)
-            let finalScore = Math.round((totalPoints / 9) * 20);
-            document.getElementById('scoreDisplay').innerText = finalScore;
-
-            let profilText = "";
-            let ctaTitle = "";
-            let ctaDesc = "";
-            let ctaUrl = "#"; // Mets ton lien ici (Stripe, Calendly, Instagram...)
-
-            if (finalScore <= 10) {
-                profilText = "🚨 **Profil : Restrictions Critiques.** Ta mobilité globale est fortement réduite. Tu compenses probablement sur tes articulations, ce qui augmente tes risques de blessures lors de tes entraînements et bloque ta progression de force.";
-                ctaTitle = "Accéder au Programme Fondations Mobilité";
-                ctaDesc = "Pour débloquer tes hanches et tes épaules de manière autonome, rejoins mon programme ou mon offre d'abonnement en arrière-plan.";
-                ctaUrl = "https://ton-site-abonnement.com"; // TON LIEN DE PROGRAMME / ABONNEMENT
-            } else if (finalScore <= 15) {
-                profilText = "⚠️ **Profil : Mobilité Intermédiaire.** Tu as des bases correctes, mais des raideurs localisées (probablement sur la chaîne postérieure ou les chevilles) limitent ton amplitude de mouvement sur tes lifts lourds.";
-                ctaTitle = "Rejoindre le Club de Performance";
-                ctaDesc = "Optimise tes mouvements profonds pour passer un cap de performance sans te blesser.";
-                ctaUrl = "https://ton-site-abonnement.com"; // TON LIEN DE PROGRAMME / ABONNEMENT
-            } else {
-                profilText = "✅ **Profil : Athlète Mobile.** Très bonne flexibilité générale. Pour toi, l'enjeu n'est plus la souplesse passive, mais le renforcement dans les amplitudes maximales (mobilité active/force).";
-                ctaTitle = "Réserver un Coaching One-to-One";
-                ctaDesc = "Ton profil est avancé. On doit passer sur du sur-mesure pour pousser tes limites en performance pure.";
-                ctaUrl = "https://calendly.com/ton-lien"; // TON LIEN CALENDLY ONE-TO-ONE
-            }
-
-            document.getElementById('profilAnalyse').innerHTML = profilText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            document.getElementById('ctaTitle').innerText = ctaTitle;
-            document.getElementById('ctaDesc').innerText = ctaDesc;
-            document.getElementById('ctaButton').href = ctaUrl;
-
-            nextStep(6);
-        }
-    </script>
 </body>
 </html>
