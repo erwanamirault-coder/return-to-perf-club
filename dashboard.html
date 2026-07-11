@@ -70,6 +70,11 @@
       <span class="block font-heading uppercase font-semibold mb-1">Ma programmation</span>
       <span class="block text-sm text-[color:var(--fg-50)]">Accède à tes séances d'entraînement</span>
     </a>
+
+    <a id="admin-link" href="admin.html" class="hidden block w-full px-8 py-5 rounded-xl border border-brand-blue-dark bg-brand-blue/5 hover:border-brand-blue transition-colors text-left">
+      <span class="block font-heading uppercase font-semibold mb-1 text-[color:var(--accent)]">Gérer les séances (Admin)</span>
+      <span class="block text-sm text-[color:var(--fg-50)]">Créer ou modifier les programmes de tes clients</span>
+    </a>
   </div>
 
   <button id="logout-btn" class="mt-10 text-xs text-[color:var(--fg-40)] hover:text-[color:var(--fg-70)] transition-colors">
@@ -79,11 +84,17 @@
   <script src="supabase-config.js"></script>
   <script src="theme.js"></script>
   <script>
+    const ADMIN_EMAIL = "erwan20b@gmail.com";
+
     async function load() {
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) { window.location.href = 'login.html'; return; }
       const firstName = user.user_metadata?.full_name || 'toi';
       document.getElementById('welcome-msg').textContent = `Bon retour, ${firstName}`;
+
+      if (user.email === ADMIN_EMAIL) {
+        document.getElementById('admin-link').classList.remove('hidden');
+      }
     }
 
     document.getElementById('logout-btn').addEventListener('click', async () => {
