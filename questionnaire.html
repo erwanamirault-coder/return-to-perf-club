@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ton bilan — Bilan de tes capacités</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000', white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="bg-brand-black text-brand-white min-h-screen flex flex-col">
+
+  <div class="w-full h-1 bg-white/10">
+    <div id="progress-bar" class="h-1 bg-brand-blue transition-all duration-300" style="width: 0%"></div>
+  </div>
+
+  <main class="flex-1 flex flex-col items-center justify-center px-6 py-12">
+    <div class="w-full max-w-lg">
+
+      <p id="step-label" class="text-center text-xs uppercase tracking-widest text-brand-blue-light mb-3 font-semibold"></p>
+      <h1 id="joint-title" class="font-heading uppercase text-2xl sm:text-3xl font-bold text-center mb-6"></h1>
+
+      <div class="aspect-video w-full rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 overflow-hidden">
+        <video id="test-video" class="w-full h-full object-cover hidden" controls></video>
+        <p id="video-placeholder" class="text-white/40 text-sm px-6 text-center">
+          Vidéo de démonstration à venir
+        </p>
+      </div>
+
+      <p id="instructions" class="text-white/70 text-center mb-8 leading-relaxed"></p>
+
+      <p class="text-center text-sm font-medium mb-4 text-white/80">Note ton niveau sur ce mouvement :</p>
+      <div class="flex gap-3 justify-center mb-10" id="rating-buttons">
+        <button data-score="1" class="rating-btn flex-1 max-w-[110px] py-4 rounded-lg border border-white/15 hover:border-brand-blue transition-colors">
+          <span class="block font-heading text-xl font-bold">1</span>
+          <span class="block text-[11px] text-white/50 mt-1">Difficile</span>
+        </button>
+        <button data-score="2" class="rating-btn flex-1 max-w-[110px] py-4 rounded-lg border border-white/15 hover:border-brand-blue transition-colors">
+          <span class="block font-heading text-xl font-bold">2</span>
+          <span class="block text-[11px] text-white/50 mt-1">Moyen</span>
+        </button>
+        <button data-score="3" class="rating-btn flex-1 max-w-[110px] py-4 rounded-lg border border-white/15 hover:border-brand-blue transition-colors">
+          <span class="block font-heading text-xl font-bold">3</span>
+          <span class="block text-[11px] text-white/50 mt-1">Facile</span>
+        </button>
+      </div>
+
+      <div class="flex justify-between items-center">
+        <button id="back-btn" class="text-sm text-white/50 hover:text-white transition-colors">&larr; Précédent</button>
+        <button id="next-btn" disabled class="px-8 py-3 rounded-lg bg-brand-blue disabled:bg-white/10 disabled:text-white/30 hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-sm">
+          Suivant
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="supabase-config.js"></script>
+  <script>
+    const tests = [
+      { joint: "Épaules", title: "Élévation des bras", instructions: "Lève les deux bras tendus au-dessus de la tête, le plus haut possible, sans cambrer le dos.", videoUrl: "" },
+      { joint: "Hanches", title: "Squat profond", instructions: "Descends en position accroupie, le plus bas possible, talons au sol.", videoUrl: "" },
+      { joint: "Chevilles", title: "Genou vers le mur", instructions: "Pied fixe face à un mur, avance le genou vers le mur sans décoller le talon.", videoUrl: "" },
+      { joint: "Colonne", title: "Rotation du buste", instructions: "Assis, bras croisés sur la poitrine, tourne le buste à droite puis à gauche, le plus loin possible.", videoUrl: "" },
+      { joint: "Genoux", title: "Fente avant", instructions: "Réalise une fente avant profonde, sans douleur ni perte d'équilibre.", videoUrl: "" }
+    ];
+
+    let currentStep = 0;
+    const answers = new Array(tests.length).fill(null);
+
+    const stepLabel = document.getElementById('step-label');
+    const jointTitle = document.getElementById('joint-title');
+    const instructions = document.getElementById('instructions');
+    const video = document.getElementById('test-video');
+    const videoPlaceholder = document.getElementById('video-placeholder');
+    const progressBar = document.getElementById('progress-bar');
+    const nextBtn = document.getElementById('next-btn');
+    const backBtn = document.getElementById('back-btn');
+    const ratingButtons = document.querySelectorAll('.rating-btn');
+
+    function renderStep() {
+      const t = tests[currentStep];
+      stepLabel.textContent = `Étape ${currentStep + 1} / ${tests.length} — ${t.joint}`;
+      jointTitle.textContent = t.title;
+      instructions.textContent = t.instructions;
+      progressBar.style.width = `${((currentStep) / tests.length) * 100}%`;
+
+      if (t.videoUrl) {
+        video.src = t.videoUrl;
+        video.classList.remove('hidden');
+        videoPlaceholder.classList.add('hidden');
+      } else {
+        video.classList.add('hidden');
+        videoPlaceholder.classList.remove('hidden');
+      }
+
+      ratingButtons.forEach(btn => {
+        const selected = Number(btn.dataset.score) === answers[currentStep];
+        btn.classList.toggle('border-brand-blue', selected);
+        btn.classList.toggle('bg-brand-blue/10', selected);
+      });
+
+      nextBtn.disabled = answers[currentStep] === null;
+      nextBtn.textContent = currentStep === tests.length - 1 ? 'Voir mon bilan' : 'Suivant';
+      backBtn.classList.toggle('invisible', currentStep === 0);
+    }
+
+    ratingButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        answers[currentStep] = Number(btn.dataset.score);
+        renderStep();
+      });
+    });
+
+    backBtn.addEventListener('click', () => {
+      if (currentStep > 0) { currentStep--; renderStep(); }
+    });
+
+    nextBtn.addEventListener('click', async () => {
+      if (currentStep < tests.length - 1) {
+        currentStep++;
+        renderStep();
+      } else {
+        await finishBilan();
+      }
+    });
+
+    async function finishBilan() {
+      nextBtn.disabled = true;
+      nextBtn.textContent = 'Enregistrement...';
+
+      const scores = {};
+      tests.forEach((t, i) => { scores[t.joint] = answers[i]; });
+      const globalScore = Math.round((answers.reduce((a, b) => a + b, 0) / (tests.length * 3)) * 100);
+
+      const result = { scores, globalScore, date: new Date().toISOString() };
+      const { data: { user } } = await supabaseClient.auth.getUser();
+
+      if (user) {
+        await supabaseClient.from('bilans').insert({
+          user_id: user.id,
+          scores: scores,
+          score_global: globalScore
+        });
+      }
+
+      sessionStorage.setItem('dernier_bilan', JSON.stringify(result));
+      window.location.href = 'results.html';
+    }
+
+    renderStep();
+  </script>
+
+</body>
+</html>
