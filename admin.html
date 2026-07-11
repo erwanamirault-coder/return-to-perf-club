@@ -116,6 +116,7 @@
               <input type="text" placeholder="RPE" class="ex-rpe px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
               <input type="text" placeholder="Tempo" class="ex-tempo px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
               <input type="text" placeholder="Lien vidéo" class="ex-video px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-2">
+              <textarea placeholder="Explication de l'exercice (consignes, points d'attention...)" rows="2" class="ex-description px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-4"></textarea>
             </div>
             <div class="flex items-center gap-3">
               <button class="save-exercise-btn text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium" data-editing-id="">
@@ -138,7 +139,7 @@
     }
 
     function resetForm(card) {
-      card.querySelectorAll('input').forEach(input => input.value = '');
+      card.querySelectorAll('input, textarea').forEach(input => input.value = '');
       const btn = card.querySelector('.save-exercise-btn');
       btn.dataset.editingId = '';
       btn.textContent = '+ Ajouter cet exercice';
@@ -166,6 +167,7 @@
         rpe: card.querySelector('.ex-rpe').value.trim(),
         tempo: card.querySelector('.ex-tempo').value.trim(),
         lien_video: card.querySelector('.ex-video').value.trim(),
+        description: card.querySelector('.ex-description').value.trim(),
         ordre: jours.indexOf(jour)
       };
 
@@ -200,6 +202,7 @@
       card.querySelector('.ex-rpe').value = exo.rpe || '';
       card.querySelector('.ex-tempo').value = exo.tempo || '';
       card.querySelector('.ex-video').value = exo.lien_video || '';
+      card.querySelector('.ex-description').value = exo.description || '';
 
       const btn = card.querySelector('.save-exercise-btn');
       btn.dataset.editingId = exo.id;
