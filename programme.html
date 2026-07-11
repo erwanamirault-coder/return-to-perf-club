@@ -34,93 +34,176 @@
 </head>
 <body class="min-h-screen">
 
-  <button id="theme-toggle" class="fixed top-5 right-5 z-10 w-10 h-10 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors"></button>
-
   <header class="flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
     <span class="font-heading uppercase font-bold text-sm tracking-wide">Bilan de tes capacités</span>
     <div class="flex items-center gap-4 text-sm">
       <a href="dashboard.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Mon espace</a>
       <button id="logout-btn" class="underline underline-offset-4 text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Se déconnecter</button>
+      <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
     </div>
   </header>
 
-  <main class="px-6 py-12 max-w-4xl mx-auto">
+  <main class="px-6 py-12 max-w-3xl mx-auto">
     <h1 class="font-heading uppercase text-2xl font-bold mb-8 text-center">Ma programmation</h1>
 
-    <div id="content"></div>
+    <!-- Navigation mois -->
+    <div class="flex items-center justify-between mb-6">
+      <button id="prev-month" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors">‹</button>
+      <h2 id="month-label" class="font-heading uppercase font-bold text-lg"></h2>
+      <button id="next-month" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors">›</button>
+    </div>
+
+    <!-- Grille calendrier -->
+    <div class="grid grid-cols-7 gap-1 text-center text-xs text-[color:var(--fg-40)] mb-2">
+      <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
+    </div>
+    <div id="calendar-grid" class="grid grid-cols-7 gap-1 mb-10"></div>
+
+    <!-- Séance du jour sélectionné -->
+    <div id="day-detail"></div>
+
   </main>
 
   <script src="supabase-config.js"></script>
   <script src="theme.js"></script>
   <script>
-    const content = document.getElementById('content');
-    const ordreJours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+    let seancesParDate = {};
+    let currentMonth = new Date();
+    currentMonth.setDate(1);
+    let selectedDate = null;
+
+    const monthLabel = document.getElementById('month-label');
+    const calendarGrid = document.getElementById('calendar-grid');
+    const dayDetail = document.getElementById('day-detail');
+
+    const moisNoms = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+
+    function formatDateKey(d) {
+      return d.toISOString().split('T')[0];
+    }
+
+    function renderCalendar() {
+      monthLabel.textContent = `${moisNoms[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
+      calendarGrid.innerHTML = '';
+
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const startOffset = (firstDay.getDay() + 6) % 7; // Lundi = 0
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const today = formatDateKey(new Date());
+
+      for (let i = 0; i < startOffset; i++) {
+        calendarGrid.appendChild(document.createElement('div'));
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateObj = new Date(year, month, day);
+        const key = formatDateKey(dateObj);
+        const hasSeance = !!seancesParDate[key];
+        const isToday = key === today;
+        const isSelected = key === selectedDate;
+
+        const btn = document.createElement('button');
+        btn.className = `aspect-square rounded-lg text-sm flex items-center justify-center relative border transition-colors ${
+          isSelected ? 'border-brand-blue bg-brand-blue/10' :
+          isToday ? 'border-brand-blue' : 'border-[color:var(--border)]'
+        } hover:border-brand-blue`;
+        btn.innerHTML = `${day}${hasSeance ? '<span class="absolute bottom-1 w-1 h-1 rounded-full bg-brand-blue"></span>' : ''}`;
+        btn.addEventListener('click', () => {
+          selectedDate = key;
+          renderCalendar();
+          renderDayDetail();
+        });
+        calendarGrid.appendChild(btn);
+      }
+    }
+
+    function renderDayDetail() {
+      if (!selectedDate) {
+        dayDetail.innerHTML = `<p class="text-center text-sm text-[color:var(--fg-40)]">Sélectionne un jour dans le calendrier pour voir la séance.</p>`;
+        return;
+      }
+
+      const exos = seancesParDate[selectedDate];
+      const dateObj = new Date(selectedDate);
+      const dateLabel = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+      if (!exos) {
+        dayDetail.innerHTML = `
+          <h3 class="font-heading uppercase text-base font-bold mb-3 text-[color:var(--accent)]">${dateLabel}</h3>
+          <p class="text-sm text-[color:var(--fg-40)]">Pas de séance prévue ce jour-là.</p>
+        `;
+        return;
+      }
+
+      dayDetail.innerHTML = `
+        <h3 class="font-heading uppercase text-base font-bold mb-3 text-[color:var(--accent)]">${dateLabel}</h3>
+        <div class="rounded-xl border border-[color:var(--border)] overflow-x-auto">
+          <table class="w-full text-sm min-w-[500px]">
+            <thead>
+              <tr class="bg-[color:var(--card)] text-[color:var(--fg-50)] text-xs uppercase tracking-wide">
+                <th class="text-left px-4 py-3">Exercice</th>
+                <th class="text-left px-4 py-3">Séries</th>
+                <th class="text-left px-4 py-3">Répétitions</th>
+                <th class="text-left px-4 py-3">Repos</th>
+                <th class="text-left px-4 py-3">RPE</th>
+                <th class="text-left px-4 py-3">Tempo</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${exos.map(e => `
+                <tr class="border-t border-[color:var(--border)]">
+                  <td class="px-4 py-3 font-medium">
+                    ${e.lien_video
+                      ? `<a href="${e.lien_video}" target="_blank" class="text-[color:var(--accent)] underline underline-offset-4">${e.exercice}</a>`
+                      : e.exercice}
+                  </td>
+                  <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.series}</td>
+                  <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.repetitions}</td>
+                  <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.temps_repos || '—'}</td>
+                  <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.rpe || '—'}</td>
+                  <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.tempo || '—'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
 
     async function load() {
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) { window.location.href = 'login.html'; return; }
 
-      const { data: seances, error } = await supabaseClient
+      const { data: seances } = await supabaseClient
         .from('programmes')
         .select('*')
         .order('ordre', { ascending: true });
 
-      if (error || !seances || seances.length === 0) {
-        content.innerHTML = `
-          <div class="text-center py-16">
-            <p class="text-[color:var(--fg-50)]">Aucune programmation n'est encore disponible pour toi.</p>
-            <p class="text-[color:var(--fg-30)] text-sm mt-2">Reviens bientôt, ton coach y travaille.</p>
-          </div>
-        `;
-        return;
-      }
-
-      const parJour = {};
-      seances.forEach(s => {
-        if (!parJour[s.jour]) parJour[s.jour] = [];
-        parJour[s.jour].push(s);
+      seancesParDate = {};
+      (seances || []).forEach(s => {
+        if (!s.date_seance) return;
+        if (!seancesParDate[s.date_seance]) seancesParDate[s.date_seance] = [];
+        seancesParDate[s.date_seance].push(s);
       });
 
-      const joursTries = Object.keys(parJour).sort(
-        (a, b) => ordreJours.indexOf(a) - ordreJours.indexOf(b)
-      );
+      // Sélectionne aujourd'hui par défaut s'il y a une séance, sinon rien
+      const today = formatDateKey(new Date());
+      selectedDate = seancesParDate[today] ? today : null;
 
-      content.innerHTML = joursTries.map(jour => `
-        <div class="mb-8">
-          <h2 class="font-heading uppercase text-lg font-bold mb-3 text-[color:var(--accent)]">${jour}</h2>
-          <div class="rounded-xl border border-[color:var(--border)] overflow-x-auto">
-            <table class="w-full text-sm min-w-[500px]">
-              <thead>
-                <tr class="bg-[color:var(--card)] text-[color:var(--fg-50)] text-xs uppercase tracking-wide">
-                  <th class="text-left px-4 py-3">Exercice</th>
-                  <th class="text-left px-4 py-3">Séries</th>
-                  <th class="text-left px-4 py-3">Répétitions</th>
-                  <th class="text-left px-4 py-3">Repos</th>
-                  <th class="text-left px-4 py-3">RPE</th>
-                  <th class="text-left px-4 py-3">Tempo</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${parJour[jour].map(e => `
-                  <tr class="border-t border-[color:var(--border)]">
-                    <td class="px-4 py-3 font-medium">
-                      ${e.lien_video
-                        ? `<a href="${e.lien_video}" target="_blank" class="text-[color:var(--accent)] underline underline-offset-4">${e.exercice}</a>`
-                        : e.exercice}
-                    </td>
-                    <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.series}</td>
-                    <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.repetitions}</td>
-                    <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.temps_repos || '—'}</td>
-                    <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.rpe || '—'}</td>
-                    <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.tempo || '—'}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      `).join('');
+      renderCalendar();
+      renderDayDetail();
     }
+
+    document.getElementById('prev-month').addEventListener('click', () => {
+      currentMonth.setMonth(currentMonth.getMonth() - 1);
+      renderCalendar();
+    });
+    document.getElementById('next-month').addEventListener('click', () => {
+      currentMonth.setMonth(currentMonth.getMonth() + 1);
+      renderCalendar();
+    });
 
     document.getElementById('logout-btn').addEventListener('click', async () => {
       await supabaseClient.auth.signOut();
