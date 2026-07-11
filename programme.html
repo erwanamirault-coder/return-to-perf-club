@@ -46,14 +46,12 @@
   <main class="px-6 py-12 max-w-2xl mx-auto">
     <h1 class="font-heading uppercase text-2xl font-bold mb-8 text-center">Ma programmation</h1>
 
-    <!-- Navigation semaine -->
-    <div class="flex items-center justify-between mb-5">
+    <div id="week-nav" class="flex items-center justify-between mb-5">
       <button id="prev-week" class="w-8 h-8 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors text-sm">‹</button>
       <h2 id="week-label" class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold"></h2>
       <button id="next-week" class="w-8 h-8 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors text-sm">›</button>
     </div>
 
-    <!-- Vue semaine discrète -->
     <div id="week-strip" class="grid grid-cols-7 gap-1.5 mb-10"></div>
 
     <div id="day-detail"></div>
@@ -63,7 +61,11 @@
   <script src="supabase-config.js"></script>
   <script src="theme.js"></script>
   <script>
+    const CALENDLY_URL = "https://calendly.com/erwan-amirault/45min";
+
     let seancesParDate = {};
+    let retoursMap = {};
+    let currentUserEmail = null;
     let currentWeekStart = getMonday(new Date());
     let selectedDate = null;
 
@@ -162,36 +164,98 @@
       }
 
       dayDetail.innerHTML = `
-        <h3 class="font-heading uppercase text-base font-bold mb-3 text-[color:var(--accent)]">${dateLabel}</h3>
-        <div class="rounded-xl border border-[color:var(--border)] overflow-x-auto">
-          <table class="w-full text-sm min-w-[500px]">
-            <thead>
-              <tr class="bg-[color:var(--card)] text-[color:var(--fg-50)] text-xs uppercase tracking-wide">
-                <th class="text-left px-4 py-3">Exercice</th>
-                <th class="text-left px-4 py-3">Séries</th>
-                <th class="text-left px-4 py-3">Répétitions</th>
-                <th class="text-left px-4 py-3">Repos</th>
-                <th class="text-left px-4 py-3">RPE</th>
-                <th class="text-left px-4 py-3">Tempo</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${exos.map(e => `
-                <tr class="border-t border-[color:var(--border)]">
-                  <td class="px-4 py-3 font-medium">
-                    ${e.lien_video
-                      ? `<a href="${e.lien_video}" target="_blank" class="text-[color:var(--accent)] underline underline-offset-4">${e.exercice}</a>`
-                      : e.exercice}
-                  </td>
-                  <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.series}</td>
-                  <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.repetitions}</td>
-                  <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.temps_repos || '—'}</td>
-                  <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.rpe || '—'}</td>
-                  <td class="px-4 py-3 text-[color:var(--fg-70)]">${e.tempo || '—'}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
+        <h3 class="font-heading uppercase text-base font-bold mb-4 text-[color:var(--accent)]">${dateLabel}</h3>
+        <div class="flex flex-col gap-4">
+          ${exos.map(e => `
+            <div class="rounded-xl border border-[color:var(--border)] p-4">
+              <div class="font-heading uppercase font-bold mb-2">
+                ${e.lien_video
+                  ? `<a href="${e.lien_video}" target="_blank" class="text-[color:var(--accent)] underline underline-offset-4">${e.exercice}</a>`
+                  : e.exercice}
+              </div>
+              <div class="flex flex-wrap gap-2 mb-3 text-xs">
+                <span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${e.series} séries</span>
+                <span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${e.repetitions} reps</span>
+                ${e.temps_repos ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">Repos ${e.temps_repos}</span>` : ''}
+                ${e.rpe ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">RPE ${e.rpe}</span>` : ''}
+                ${e.tempo ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">Tempo ${e.tempo}</span>` : ''}
+              </div>
+              ${e.description ? `<p class="text-sm text-[color:var(--fg-70)] leading-relaxed mb-4">${e.description}</p>` : ''}
+
+              <div class="border-t border-[color:var(--border)] pt-3">
+                <label class="block text-xs uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-2">Mon retour sur cet exercice</label>
+                <textarea data-programme-id="${e.id}" class="retour-input w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" rows="2" placeholder="Ressenti, douleur, facilité...">${retoursMap[e.id] || ''}</textarea>
+                <button data-programme-id="${e.id}" class="save-retour-btn mt-2 text-xs px-3 py-1.5 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">
+                  Enregistrer mon retour
+                </button>
+                <span class="save-confirm hidden text-xs text-[color:var(--accent)] ml-2">Enregistré ✓</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      document.querySelectorAll('.save-retour-btn').forEach(btn => {
+        btn.addEventListener('click', () => saveRetour(btn));
+      });
+    }
+
+    async function saveRetour(btn) {
+      const programmeId = btn.dataset.programmeId;
+      const textarea = document.querySelector(`.retour-input[data-programme-id="${programmeId}"]`);
+      const commentaire = textarea.value.trim();
+      const confirmSpan = btn.nextElementSibling;
+
+      btn.disabled = true;
+      btn.textContent = 'Enregistrement...';
+
+      const { error } = await supabaseClient
+        .from('retours')
+        .upsert({
+          programme_id: programmeId,
+          client_email: currentUserEmail,
+          commentaire: commentaire,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'programme_id,client_email' });
+
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer mon retour';
+
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      retoursMap[programmeId] = commentaire;
+      confirmSpan.classList.remove('hidden');
+      setTimeout(() => confirmSpan.classList.add('hidden'), 2000);
+    }
+
+    function renderCalendlyBlock() {
+      document.querySelector('main').innerHTML = `
+        <div class="text-center py-10">
+
+          <span class="inline-block mb-6 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold border border-brand-blue-dark text-[color:var(--accent)]">
+            Bilan de tes capacités
+          </span>
+
+          <h1 class="font-heading uppercase text-2xl sm:text-3xl font-bold mb-4">Pas encore de suivi actif</h1>
+
+          <p class="text-[color:var(--fg-70)] text-sm sm:text-base leading-relaxed mb-10 max-w-sm mx-auto">
+            Tu n'as pas encore de programme personnalisé sur ton compte. Réservons un appel pour faire le point ensemble sur tes objectifs.
+          </p>
+
+          <div class="rounded-2xl border border-brand-blue-dark bg-brand-blue/5 p-8 max-w-sm mx-auto">
+            <h2 class="font-heading uppercase text-lg font-bold mb-2">Appel bilan offert</h2>
+            <p class="text-sm text-[color:var(--fg-60)] mb-6">
+              30 minutes pour discuter de ta situation et voir comment on peut travailler ensemble.
+            </p>
+            <a href="${CALENDLY_URL}" target="_blank" class="inline-block w-full px-8 py-4 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-sm text-white">
+              Je réserve mon appel bilan offert !
+            </a>
+          </div>
+
+          <a href="dashboard.html" class="inline-block mt-10 text-sm text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
+            Retour à mon espace
+          </a>
+
         </div>
       `;
     }
@@ -199,6 +263,18 @@
     async function load() {
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) { window.location.href = 'login.html'; return; }
+      currentUserEmail = user.email;
+
+      const { data: clientActif } = await supabaseClient
+        .from('clients_actifs')
+        .select('email')
+        .eq('email', user.email)
+        .single();
+
+      if (!clientActif) {
+        renderCalendlyBlock();
+        return;
+      }
 
       const { data: seances } = await supabaseClient
         .from('programmes')
@@ -212,6 +288,14 @@
         if (!seancesParDate[key]) seancesParDate[key] = [];
         seancesParDate[key].push(s);
       });
+
+      const { data: retours } = await supabaseClient
+        .from('retours')
+        .select('*')
+        .eq('client_email', currentUserEmail);
+
+      retoursMap = {};
+      (retours || []).forEach(r => { retoursMap[r.programme_id] = r.commentaire; });
 
       const today = formatDateKey(new Date());
       selectedDate = seancesParDate[today] ? today : null;
@@ -229,7 +313,7 @@
       renderWeek();
     });
 
-    document.getElementById('logout-btn').addEventListener('click', async () => {
+    document.getElementById('logout-btn')?.addEventListener('click', async () => {
       await supabaseClient.auth.signOut();
       window.location.href = 'index.html';
     });
