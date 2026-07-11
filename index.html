@@ -3,64 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bilan Mobilité - Accueil</title>
+    <title>Bilan Mobilité</title>
     
-    <!-- Lien vers le framework CSS Tailwind -->
+    <!-- Framework CSS Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Configuration des polices et des couleurs personnalisées du modèle
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'brand-green': '#10b981',   /* Remplace par ton vert exact si besoin */
-                        'brand-orange': '#f97316'  /* Remplace par ton orange exact si besoin */
+                        // Intégration exacte de votre palette de couleurs
+                        'brand-black': '#000000',
+                        'brand-white': '#FFFFFF',
+                        'brand-blue-light': '#69A0F2',
+                        'brand-blue-main': '#2D7AED',
+                        'brand-blue-dark': '#0F4CA9',
                     },
                     fontFamily: {
-                        'display': ['Bebas Neue', 'sans-serif'],
-                        'sans': ['Poppins', 'sans-serif']
+                        // Configuration de vos typographies
+                        'title': ['Racing Sans One', 'sans-serif'],
+                        'body': ['Poppins', 'sans-serif'],
+                        'subtitle': ['Hero Bold', 'Montserrat', 'Arial Black', 'sans-serif']
                     }
                 }
             }
         }
     </script>
 
-    <!-- Importation des polices Google Fonts (Bebas Neue et Poppins) -->
+    <!-- Importation des polices Google Fonts disponibles -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-</head>
-<body class="min-h-full flex flex-col font-sans bg-white">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Racing+Sans+One&family=Montserrat:wght@800&display=swap" rel="stylesheet">
 
-    <!-- Section principale centrée verticalement et horizontalement -->
-    <main class="flex-1 flex items-center justify-center px-6 py-20">
+    <style>
+        /* Si vous avez le fichier de votre police Hero Bold, vous pourrez décommenter ce bloc :
+        @font-face {
+            font-family: 'Hero Bold';
+            src: url('chemin/vers/votre/police/Hero-Bold.woff2') format('woff2');
+            font-weight: bold;
+            font-style: normal;
+        }
+        */
+    </style>
+</head>
+<body class="min-h-full flex flex-col font-body bg-brand-white text-brand-black">
+
+    <!-- Section principale -->
+    <main class="flex-1 flex flex-col items-center justify-center px-6 py-16">
+        
+        <!-- ZONE LOGO SVG (Placé en haut du bloc de contenu) -->
+        <div class="mb-8 flex justify-center text-brand-blue-dark">
+            <!-- Remplacer les balises <svg> ci-dessous par le code complet de votre logo SVG -->
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 text-brand-blue-main">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+            </svg>
+            <!-- Fin de votre zone SVG -->
+        </div>
+
         <div class="max-w-2xl text-center">
             
-            <!-- 1. Le Badge du haut -->
-            <span class="inline-block bg-brand-green text-white text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">
+            <!-- 1. Le Badge (Utilise la police Hero Bold / Subtitle) -->
+            <span class="inline-block bg-brand-blue-dark text-brand-white text-xs font-subtitle uppercase tracking-widest px-5 py-2 rounded-full mb-6 font-bold">
                 Bilan Mobilité
             </span>
             
-            <!-- 2. Le Titre d'impact (Police Display / Bebas Neue) -->
-            <h1 class="font-display text-5xl md:text-6xl tracking-wide leading-tight mb-6">
+            <!-- 2. Le Titre d'impact (Utilise Racing Sans One) -->
+            <h1 class="font-title text-5xl md:text-7xl tracking-wide uppercase leading-tight mb-8 text-brand-black italic">
                 Ta mobilité fait la différence dans ton sport.
             </h1>
             
-            <!-- 3. Blocs de texte descriptifs (Alignés à gauche pour la lisibilité) -->
-            <p class="text-[15px] text-neutral-600 leading-relaxed mb-6 text-left">
-                Épaules, hanches, chevilles, dos : chaque articulation limitée oblige ton corps à compenser ailleurs. Voilà pourquoi tu te blesses, tu n’arrives pas à progresser et tu traînes des douleurs sans explication.
-            </p>
+            <!-- 3. Paragraphes descriptifs (Utilisent Poppins) -->
+            <div class="space-y-4 mb-10 text-left">
+                <p class="text-[15px] text-neutral-600 leading-relaxed">
+                    Épaules, hanches, chevilles, dos : chaque articulation limitée oblige ton corps à compenser ailleurs. Voilà pourquoi tu te blesses, tu n’arrives pas à progresser et tu traînes des douleurs sans explication.
+                </p>
+                <p class="text-[15px] font-semibold text-brand-blue-dark leading-relaxed">
+                    Crée ton compte pour effectuer ton bilan.
+                </p>
+            </div>
             
-            <p class="text-[15px] text-neutral-600 leading-relaxed mb-10 text-left">
-                Crée ton compte pour effectuer ton bilan.
-            </p>
-            
-            <!-- 4. Zone des Boutons d'action (Appels à l'action / CTA) -->
+            <!-- 4. Boutons d'action (Utilisent Hero Bold / Subtitle) -->
             <div class="flex flex-wrap items-center justify-center gap-4">
-                <a class="font-display text-xl tracking-wide bg-brand-orange text-white px-14 py-4 rounded-lg hover:brightness-95 transition inline-block" href="/signup">
+                <a class="font-subtitle font-bold text-lg tracking-wider bg-brand-blue-main text-brand-white px-12 py-4 rounded-lg hover:bg-brand-blue-dark transition duration-300 shadow-lg shadow-brand-blue-light/20 inline-block" href="/signup">
                     CRÉER MON COMPTE
                 </a>
-                <a class="text-sm font-semibold text-neutral-500 underline hover:text-neutral-800 transition inline-block" href="/login">
+                <a class="font-body text-sm font-semibold text-neutral-500 underline hover:text-brand-black transition duration-200 inline-block" href="/login">
                     J’ai déjà un compte
                 </a>
             </div>
