@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Créer une semaine</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000', white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
+    <span class="font-heading uppercase font-bold text-sm tracking-wide">Admin — Bilan de tes capacités</span>
+    <div class="flex items-center gap-4 text-sm">
+      <a href="dashboard.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Mon espace</a>
+      <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+    </div>
+  </header>
+
+  <main id="main-content" class="px-6 py-10 max-w-3xl mx-auto hidden">
+    <h1 class="font-heading uppercase text-2xl font-bold mb-8 text-center">Créer / modifier une semaine</h1>
+
+    <div class="grid sm:grid-cols-2 gap-4 mb-8">
+      <div>
+        <label class="block text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-2">Email du client</label>
+        <input type="email" id="client-email" placeholder="client@email.com"
+          class="w-full px-4 py-3 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] focus:border-brand-blue outline-none">
+      </div>
+      <div>
+        <label class="block text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-2">N'importe quel jour de la semaine</label>
+        <input type="date" id="week-picker"
+          class="w-full px-4 py-3 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] focus:border-brand-blue outline-none">
+      </div>
+    </div>
+
+    <p id="week-info" class="text-sm text-[color:var(--fg-50)] mb-8"></p>
+    <p class="text-xs text-[color:var(--fg-40)] mb-6">💡 Clique sur un exercice déjà ajouté ci-dessous pour le modifier.</p>
+
+    <div id="days-container" class="flex flex-col gap-4"></div>
+
+  </main>
+
+  <p id="denied" class="hidden text-center py-20 text-[color:var(--fg-50)]">Accès réservé.</p>
+
+  <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    const ADMIN_EMAIL = "erwan20b@gmail.com";
+
+    const jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+    const daysContainer = document.getElementById('days-container');
+    const weekPicker = document.getElementById('week-picker');
+    const weekInfo = document.getElementById('week-info');
+    const clientEmailInput = document.getElementById('client-email');
+
+    let currentMonday = null;
+
+    function getMonday(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      const day = date.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      date.setDate(date.getDate() + diff);
+      return date;
+    }
+
+    function formatDateKey(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function buildDaysUI() {
+      daysContainer.innerHTML = jours.map((jour, i) => {
+        const d = new Date(currentMonday);
+        d.setDate(currentMonday.getDate() + i);
+        const dateLabel = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+
+        return `
+          <div class="rounded-xl border border-[color:var(--border)] p-4" data-jour="${jour}">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-heading uppercase font-bold text-sm">${jour} <span class="text-[color:var(--fg-40)] font-normal normal-case">— ${dateLabel}</span></h3>
+            </div>
+            <div class="existing-list flex flex-col gap-2 mb-3"></div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
+              <input type="text" placeholder="Exercice" class="ex-exercice px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="number" placeholder="Séries" class="ex-series px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="Répétitions" class="ex-repetitions px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="Repos" class="ex-repos px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="RPE" class="ex-rpe px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="Tempo" class="ex-tempo px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="Lien vidéo" class="ex-video px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-2">
+            </div>
+            <div class="flex items-center gap-3">
+              <button class="save-exercise-btn text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium" data-editing-id="">
+                + Ajouter cet exercice
+              </button>
+              <button class="cancel-edit-btn hidden text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
+                Annuler la modification
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.save-exercise-btn').forEach(btn => {
+        btn.addEventListener('click', () => saveExercise(btn));
+      });
+      document.querySelectorAll('.cancel-edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => resetForm(btn.closest('[data-jour]')));
+      });
+    }
+
+    function resetForm(card) {
+      card.querySelectorAll('input').forEach(input => input.value = '');
+      const btn = card.querySelector('.save-exercise-btn');
+      btn.dataset.editingId = '';
+      btn.textContent = '+ Ajouter cet exercice';
+      card.querySelector('.cancel-edit-btn').classList.add('hidden');
+    }
+
+    async function saveExercise(btn) {
+      const card = btn.closest('[data-jour]');
+      const jour = card.dataset.jour;
+      const clientEmail = clientEmailInput.value.trim();
+
+      if (!clientEmail) { alert("Renseigne l'email du client d'abord."); return; }
+
+      const exercice = card.querySelector('.ex-exercice').value.trim();
+      if (!exercice) { alert("Le nom de l'exercice est obligatoire."); return; }
+
+      const payload = {
+        client_email: clientEmail,
+        jour: jour,
+        semaine_debut: formatDateKey(currentMonday),
+        exercice: exercice,
+        series: Number(card.querySelector('.ex-series').value) || 0,
+        repetitions: card.querySelector('.ex-repetitions').value.trim(),
+        temps_repos: card.querySelector('.ex-repos').value.trim(),
+        rpe: card.querySelector('.ex-rpe').value.trim(),
+        tempo: card.querySelector('.ex-tempo').value.trim(),
+        lien_video: card.querySelector('.ex-video').value.trim(),
+        ordre: jours.indexOf(jour)
+      };
+
+      const editingId = btn.dataset.editingId;
+      btn.disabled = true;
+      btn.textContent = editingId ? 'Mise à jour...' : 'Ajout...';
+
+      let error;
+      if (editingId) {
+        ({ error } = await supabaseClient.from('programmes').update(payload).eq('id', editingId));
+      } else {
+        ({ error } = await supabaseClient.from('programmes').insert(payload));
+      }
+
+      btn.disabled = false;
+
+      if (error) {
+        alert("Erreur : " + error.message);
+        btn.textContent = editingId ? 'Mettre à jour cet exercice' : '+ Ajouter cet exercice';
+        return;
+      }
+
+      resetForm(card);
+      loadExistingForWeek();
+    }
+
+    function editExercise(exo, card) {
+      card.querySelector('.ex-exercice').value = exo.exercice || '';
+      card.querySelector('.ex-series').value = exo.series || '';
+      card.querySelector('.ex-repetitions').value = exo.repetitions || '';
+      card.querySelector('.ex-repos').value = exo.temps_repos || '';
+      card.querySelector('.ex-rpe').value = exo.rpe || '';
+      card.querySelector('.ex-tempo').value = exo.tempo || '';
+      card.querySelector('.ex-video').value = exo.lien_video || '';
+
+      const btn = card.querySelector('.save-exercise-btn');
+      btn.dataset.editingId = exo.id;
+      btn.textContent = 'Mettre à jour cet exercice';
+      card.querySelector('.cancel-edit-btn').classList.remove('hidden');
+
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    async function loadExistingForWeek() {
+      const clientEmail = clientEmailInput.value.trim();
+      if (!clientEmail || !currentMonday) return;
+
+      const { data } = await supabaseClient
+        .from('programmes')
+        .select('*')
+        .eq('client_email', clientEmail)
+        .eq('semaine_debut', formatDateKey(currentMonday));
+
+      document.querySelectorAll('.existing-list').forEach(el => el.innerHTML = '');
+
+      (data || []).forEach(exo => {
+        const card = document.querySelector(`[data-jour="${exo.jour}"]`);
+        if (!card) return;
+        const list = card.querySelector('.existing-list');
+
+        const row = document.createElement('div');
+        row.className = "flex items-center justify-between text-sm bg-[color:var(--card)] rounded-lg px-3 py-2";
+        row.innerHTML = `
+          <button class="edit-row-btn text-left hover:text-[color:var(--accent)] transition-colors">${exo.exercice} — ${exo.series}x${exo.repetitions}</button>
+          <button class="delete-btn text-red-400 hover:text-red-300 text-xs ml-3 shrink-0" data-id="${exo.id}">Supprimer</button>
+        `;
+        row.querySelector('.edit-row-btn').addEventListener('click', () => editExercise(exo, card));
+        row.querySelector('.delete-btn').addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await supabaseClient.from('programmes').delete().eq('id', exo.id);
+          loadExistingForWeek();
+        });
+
+        list.appendChild(row);
+      });
+    }
+
+    weekPicker.addEventListener('change', () => {
+      if (!weekPicker.value) return;
+      currentMonday = getMonday(weekPicker.value);
+      const sunday = new Date(currentMonday);
+      sunday.setDate(currentMonday.getDate() + 6);
+      weekInfo.textContent = `Semaine du ${currentMonday.toLocaleDateString('fr-FR')} au ${sunday.toLocaleDateString('fr-FR')}`;
+      buildDaysUI();
+      loadExistingForWeek();
+    });
+
+    clientEmailInput.addEventListener('change', loadExistingForWeek);
+
+    async function checkAccess() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user || user.email !== ADMIN_EMAIL) {
+        document.getElementById('denied').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('main-content').classList.remove('hidden');
+    }
+
+    checkAccess();
+  </script>
+
+</body>
+</html>
