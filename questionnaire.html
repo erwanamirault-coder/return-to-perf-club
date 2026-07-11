@@ -30,148 +30,138 @@
   h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
 </style>
 </head>
-<body class="bg-brand-black text-brand-white min-h-screen flex flex-col">
+<body class="bg-brand-black text-brand-white min-h-screen">
 
+  <!-- HEADER -->
+  <header class="flex items-center justify-between px-6 sm:px-10 py-5 border-b border-white/10">
+    <div class="flex items-center gap-3">
+      <span class="font-heading uppercase font-bold text-sm tracking-wide">Bilan de tes capacités</span>
+    </div>
+    <div class="flex items-center gap-4 text-sm">
+      <span id="user-name" class="text-white/40"></span>
+      <button id="logout-btn" class="underline underline-offset-4 text-white/60 hover:text-white transition-colors">Se déconnecter</button>
+    </div>
+  </header>
+
+  <!-- Barre de progression -->
   <div class="w-full h-1 bg-white/10">
     <div id="progress-bar" class="h-1 bg-brand-blue transition-all duration-300" style="width: 0%"></div>
   </div>
 
-  <main class="flex-1 flex flex-col items-center justify-center px-6 py-12">
+  <main class="flex flex-col items-center px-6 py-10">
     <div class="w-full max-w-lg">
 
-      <p id="step-label" class="text-center text-xs uppercase tracking-widest text-brand-blue-light mb-3 font-semibold"></p>
-      <h1 id="joint-title" class="font-heading uppercase text-2xl sm:text-3xl font-bold text-center mb-6"></h1>
+      <p id="step-label" class="text-xs text-white/40 mb-4"></p>
 
-      <div class="aspect-video w-full rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 overflow-hidden">
+      <span id="joint-badge" class="inline-block mb-3 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold text-brand-blue-light border border-brand-blue-dark"></span>
+
+      <h1 id="test-title" class="font-heading uppercase text-2xl sm:text-3xl font-bold mb-1"></h1>
+      <p id="test-type" class="text-xs uppercase tracking-widest text-brand-blue-light font-semibold mb-5"></p>
+
+      <!-- Vidéo -->
+      <div class="aspect-[3/4] w-full max-w-xs mx-auto rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-5 overflow-hidden">
         <video id="test-video" class="w-full h-full object-cover hidden" controls></video>
         <p id="video-placeholder" class="text-white/40 text-sm px-6 text-center">
           Vidéo de démonstration à venir
         </p>
       </div>
 
-      <p id="instructions" class="text-white/70 text-center mb-8 leading-relaxed"></p>
+      <p id="instructions" class="text-white/70 text-sm leading-relaxed mb-6"></p>
 
-      <p class="text-center text-sm font-medium mb-4 text-white/80">Note ton niveau sur ce mouvement :</p>
-      <div class="flex gap-3 justify-center mb-10" id="rating-buttons">
-        <button data-score="1" class="rating-btn flex-1 max-w-[110px] py-4 rounded-lg border border-white/15 hover:border-brand-blue transition-colors">
-          <span class="block font-heading text-xl font-bold">1</span>
-          <span class="block text-[11px] text-white/50 mt-1">Difficile</span>
-        </button>
-        <button data-score="2" class="rating-btn flex-1 max-w-[110px] py-4 rounded-lg border border-white/15 hover:border-brand-blue transition-colors">
-          <span class="block font-heading text-xl font-bold">2</span>
-          <span class="block text-[11px] text-white/50 mt-1">Moyen</span>
-        </button>
-        <button data-score="3" class="rating-btn flex-1 max-w-[110px] py-4 rounded-lg border border-white/15 hover:border-brand-blue transition-colors">
-          <span class="block font-heading text-xl font-bold">3</span>
-          <span class="block text-[11px] text-white/50 mt-1">Facile</span>
-        </button>
+      <!-- 3 photos de référence -->
+      <div class="grid grid-cols-3 gap-2 mb-8" id="reference-images">
+        <!-- rempli par JS -->
       </div>
 
-      <div class="flex justify-between items-center">
-        <button id="back-btn" class="text-sm text-white/50 hover:text-white transition-colors">&larr; Précédent</button>
+      <!-- Notation gauche / droite -->
+      <div class="grid grid-cols-2 gap-4 mb-10">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-white/50 font-semibold mb-2">Côté gauche</p>
+          <div class="flex flex-col gap-2" id="left-buttons">
+            <button data-side="left" data-value="1" class="rating-btn px-4 py-2.5 rounded-lg border border-white/15 hover:border-brand-blue transition-colors text-sm text-left">Limité</button>
+            <button data-side="left" data-value="2" class="rating-btn px-4 py-2.5 rounded-lg border border-white/15 hover:border-brand-blue transition-colors text-sm text-left">Satisfaisant</button>
+            <button data-side="left" data-value="3" class="rating-btn px-4 py-2.5 rounded-lg border border-white/15 hover:border-brand-blue transition-colors text-sm text-left">Excellent</button>
+          </div>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-widest text-white/50 font-semibold mb-2">Côté droit</p>
+          <div class="flex flex-col gap-2" id="right-buttons">
+            <button data-side="right" data-value="1" class="rating-btn px-4 py-2.5 rounded-lg border border-white/15 hover:border-brand-blue transition-colors text-sm text-left">Limité</button>
+            <button data-side="right" data-value="2" class="rating-btn px-4 py-2.5 rounded-lg border border-white/15 hover:border-brand-blue transition-colors text-sm text-left">Satisfaisant</button>
+            <button data-side="right" data-value="3" class="rating-btn px-4 py-2.5 rounded-lg border border-white/15 hover:border-brand-blue transition-colors text-sm text-left">Excellent</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center mb-6">
+        <a href="choix-bilan.html" class="text-sm text-white/50 hover:text-white transition-colors underline underline-offset-4">Changer de bilan</a>
         <button id="next-btn" disabled class="px-8 py-3 rounded-lg bg-brand-blue disabled:bg-white/10 disabled:text-white/30 hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-sm">
           Suivant
         </button>
       </div>
+
+      <p class="text-center text-xs text-white/30">
+        Reprendre plus tard — ta progression est déjà enregistrée
+      </p>
 
     </div>
   </main>
 
   <script src="supabase-config.js"></script>
   <script>
-    const tests = [
-      { joint: "Épaules", title: "Élévation des bras", instructions: "Lève les deux bras tendus au-dessus de la tête, le plus haut possible, sans cambrer le dos.", videoUrl: "" },
-      { joint: "Hanches", title: "Squat profond", instructions: "Descends en position accroupie, le plus bas possible, talons au sol.", videoUrl: "" },
-      { joint: "Chevilles", title: "Genou vers le mur", instructions: "Pied fixe face à un mur, avance le genou vers le mur sans décoller le talon.", videoUrl: "" },
-      { joint: "Colonne", title: "Rotation du buste", instructions: "Assis, bras croisés sur la poitrine, tourne le buste à droite puis à gauche, le plus loin possible.", videoUrl: "" },
-      { joint: "Genoux", title: "Fente avant", instructions: "Réalise une fente avant profonde, sans douleur ni perte d'équilibre.", videoUrl: "" }
-    ];
+    // ============================================
+    // TESTS PAR ARTICULATION
+    // Remplace videoUrl et les 3 images par les tiennes pour chaque test.
+    // Pour ajouter plusieurs tests par articulation, ajoute d'autres objets
+    // dans le tableau correspondant (ex: epaules: [ {...}, {...} ])
+    // ============================================
+    const testsByJoint = {
+      epaules: [{
+        joint: "Épaules", badge: "ÉPAULE", title: "Rotation interne", testType: "Test passif",
+        instructions: "Allonge-toi sur le côté, l'épaule à tester en dessous, bras à environ 90°. Avec la main opposée, pousse contre l'épaule testée. Dès que tu sens ton épaule décoller du sol, arrête-toi.",
+        videoUrl: "",
+        images: [ { url: "", label: "Limité" }, { url: "", label: "Satisfaisant" }, { url: "", label: "Excellent" } ]
+      }],
+      hanches: [{
+        joint: "Hanches", badge: "HANCHE", title: "Squat profond", testType: "Test actif",
+        instructions: "Descends en position accroupie, le plus bas possible, talons au sol, sans douleur.",
+        videoUrl: "",
+        images: [ { url: "", label: "Limité" }, { url: "", label: "Satisfaisant" }, { url: "", label: "Excellent" } ]
+      }],
+      chevilles: [{
+        joint: "Chevilles", badge: "CHEVILLE", title: "Genou vers le mur", testType: "Test actif",
+        instructions: "Pied fixe face à un mur, avance le genou vers le mur sans décoller le talon.",
+        videoUrl: "",
+        images: [ { url: "", label: "Limité" }, { url: "", label: "Satisfaisant" }, { url: "", label: "Excellent" } ]
+      }],
+      colonne: [{
+        joint: "Colonne", badge: "THORACIQUE", title: "Rotation du buste", testType: "Test actif",
+        instructions: "Assis, bras croisés sur la poitrine, tourne le buste le plus loin possible.",
+        videoUrl: "",
+        images: [ { url: "", label: "Limité" }, { url: "", label: "Satisfaisant" }, { url: "", label: "Excellent" } ]
+      }],
+      genoux: [{
+        joint: "Genoux", badge: "GENOU", title: "Fente avant", testType: "Test actif",
+        instructions: "Réalise une fente avant profonde, sans douleur ni perte d'équilibre.",
+        videoUrl: "",
+        images: [ { url: "", label: "Limité" }, { url: "", label: "Satisfaisant" }, { url: "", label: "Excellent" } ]
+      }]
+    };
+
+    // Détermine la liste de tests selon l'URL (?mode=complet ou ?zone=epaules)
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get('mode');
+    const zone = params.get('zone');
+
+    let tests = [];
+    if (mode === 'complet') {
+      Object.values(testsByJoint).forEach(arr => tests.push(...arr));
+    } else if (zone && testsByJoint[zone]) {
+      tests = [...testsByJoint[zone]];
+    } else {
+      // Sécurité : si aucun paramètre valide, retour au choix
+      window.location.href = 'choix-bilan.html';
+    }
 
     let currentStep = 0;
-    const answers = new Array(tests.length).fill(null);
-
-    const stepLabel = document.getElementById('step-label');
-    const jointTitle = document.getElementById('joint-title');
-    const instructions = document.getElementById('instructions');
-    const video = document.getElementById('test-video');
-    const videoPlaceholder = document.getElementById('video-placeholder');
-    const progressBar = document.getElementById('progress-bar');
-    const nextBtn = document.getElementById('next-btn');
-    const backBtn = document.getElementById('back-btn');
-    const ratingButtons = document.querySelectorAll('.rating-btn');
-
-    function renderStep() {
-      const t = tests[currentStep];
-      stepLabel.textContent = `Étape ${currentStep + 1} / ${tests.length} — ${t.joint}`;
-      jointTitle.textContent = t.title;
-      instructions.textContent = t.instructions;
-      progressBar.style.width = `${((currentStep) / tests.length) * 100}%`;
-
-      if (t.videoUrl) {
-        video.src = t.videoUrl;
-        video.classList.remove('hidden');
-        videoPlaceholder.classList.add('hidden');
-      } else {
-        video.classList.add('hidden');
-        videoPlaceholder.classList.remove('hidden');
-      }
-
-      ratingButtons.forEach(btn => {
-        const selected = Number(btn.dataset.score) === answers[currentStep];
-        btn.classList.toggle('border-brand-blue', selected);
-        btn.classList.toggle('bg-brand-blue/10', selected);
-      });
-
-      nextBtn.disabled = answers[currentStep] === null;
-      nextBtn.textContent = currentStep === tests.length - 1 ? 'Voir mon bilan' : 'Suivant';
-      backBtn.classList.toggle('invisible', currentStep === 0);
-    }
-
-    ratingButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        answers[currentStep] = Number(btn.dataset.score);
-        renderStep();
-      });
-    });
-
-    backBtn.addEventListener('click', () => {
-      if (currentStep > 0) { currentStep--; renderStep(); }
-    });
-
-    nextBtn.addEventListener('click', async () => {
-      if (currentStep < tests.length - 1) {
-        currentStep++;
-        renderStep();
-      } else {
-        await finishBilan();
-      }
-    });
-
-    async function finishBilan() {
-      nextBtn.disabled = true;
-      nextBtn.textContent = 'Enregistrement...';
-
-      const scores = {};
-      tests.forEach((t, i) => { scores[t.joint] = answers[i]; });
-      const globalScore = Math.round((answers.reduce((a, b) => a + b, 0) / (tests.length * 3)) * 100);
-
-      const result = { scores, globalScore, date: new Date().toISOString() };
-      const { data: { user } } = await supabaseClient.auth.getUser();
-
-      if (user) {
-        await supabaseClient.from('bilans').insert({
-          user_id: user.id,
-          scores: scores,
-          score_global: globalScore
-        });
-      }
-
-      sessionStorage.setItem('dernier_bilan', JSON.stringify(result));
-      window.location.href = 'results.html';
-    }
-
-    renderStep();
-  </script>
-
-</body>
-</html>
+    const answers =
