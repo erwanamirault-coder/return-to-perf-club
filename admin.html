@@ -4,7 +4,7 @@
 <script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin — Créer une semaine</title>
+<title>Admin — Gérer les séances</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43,25 +43,38 @@
   </header>
 
   <main id="main-content" class="px-6 py-10 max-w-3xl mx-auto hidden">
-    <h1 class="font-heading uppercase text-2xl font-bold mb-8 text-center">Créer / modifier une semaine</h1>
+    <h1 class="font-heading uppercase text-2xl font-bold mb-6 text-center">Gérer les séances</h1>
 
-    <div class="grid sm:grid-cols-2 gap-4 mb-8">
-      <div>
-        <label class="block text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-2">Email du client</label>
-        <input type="email" id="client-email" placeholder="client@email.com"
-          class="w-full px-4 py-3 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] focus:border-brand-blue outline-none">
-      </div>
-      <div>
-        <label class="block text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-2">N'importe quel jour de la semaine</label>
-        <input type="date" id="week-picker"
-          class="w-full px-4 py-3 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] focus:border-brand-blue outline-none">
+    <!-- Onglets clients -->
+    <div id="client-tabs" class="flex flex-wrap gap-2 mb-8"></div>
+
+    <!-- Ajouter un nouveau client -->
+    <div id="add-client-form" class="hidden rounded-xl border border-[color:var(--border)] p-4 mb-8">
+      <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-3">Ajouter un client en suivi</p>
+      <div class="grid sm:grid-cols-3 gap-2">
+        <input type="email" id="new-client-email" placeholder="Email du client" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-1">
+        <input type="text" id="new-client-nom" placeholder="Prénom (optionnel)" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-1">
+        <button id="confirm-add-client" class="px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-sm font-medium">Ajouter</button>
       </div>
     </div>
 
-    <p id="week-info" class="text-sm text-[color:var(--fg-50)] mb-8"></p>
-    <p class="text-xs text-[color:var(--fg-40)] mb-6">💡 Clique sur un exercice déjà ajouté ci-dessous pour le modifier.</p>
+    <div id="client-workspace" class="hidden">
+      <div class="flex items-center justify-between mb-2">
+        <p id="selected-client-label" class="text-sm text-[color:var(--fg-60)]"></p>
+        <button id="remove-client-btn" class="text-xs text-red-400 hover:text-red-300">Retirer ce client du suivi</button>
+      </div>
 
-    <div id="days-container" class="flex flex-col gap-4"></div>
+      <div class="mb-6">
+        <label class="block text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-2">N'importe quel jour de la semaine</label>
+        <input type="date" id="week-picker"
+          class="w-full sm:w-64 px-4 py-3 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] focus:border-brand-blue outline-none">
+      </div>
+
+      <p id="week-info" class="text-sm text-[color:var(--fg-50)] mb-6"></p>
+      <p class="text-xs text-[color:var(--fg-40)] mb-6">💡 Clique sur un exercice déjà ajouté ci-dessous pour le modifier.</p>
+
+      <div id="days-container" class="flex flex-col gap-4"></div>
+    </div>
 
   </main>
 
@@ -73,11 +86,16 @@
     const ADMIN_EMAIL = "erwan20b@gmail.com";
 
     const jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+    const clientTabs = document.getElementById('client-tabs');
+    const addClientForm = document.getElementById('add-client-form');
+    const clientWorkspace = document.getElementById('client-workspace');
     const daysContainer = document.getElementById('days-container');
     const weekPicker = document.getElementById('week-picker');
     const weekInfo = document.getElementById('week-info');
-    const clientEmailInput = document.getElementById('client-email');
+    const selectedClientLabel = document.getElementById('selected-client-label');
 
+    let clientsActifs = [];
+    let selectedClientEmail = null;
     let currentMonday = null;
 
     function getMonday(dateStr) {
@@ -95,6 +113,64 @@
       const day = String(d.getDate()).padStart(2, '0');
       return `${y}-${m}-${day}`;
     }
+
+    async function loadClients() {
+      const { data } = await supabaseClient.from('clients_actifs').select('*').order('nom', { ascending: true });
+      clientsActifs = data || [];
+      renderTabs();
+    }
+
+    function renderTabs() {
+      clientTabs.innerHTML = clientsActifs.map(c => `
+        <button data-email="${c.email}" class="client-tab px-4 py-2 rounded-full text-sm border transition-colors ${
+          selectedClientEmail === c.email ? 'bg-brand-blue text-white border-brand-blue' : 'border-[color:var(--border-strong)] hover:border-brand-blue'
+        }">${c.nom || c.email}</button>
+      `).join('') + `
+        <button id="show-add-client" class="px-4 py-2 rounded-full text-sm border border-dashed border-[color:var(--border-strong)] hover:border-brand-blue transition-colors">+ Ajouter</button>
+      `;
+
+      document.querySelectorAll('.client-tab').forEach(btn => {
+        btn.addEventListener('click', () => selectClient(btn.dataset.email));
+      });
+      document.getElementById('show-add-client').addEventListener('click', () => {
+        addClientForm.classList.toggle('hidden');
+      });
+    }
+
+    function selectClient(email) {
+      selectedClientEmail = email;
+      const client = clientsActifs.find(c => c.email === email);
+      selectedClientLabel.textContent = `Client sélectionné : ${client.nom ? client.nom + ' — ' : ''}${email}`;
+      addClientForm.classList.add('hidden');
+      clientWorkspace.classList.remove('hidden');
+      weekPicker.value = '';
+      weekInfo.textContent = '';
+      daysContainer.innerHTML = '';
+      renderTabs();
+    }
+
+    document.getElementById('confirm-add-client').addEventListener('click', async () => {
+      const email = document.getElementById('new-client-email').value.trim();
+      const nom = document.getElementById('new-client-nom').value.trim();
+      if (!email) { alert("L'email est obligatoire."); return; }
+
+      const { error } = await supabaseClient.from('clients_actifs').insert({ email, nom });
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      document.getElementById('new-client-email').value = '';
+      document.getElementById('new-client-nom').value = '';
+      await loadClients();
+      selectClient(email);
+    });
+
+    document.getElementById('remove-client-btn').addEventListener('click', async () => {
+      if (!selectedClientEmail) return;
+      if (!confirm(`Retirer ${selectedClientEmail} du suivi ? (ses séances déjà créées ne seront pas supprimées)`)) return;
+      await supabaseClient.from('clients_actifs').delete().eq('email', selectedClientEmail);
+      selectedClientEmail = null;
+      clientWorkspace.classList.add('hidden');
+      await loadClients();
+    });
 
     function buildDaysUI() {
       daysContainer.innerHTML = jours.map((jour, i) => {
@@ -149,15 +225,14 @@
     async function saveExercise(btn) {
       const card = btn.closest('[data-jour]');
       const jour = card.dataset.jour;
-      const clientEmail = clientEmailInput.value.trim();
 
-      if (!clientEmail) { alert("Renseigne l'email du client d'abord."); return; }
+      if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
 
       const exercice = card.querySelector('.ex-exercice').value.trim();
       if (!exercice) { alert("Le nom de l'exercice est obligatoire."); return; }
 
       const payload = {
-        client_email: clientEmail,
+        client_email: selectedClientEmail,
         jour: jour,
         semaine_debut: formatDateKey(currentMonday),
         exercice: exercice,
@@ -213,13 +288,12 @@
     }
 
     async function loadExistingForWeek() {
-      const clientEmail = clientEmailInput.value.trim();
-      if (!clientEmail || !currentMonday) return;
+      if (!selectedClientEmail || !currentMonday) return;
 
       const { data } = await supabaseClient
         .from('programmes')
         .select('*')
-        .eq('client_email', clientEmail)
+        .eq('client_email', selectedClientEmail)
         .eq('semaine_debut', formatDateKey(currentMonday));
 
       document.querySelectorAll('.existing-list').forEach(el => el.innerHTML = '');
@@ -256,8 +330,6 @@
       loadExistingForWeek();
     });
 
-    clientEmailInput.addEventListener('change', loadExistingForWeek);
-
     async function checkAccess() {
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user || user.email !== ADMIN_EMAIL) {
@@ -265,6 +337,7 @@
         return;
       }
       document.getElementById('main-content').classList.remove('hidden');
+      loadClients();
     }
 
     checkAccess();
