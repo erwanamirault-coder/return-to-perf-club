@@ -1,12 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bilan de tes capacités</title>
-<meta name="descript<!DOCTYPE html>
-<html lang="fr">
-<head>
 <script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -45,7 +39,6 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
-  <!-- Bouton mode clair/sombre -->
   <button id="theme-toggle" class="fixed top-5 right-5 z-10 w-10 h-10 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors"></button>
 
   <main class="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center max-w-xl mx-auto">
@@ -114,108 +107,5 @@
   </footer>
 
   <script src="theme.js"></script>
-</body>
-</html>
-    theme: {
-      extend: {
-        colors: {
-          brand: {
-            black: '#000000',
-            white: '#FFFFFF',
-            blue: {
-              light: '#69A0F2',
-              DEFAULT: '#2D7AED',
-              dark: '#0F4CA9',
-            }
-          }
-        },
-        fontFamily: {
-          heading: ['Oswald', 'sans-serif'],
-          body: ['Poppins', 'sans-serif'],
-        }
-      }
-    }
-  }
-</script>
-
-<style>
-  body { font-family: 'Poppins', sans-serif; }
-  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
-</style>
-</head>
-<body class="bg-brand-black text-brand-white min-h-screen flex flex-col">
-
-  <main class="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center max-w-xl mx-auto">
-
-    <!-- 1. Logo -->
-    <div class="mb-8">
-      <svg width="72" height="72" viewBox="0 0 5000 5000" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-          <g transform="matrix(1.49977,0,0,1.36765,-875.914,-643.774)">
-              <ellipse cx="2258.65" cy="2294.96" rx="1278.02" ry="1389.04" style="fill:white;"/>
-          </g>
-          <g transform="matrix(1.80276,0,0,2.94477,-1071.77,-4864.87)">
-              <path d="M1184.19,2921.59C1022.41,2808.4 924.46,2660.72 924.46,2499.28C924.46,2493.3 924.594,2487.34 924.861,2481.4C933.536,2289.25 1080.93,2117.98 1308.41,2003.13C1367.23,1973.43 1431.41,1947.52 1499.94,1926C1521.97,1919.21 1544.38,1912.76 1567.12,1906.77C1612.27,1894.9 1659.04,1884.89 1707.17,1876.89C1796.55,1862.07 1890.6,1854.16 1987.68,1854.16C2067.46,1854.16 2145.2,1859.51 2219.99,1869.63C2252.24,1874.02 2283.95,1879.31 2315.03,1885.45C2317.05,1885.82 2319.07,1886.19 2321.08,1886.57C2740.24,1970.6 3044.32,2208.7 3050.8,2490.11C3050.79,2490.6 3050.79,2491.08 3050.79,2491.57C3050.84,2494.31 3050.9,2497.06 3050.9,2499.74C3050.6,2761.38 2793.05,2986.78 2423.55,3087.79L2239.75,2044.12L1858.43,2040.57L1184.19,2921.59ZM1369.84,3024.22C1491.36,2857.35 1762.33,2489.86 1934.17,2263.64C1976.79,2548.31 2035.9,2846.26 2060.85,3142.89C2036.67,3143.89 2012.27,3144.4 1987.68,3144.4C1757.35,3144.4 1544.02,3099.86 1369.84,3024.22Z"/>
-          </g>
-          <g transform="matrix(1.05018,0.123149,-0.123149,1.05018,269.988,-435.763)">
-              <g transform="matrix(14.3046,-3.31189,3.61677,15.6214,-199.404,160.469)">
-                  <g>
-                      <path d="M199.805,172.035L199.609,172.254C199.219,172.895 199.875,173.977 201.582,175.5L225.32,193.125L233.672,206.809C240.609,223.789 244.926,234.895 246.629,240.133C247.449,241.918 248.238,242.258 248.992,241.156C249.73,240.285 250.926,237.938 252.57,234.125C261.375,212.273 266.273,199.98 267.273,197.25C272.617,182.715 275.34,175.023 275.445,174.172C275.996,172.465 275.895,171 275.133,169.773C274.246,168.949 273.031,168.59 271.484,168.695C261.918,169.586 252.164,170.277 242.223,170.77C223.797,171.516 209.82,171.852 200.293,171.777C200.129,171.828 199.965,171.914 199.805,172.035" style="fill:rgb(45,122,237);fill-rule:nonzero;"/>
-                  </g>
-              </g>
-              <g transform="matrix(14.3011,-3.32692,3.63318,15.6176,-252.871,174.952)">
-                  <path d="M34.316,96.129L33.504,100.387C32.246,109.445 33.164,121.766 36.254,137.348C39.492,154.395 44.027,168.152 49.859,178.613C51.875,182.461 54.086,186.18 56.484,189.777C57.445,191.73 61.48,196.844 68.59,205.105C78.625,214.953 89.543,222.648 101.336,228.191C107.234,230.961 113.352,233.195 119.691,234.891L129.363,237.031C142.887,239.301 156.473,239.512 170.129,237.656C184.145,235.863 198.949,232.121 214.543,226.43C234.379,218.465 246.516,213.102 250.957,210.34L224.715,182.859C214.969,189.805 205.41,195.566 196.031,200.141C186.652,204.715 177.457,208.102 168.445,210.305L155.063,212.715C146.234,213.73 137.586,213.563 129.121,212.207L116.563,209.281L104.273,204.578L98.098,201.379C82.547,193.309 68.875,180.176 57.078,161.988C53.105,155.949 49.125,147.289 45.133,136.004C42.148,127.195 38.883,114.469 35.328,97.832C35.051,96.816 34.715,96.25 34.316,96.129" style="fill:rgb(45,122,237);fill-rule:nonzero;"/>
-              </g>
-          </g>
-      </svg>
-    </div>
-
-    <!-- 2. Badge -->
-    <span class="inline-block mb-6 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold text-brand-blue-light border border-brand-blue-dark">
-      Bilan de tes capacités
-    </span>
-
-    <!-- 3. Titre H1 -->
-    <h1 class="font-heading uppercase text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-6">
-      Ta mobilité fait la différence dans <span class="text-brand-blue">ton sport.</span>
-    </h1>
-
-    <!-- 4. Description -->
-    <p class="text-brand-white/70 text-base sm:text-lg leading-relaxed mb-2 max-w-md">
-      Épaules, hanches, chevilles, genoux, colonne : chaque articulation limitée oblige ton corps à compenser ailleurs.
-      C'est souvent pour ça que tu te blesses, que tu stagnes, ou que tu traînes des douleurs sans explication.
-    </p>
-    <p class="text-brand-white/70 text-base sm:text-lg leading-relaxed mb-8 max-w-md">
-      Fais le bilan complet, articulation par articulation, et obtiens ton score.
-    </p>
-
-    <!-- Arguments de réassurance -->
-    <div class="flex items-center gap-6 mb-10 text-sm font-medium text-brand-blue-light">
-      <span class="flex items-center gap-2">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/></svg>
-        Moins de 10 min
-      </span>
-      <span class="flex items-center gap-2">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        100% Gratuit
-      </span>
-    </div>
-
-    <!-- 5. CTA -->
-    <a href="signup.html" class="w-full sm:w-auto px-10 py-4 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-brand-white mb-4">
-      Créer mon compte
-    </a>
-    <a href="login.html" class="text-sm text-brand-white/60 hover:text-brand-white transition-colors underline underline-offset-4">
-      J'ai déjà un compte
-    </a>
-
-  </main>
-
-  <!-- 6. Signature footer -->
-  <footer class="text-center px-6 pb-8">
-    <p class="text-xs text-brand-white/40 italic max-w-sm mx-auto">
-      La blessure n'est qu'une étape, pas toute l'histoire. Alors changeons-la ensemble.
-    </p>
-  </footer>
-
 </body>
 </html>
