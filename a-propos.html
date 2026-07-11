@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>À propos — Erwan Amirault</title>
+<meta name="description" content="Réathlétiseur et préparateur physique, j'aide les sportifs à retrouver performance et confiance après une blessure.">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000', white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, h3, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <button id="theme-toggle" class="fixed top-5 right-5 z-10 w-10 h-10 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors"></button>
+
+  <!-- HEADER -->
+  <header class="flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
+    <a href="index.html" class="font-heading uppercase font-bold text-sm tracking-wide">Bilan de tes capacités</a>
+    <nav class="hidden sm:flex items-center gap-6 text-sm">
+      <a href="index.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Accueil</a>
+      <a href="a-propos.html" class="text-[color:var(--accent)] font-medium">À propos</a>
+      <a href="login.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Connexion</a>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section class="px-6 py-16 sm:py-20 text-center max-w-2xl mx-auto">
+    <span class="inline-block mb-6 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold border border-brand-blue-dark text-[color:var(--accent)]">
+      À propos
+    </span>
+    <h1 class="font-heading uppercase text-3xl sm:text-5xl font-bold leading-tight mb-6">
+      Reprends le <span class="text-brand-blue">contrôle.</span>
+    </h1>
+    <p class="text-[color:var(--fg-70)] text-base sm:text-lg leading-relaxed">
+      👋 Salut, moi c'est Erwan. J'accompagne les sportifs à retrouver leur performance et leur confiance après une blessure, une opération ou une longue période d'arrêt.
+    </p>
+  </section>
+
+  <!-- MON PARCOURS -->
+  <section class="px-6 py-14 max-w-2xl mx-auto border-t border-[color:var(--border)]">
+    <h2 class="font-heading uppercase text-2xl font-bold mb-6">Mon parcours</h2>
+    <div class="flex flex-col gap-4 text-[color:var(--fg-70)] leading-relaxed">
+      <p>
+        🥋 Issu du judo, j'ai passé plusieurs années sur les tatamis à comprendre ce que le corps pouvait encaisser… et surtout comment le reconstruire après les blessures.
+      </p>
+      <p>
+        Aujourd'hui, j'accompagne les sportifs à résoudre leurs problématiques de reprise — que ce soit pendant ou après une blessure — et je les guide jusqu'à leur meilleur niveau, pour qu'ils puissent à nouveau performer en toute sérénité.
+      </p>
+    </div>
+  </section>
+
+  <!-- CE QUE JE CROIS -->
+  <section class="px-6 py-14 max-w-2xl mx-auto border-t border-[color:var(--border)]">
+    <h2 class="font-heading uppercase text-2xl font-bold mb-8">Comment je travaille</h2>
+    <div class="grid sm:grid-cols-3 gap-5">
+      <div class="rounded-xl border border-[color:var(--border)] p-5">
+        <div class="text-2xl mb-3">🔎</div>
+        <h3 class="font-heading uppercase font-bold text-sm mb-2">Bilan complet</h3>
+        <p class="text-sm text-[color:var(--fg-60)] leading-relaxed">Analyse approfondie de ton profil, tes blessures, ton niveau et tes objectifs avant toute programmation.</p>
+      </div>
+      <div class="rounded-xl border border-[color:var(--border)] p-5">
+        <div class="text-2xl mb-3">💬</div>
+        <h3 class="font-heading uppercase font-bold text-sm mb-2">Suivi réactif</h3>
+        <p class="text-sm text-[color:var(--fg-60)] leading-relaxed">Des échanges réguliers pour corriger, adapter et ajuster ton programme en temps réel selon tes ressentis.</p>
+      </div>
+      <div class="rounded-xl border border-[color:var(--border)] p-5">
+        <div class="text-2xl mb-3">🎯</div>
+        <h3 class="font-heading uppercase font-bold text-sm mb-2">Résultats concrets</h3>
+        <p class="text-sm text-[color:var(--fg-60)] leading-relaxed">Un objectif simple : t'aider à performer sans douleur et retrouver confiance dans ton corps.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CITATION -->
+  <section class="px-6 py-16 text-center max-w-xl mx-auto border-t border-[color:var(--border)]">
+    <p class="font-heading uppercase text-xl sm:text-2xl font-bold leading-snug">
+      "La blessure n'est qu'une étape.<br>Pas toute l'histoire."
+    </p>
+    <p class="text-xs text-[color:var(--fg-40)] mt-4 uppercase tracking-widest">Ma devise</p>
+  </section>
+
+  <!-- RÉSULTATS CLIENTS -->
+  <section class="px-6 py-14 max-w-2xl mx-auto border-t border-[color:var(--border)]">
+    <h2 class="font-heading uppercase text-2xl font-bold mb-8 text-center">Résultats clients</h2>
+    <div class="flex flex-col gap-5">
+
+      <div class="rounded-xl border border-[color:var(--border)] p-5">
+        <p class="text-sm text-[color:var(--fg-70)] leading-relaxed italic mb-3">
+          "Erwan m'a accompagné pendant ma préparation sportive, en s'adaptant à ma charge d'entraînement, et a su me proposer un programme de renforcement spécifique qui m'a fait passer un cap dans mes performances."
+        </p>
+        <p class="text-xs uppercase tracking-widest text-[color:var(--accent)] font-semibold">Quentin Soulat</p>
+      </div>
+
+      <div class="rounded-xl border border-[color:var(--border)] p-5">
+        <p class="text-sm text-[color:var(--fg-70)] leading-relaxed italic mb-3">
+          "Erwan m'a concocté un programme pour une tendinopathie du tendon d'Achille, avec un suivi sérieux et une réadaptation constante selon mes ressentis. Il ne vous laisse pas tomber, reste joignable et toujours dans la bienveillance."
+        </p>
+        <p class="text-xs uppercase tracking-widest text-[color:var(--accent)] font-semibold">Frédérique</p>
+      </div>
+
+      <div class="rounded-xl border border-[color:var(--border)] p-5">
+        <p class="text-sm text-[color:var(--fg-70)] leading-relaxed italic mb-3">
+          "Après une déchirure à l'adducteur suite à une reprise du judo, Erwan m'a préparé des exercices sur-mesure adaptés à mes blessures. Résultat : plus de gêne, plus de douleur, une reprise de souplesse et une nouvelle vision de l'entraînement post-blessure."
+        </p>
+        <p class="text-xs uppercase tracking-widest text-[color:var(--accent)] font-semibold">Célia Muraccioli</p>
+      </div>
+
+      <div class="rounded-xl border border-[color:var(--border)] p-5">
+        <p class="text-sm text-[color:var(--fg-70)] leading-relaxed italic mb-3">
+          "Après une rupture des ligaments croisés, j'ai contacté Erwan pour une préparation pré et post-opératoire. Quatre mois après l'opération, ma récupération équivalait à six mois. J'ai obtenu ma ceinture noire moins d'un an après l'opération."
+        </p>
+        <p class="text-xs uppercase tracking-widest text-[color:var(--accent)] font-semibold">Fred M.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section class="px-6 py-16 text-center">
+    <div class="rounded-2xl border border-brand-blue-dark bg-brand-blue/5 p-8 max-w-md mx-auto">
+      <h2 class="font-heading uppercase text-xl font-bold mb-2">Réserve ton diagnostic offert</h2>
+      <p class="text-sm text-[color:var(--fg-60)] mb-6">
+        Chaque blocage a une cause. Découvre la tienne avec ton diagnostic gratuit.
+      </p>
+      <a href="https://calendly.com/erwan-amirault/45min" target="_blank" class="inline-block w-full px-8 py-4 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-sm text-white">
+        Je réserve ma place !
+      </a>
+    </div>
+  </section>
+
+  <footer class="text-center px-6 pb-10">
+    <p class="text-xs text-[color:var(--fg-40)] italic max-w-sm mx-auto">
+      La blessure n'est qu'une étape, pas toute l'histoire. Alors changeons-la ensemble.
+    </p>
+  </footer>
+
+  <script src="theme.js"></script>
+</body>
+</html>
