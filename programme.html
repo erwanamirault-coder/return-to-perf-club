@@ -263,13 +263,13 @@
     async function load() {
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) { window.location.href = 'login.html'; return; }
-      currentUserEmail = user.email;
+      currentUserEmail = user.email.trim().toLowerCase();
 
       const { data: clientActif } = await supabaseClient
         .from('clients_actifs')
         .select('email')
-        .eq('email', user.email)
-        .single();
+        .ilike('email', currentUserEmail)
+        .maybeSingle();
 
       if (!clientActif) {
         renderCalendlyBlock();
