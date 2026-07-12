@@ -55,6 +55,8 @@
   <script src="supabase-config.js"></script>
   <script src="theme.js"></script>
   <script>
+    const CALENDLY_URL = "https://calendly.com/erwan-amirault/45min";
+
     const mouvements = {
       "Haltérophilie / Weightlifting": [
         { fr: "Arraché", en: "Snatch" }, { fr: "Arraché suspendu", en: "Hang Snatch" },
@@ -256,7 +258,6 @@
     }
 
     async function saveQuick(btn, kind) {
-      // CORRECTION : on prend le parent direct du bouton (le bloc du formulaire), pas closest() qui se matchait sur le bouton lui-même
       const wrapper = btn.parentElement;
       const exercice = btn.dataset.exercice;
 
@@ -315,10 +316,54 @@
       renderList();
     }
 
+    function renderCalendlyBlock() {
+      document.querySelector('main').innerHTML = `
+        <div class="text-center py-10">
+
+          <span class="inline-block mb-6 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold border border-brand-blue-dark text-[color:var(--accent)]">
+            Bilan de tes capacités
+          </span>
+
+          <h1 class="font-heading uppercase text-2xl sm:text-3xl font-bold mb-4">Pas encore de suivi actif</h1>
+
+          <p class="text-[color:var(--fg-70)] text-sm sm:text-base leading-relaxed mb-10 max-w-sm mx-auto">
+            Les records personnels sont réservés aux clients suivis. Réservons un appel pour faire le point ensemble sur tes objectifs.
+          </p>
+
+          <div class="rounded-2xl border border-brand-blue-dark bg-brand-blue/5 p-8 max-w-sm mx-auto">
+            <h2 class="font-heading uppercase text-lg font-bold mb-2">Appel bilan offert</h2>
+            <p class="text-sm text-[color:var(--fg-60)] mb-6">
+              30 minutes pour discuter de ta situation et voir comment on peut travailler ensemble.
+            </p>
+            <a href="${CALENDLY_URL}" target="_blank" class="inline-block w-full px-8 py-4 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-sm text-white">
+              Je réserve mon appel bilan offert !
+            </a>
+          </div>
+
+          <a href="dashboard.html" class="inline-block mt-10 text-sm text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
+            Retour à mon espace
+          </a>
+
+        </div>
+      `;
+      document.getElementById('page-content')?.classList.remove('hidden');
+    }
+
     async function load() {
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) { window.location.href = 'login.html'; return; }
       currentUserEmail = user.email.trim().toLowerCase();
+
+      const { data: clientActif } = await supabaseClient
+        .from('clients_actifs')
+        .select('email')
+        .ilike('email', currentUserEmail)
+        .maybeSingle();
+
+      if (!clientActif) {
+        renderCalendlyBlock();
+        return;
+      }
 
       document.getElementById('page-content').classList.remove('hidden');
       await loadRecords();
