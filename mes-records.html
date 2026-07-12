@@ -44,12 +44,11 @@
 
   <main id="page-content" class="px-6 py-12 max-w-2xl mx-auto hidden">
     <h1 class="font-heading uppercase text-2xl font-bold mb-2 text-center">🏆 Mes records</h1>
-    <p class="text-sm text-[color:var(--fg-50)] text-center mb-8">Clique sur un mouvement pour voir ton évolution et ajouter une nouvelle valeur.</p>
+    <p class="text-sm text-[color:var(--fg-50)] text-center mb-8">Tape ✎ pour saisir rapidement une valeur, ou clique sur le mouvement pour voir ton évolution complète.</p>
 
-    <!-- Onglets catégories -->
     <div id="category-tabs" class="flex flex-wrap gap-2 justify-center mb-8"></div>
 
-    <div id="movement-list" class="rounded-xl border border-[color:var(--border)] divide-y divide-[color:var(--border)]"></div>
+    <div id="movement-list" class="flex flex-col gap-0 rounded-xl border border-[color:var(--border)] overflow-hidden divide-y divide-[color:var(--border)]"></div>
 
   </main>
 
@@ -90,11 +89,15 @@
         { fr: "WOD Grace (temps)", en: "Grace Time" }, { fr: "WOD Murph (temps)", en: "Murph Time" }, { fr: "WOD Helen (temps)", en: "Helen Time" }
       ]
     };
-    const categoriesForce = ["Haltérophilie / Weightlifting", "Renforcement"];
+    // Uniquement de la charge (kg) : Haltérophilie
+    const categoriesChargeSeule = ["Haltérophilie / Weightlifting"];
+    // Charge en kg mais avec choix 1/3/5RM : Renforcement
+    const categoriesForceRM = ["Renforcement"];
 
     let currentUserEmail = null;
     let allRecords = [];
     let currentCategory = Object.keys(mouvements)[0];
+    let openRow = null;
 
     const categoryTabs = document.getElementById('category-tabs');
     const movementList = document.getElementById('movement-list');
@@ -104,7 +107,7 @@
       btn.textContent = cat;
       btn.className = "cat-tab px-4 py-2 rounded-full text-xs font-medium border transition-colors";
       btn.dataset.cat = cat;
-      btn.addEventListener('click', () => { currentCategory = cat; renderTabs(); renderList(); });
+      btn.addEventListener('click', () => { currentCategory = cat; openRow = null; renderTabs(); renderList(); });
       categoryTabs.appendChild(btn);
     });
 
@@ -118,41 +121,191 @@
       });
     }
 
-    function bestValue(exercice) {
-      const matches = allRecords.filter(r => r.exercice === exercice);
+    function bestValue(exercice, rm) {
+      const matches = allRecords.filter(r => r.exercice === exercice && (rm === undefined ? true : r.repetitions_max === rm));
       if (matches.length === 0) return null;
       return matches.reduce((best, r) => (r.valeur > best.valeur ? r : best));
     }
 
+    function movementKind(cat) {
+      if (categoriesChargeSeule.includes(cat)) return 'kg-simple';   // Haltéro : juste kg, pas de 1/3/5RM
+      if (categoriesForceRM.includes(cat)) return 'kg-rm';           // Renfo : kg avec 1/3/5RM
+      return 'unite-libre';                                          // Gym / Cardio : valeur + unité au choix
+    }
+
     function renderList() {
-      const isForce = categoriesForce.includes(currentCategory);
+      const kind = movementKind(currentCategory);
+
       movementList.innerHTML = mouvements[currentCategory].map(m => {
-        const best = bestValue(m.fr);
+        const isOpen = openRow === m.fr;
+        let bestDisplay = '—';
+
+        if (kind === 'kg-rm') {
+          const b1 = bestValue(m.fr, 1);
+          bestDisplay = b1 ? `${b1.valeur} kg (1RM)` : '—';
+        } else {
+          const b = bestValue(m.fr);
+          bestDisplay = b ? `${b.valeur} ${b.unite}` : '—';
+        }
+
         return `
-          <button type="button" class="movement-row w-full text-left flex items-center justify-between px-4 py-3.5 hover:bg-[color:var(--card)] transition-colors" data-exercice="${m.fr}" data-en="${m.en}" data-categorie="${currentCategory}" data-force="${isForce ? 1 : 0}">
-            <div>
-              <p class="text-sm font-medium">${m.en}</p>
-              <p class="text-xs text-[color:var(--fg-40)]">${m.fr}</p>
+          <div data-exercice="${m.fr}">
+            <div class="flex items-center justify-between px-4 py-3.5 hover:bg-[color:var(--card)] transition-colors">
+              <button type="button" class="open-detail-btn text-left flex-1" data-exercice="${m.fr}" data-en="${m.en}">
+                <p class="text-sm font-medium">${m.en}</p>
+                <p class="text-xs text-[color:var(--fg-40)]">${m.fr}</p>
+              </button>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="font-heading font-bold text-[color:var(--accent)] text-sm">${bestDisplay}</span>
+                <button type="button" class="toggle-quick-btn w-7 h-7 rounded-full border border-[color:var(--border-strong)] hover:border-brand-blue flex items-center justify-center text-xs" data-exercice="${m.fr}">✎</button>
+                <button type="button" class="open-detail-btn text-[color:var(--fg-30)]" data-exercice="${m.fr}" data-en="${m.en}">›</button>
+              </div>
             </div>
-            <div class="flex items-center gap-2">
-              <span class="font-heading font-bold text-[color:var(--accent)]">${best ? best.valeur + ' ' + best.unite : '—'}</span>
-              <span class="text-[color:var(--fg-30)]">›</span>
-            </div>
-          </button>
+
+            ${isOpen ? renderQuickForm(m, kind) : ''}
+          </div>
         `;
       }).join('');
 
-      document.querySelectorAll('.movement-row').forEach(row => {
-        row.addEventListener('click', () => {
-          const params = new URLSearchParams({
-            exercice: row.dataset.exercice,
-            en: row.dataset.en,
-            categorie: row.dataset.categorie,
-            force: row.dataset.force
-          });
-          window.location.href = `pr-detail.html?${params.toString()}`;
+      document.querySelectorAll('.toggle-quick-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          openRow = openRow === btn.dataset.exercice ? null : btn.dataset.exercice;
+          renderList();
         });
       });
+
+      document.querySelectorAll('.open-detail-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const p = new URLSearchParams({
+            exercice: btn.dataset.exercice, en: btn.dataset.en,
+            categorie: currentCategory, kind: kind
+          });
+          window.location.href = `pr-detail.html?${p.toString()}`;
+        });
+      });
+
+      document.querySelectorAll('.quick-save-btn').forEach(btn => {
+        btn.addEventListener('click', () => saveQuick(btn, kind));
+      });
+    }
+
+    function renderQuickForm(m, kind) {
+      const today = new Date().toISOString().split('T')[0];
+
+      if (kind === 'kg-simple') {
+        return `
+          <div class="px-4 pb-4 flex flex-wrap items-end gap-2 bg-[color:var(--card)]">
+            <div>
+              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Charge (kg)</label>
+              <input type="number" step="0.5" class="quick-valeur w-24 px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            </div>
+            <div>
+              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Date</label>
+              <input type="date" class="quick-date px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" value="${today}">
+            </div>
+            <button type="button" class="quick-save-btn px-4 py-1.5 rounded-md bg-brand-blue hover:bg-brand-blue-dark text-white text-sm font-medium" data-exercice="${m.fr}">Enregistrer</button>
+          </div>
+        `;
+      }
+
+      if (kind === 'kg-rm') {
+        return `
+          <div class="px-4 pb-4 flex flex-wrap items-end gap-2 bg-[color:var(--card)]">
+            <div>
+              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">RM</label>
+              <select class="quick-rm px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+                <option value="1">1RM</option>
+                <option value="3">3RM</option>
+                <option value="5">5RM</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Charge (kg)</label>
+              <input type="number" step="0.5" class="quick-valeur w-24 px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            </div>
+            <div>
+              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Date</label>
+              <input type="date" class="quick-date px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" value="${today}">
+            </div>
+            <button type="button" class="quick-save-btn px-4 py-1.5 rounded-md bg-brand-blue hover:bg-brand-blue-dark text-white text-sm font-medium" data-exercice="${m.fr}">Enregistrer</button>
+          </div>
+        `;
+      }
+
+      // unite-libre (Gym / Cardio)
+      return `
+        <div class="px-4 pb-4 flex flex-wrap items-end gap-2 bg-[color:var(--card)]">
+          <div>
+            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Valeur</label>
+            <input type="number" step="0.5" class="quick-valeur w-24 px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Unité</label>
+            <select class="quick-unite px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <option value="reps">reps</option>
+              <option value="sec">sec</option>
+              <option value="m">m</option>
+              <option value="cal">cal</option>
+              <option value="kg">kg</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Date</label>
+            <input type="date" class="quick-date px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" value="${today}">
+          </div>
+          <button type="button" class="quick-save-btn px-4 py-1.5 rounded-md bg-brand-blue hover:bg-brand-blue-dark text-white text-sm font-medium" data-exercice="${m.fr}">Enregistrer</button>
+        </div>
+      `;
+    }
+
+    async function saveQuick(btn, kind) {
+      const exercice = btn.dataset.exercice;
+      const wrapper = btn.closest('[data-exercice]') || btn.parentElement;
+      const valeur = parseFloat(wrapper.querySelector('.quick-valeur').value);
+      const date = wrapper.querySelector('.quick-date').value || new Date().toISOString().split('T')[0];
+
+      if (isNaN(valeur)) { alert("Renseigne une valeur."); return; }
+
+      let unite = 'kg';
+      let rm = 0;
+
+      if (kind === 'kg-rm') {
+        rm = Number(wrapper.querySelector('.quick-rm').value);
+      } else if (kind === 'unite-libre') {
+        unite = wrapper.querySelector('.quick-unite').value;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '...';
+
+      const { error } = await supabaseClient.from('records').insert({
+        client_email: currentUserEmail,
+        categorie: currentCategory,
+        exercice: exercice,
+        valeur: valeur,
+        unite: unite,
+        repetitions_max: rm,
+        date_record: date,
+        updated_at: new Date().toISOString()
+      });
+
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer';
+
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      openRow = null;
+      await loadRecords();
+    }
+
+    async function loadRecords() {
+      const { data } = await supabaseClient
+        .from('records')
+        .select('*')
+        .eq('client_email', currentUserEmail);
+      allRecords = data || [];
+      renderTabs();
+      renderList();
     }
 
     async function load() {
@@ -160,15 +313,8 @@
       if (!user) { window.location.href = 'login.html'; return; }
       currentUserEmail = user.email.trim().toLowerCase();
 
-      const { data } = await supabaseClient
-        .from('records')
-        .select('*')
-        .eq('client_email', currentUserEmail);
-      allRecords = data || [];
-
       document.getElementById('page-content').classList.remove('hidden');
-      renderTabs();
-      renderList();
+      await loadRecords();
     }
 
     load();
