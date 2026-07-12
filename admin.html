@@ -62,7 +62,6 @@
         <button id="remove-client-btn" class="text-xs text-red-400 hover:text-red-300">Retirer ce client du suivi</button>
       </div>
 
-      <!-- Onglets Programmation / Records -->
       <div class="flex gap-2 mb-8 border-b border-[color:var(--border)]">
         <button id="tab-programmation" class="section-tab px-4 py-2.5 text-sm font-medium border-b-2 border-brand-blue text-[color:var(--accent)]">Programmation</button>
         <button id="tab-records" class="section-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">Records (PR)</button>
@@ -92,32 +91,69 @@
 
       <!-- SECTION RECORDS -->
       <div id="section-records" class="hidden">
-        <div class="rounded-xl border border-[color:var(--border)] p-4 mb-6">
-          <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-3">Ajouter / modifier un record</p>
-          <div class="grid sm:grid-cols-4 gap-2 mb-3">
-            <input type="text" id="pr-exercice" placeholder="Exercice (ex: Squat)" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-2">
-            <input type="number" step="0.5" id="pr-valeur" placeholder="Valeur" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-            <select id="pr-unite" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <option value="kg">kg</option>
-              <option value="reps">répétitions</option>
-              <option value="sec">secondes</option>
-              <option value="m">mètres</option>
+
+        <div class="rounded-xl border border-[color:var(--border)] p-4 mb-8">
+          <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-3">Ajouter / mettre à jour un record</p>
+          <div class="grid sm:grid-cols-2 gap-2 mb-4">
+            <select id="pr-categorie" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <option value="">Choisis une catégorie...</option>
+            </select>
+            <select id="pr-exercice" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <option value="">Choisis d'abord une catégorie</option>
             </select>
           </div>
-          <div class="grid sm:grid-cols-2 gap-2 mb-3">
-            <input type="date" id="pr-date" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-            <input type="text" id="pr-notes" placeholder="Note (optionnel)" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+
+          <!-- Mode FORCE -->
+          <div id="mode-force" class="hidden">
+            <p class="text-xs text-[color:var(--fg-40)] mb-2">Renseigne une, deux ou les trois valeurs (en kg) :</p>
+            <div class="grid grid-cols-3 gap-2 mb-3">
+              <div>
+                <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">1RM</label>
+                <input type="number" step="0.5" id="rm-1" placeholder="kg" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              </div>
+              <div>
+                <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">3RM</label>
+                <input type="number" step="0.5" id="rm-3" placeholder="kg" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              </div>
+              <div>
+                <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">5RM</label>
+                <input type="number" step="0.5" id="rm-5" placeholder="kg" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              </div>
+            </div>
+            <input type="date" id="rm-date" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-3">
+            <input type="text" id="rm-notes" placeholder="Note (optionnel)" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-3">
+            <div class="flex items-center gap-3">
+              <button id="save-rm-btn" class="text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">Enregistrer</button>
+              <span id="rm-confirm" class="hidden text-xs text-[color:var(--accent)] font-medium">Enregistré ✓</span>
+            </div>
           </div>
-          <div class="flex items-center gap-3">
-            <button id="save-pr-btn" data-editing-id="" class="text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">
-              + Ajouter ce record
-            </button>
-            <button id="cancel-pr-edit" class="hidden text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] underline underline-offset-4">Annuler</button>
-            <span id="pr-confirm" class="hidden text-xs text-[color:var(--accent)] font-medium">Enregistré ✓</span>
+
+          <!-- Mode SIMPLE -->
+          <div id="mode-simple" class="hidden">
+            <div class="grid sm:grid-cols-3 gap-2 mb-3">
+              <input type="number" step="0.5" id="pr-valeur" placeholder="Valeur" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <select id="pr-unite" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+                <option value="reps">répétitions</option>
+                <option value="sec">secondes (temps)</option>
+                <option value="m">mètres</option>
+                <option value="cal">calories</option>
+                <option value="kg">kg</option>
+              </select>
+              <input type="date" id="pr-date" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            </div>
+            <input type="text" id="pr-notes" placeholder="Note (optionnel)" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-3">
+            <div class="flex items-center gap-3">
+              <button id="save-pr-btn" data-editing-id="" class="text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">
+                + Enregistrer ce record
+              </button>
+              <button id="cancel-pr-edit" class="hidden text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] underline underline-offset-4">Annuler</button>
+              <span id="pr-confirm" class="hidden text-xs text-[color:var(--accent)] font-medium">Enregistré ✓</span>
+            </div>
           </div>
         </div>
 
-        <div id="pr-list" class="flex flex-col gap-2"></div>
+        <div id="records-by-category" class="flex flex-col gap-8"></div>
+
       </div>
 
     </div>
@@ -131,523 +167,33 @@
     const ADMIN_EMAIL = "erwan20b@gmail.com";
     const jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
-    const clientTabs = document.getElementById('client-tabs');
-    const addClientForm = document.getElementById('add-client-form');
-    const clientWorkspace = document.getElementById('client-workspace');
-    const daysContainer = document.getElementById('days-container');
-    const weekPicker = document.getElementById('week-picker');
-    const weekInfo = document.getElementById('week-info');
-    const selectedClientLabel = document.getElementById('selected-client-label');
-
-    let clientsActifs = [];
-    let selectedClientEmail = null;
-    let currentMonday = null;
-
-    // ---------- Onglets Programmation / Records ----------
-    document.getElementById('tab-programmation').addEventListener('click', () => switchTab('programmation'));
-    document.getElementById('tab-records').addEventListener('click', () => switchTab('records'));
-
-    function switchTab(tab) {
-      const isProg = tab === 'programmation';
-      document.getElementById('section-programmation').classList.toggle('hidden', !isProg);
-      document.getElementById('section-records').classList.toggle('hidden', isProg);
-      document.getElementById('tab-programmation').classList.toggle('border-brand-blue', isProg);
-      document.getElementById('tab-programmation').classList.toggle('text-[color:var(--accent)]', isProg);
-      document.getElementById('tab-programmation').classList.toggle('border-transparent', !isProg);
-      document.getElementById('tab-programmation').classList.toggle('text-[color:var(--fg-50)]', !isProg);
-      document.getElementById('tab-records').classList.toggle('border-brand-blue', !isProg);
-      document.getElementById('tab-records').classList.toggle('text-[color:var(--accent)]', !isProg);
-      document.getElementById('tab-records').classList.toggle('border-transparent', isProg);
-      document.getElementById('tab-records').classList.toggle('text-[color:var(--fg-50)]', isProg);
-      if (!isProg) loadRecords();
-    }
-
-    // ---------- Utilitaires dates ----------
-    function getMondayFromDateStr(dateStr) {
-      const [y, m, d] = dateStr.split('-').map(Number);
-      const date = new Date(y, m - 1, d);
-      const day = date.getDay();
-      const diff = day === 0 ? -6 : 1 - day;
-      date.setDate(date.getDate() + diff);
-      return date;
-    }
-
-    function formatDateKey(d) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    }
-
-    function setWeek(mondayDate) {
-      currentMonday = mondayDate;
-      weekPicker.value = formatDateKey(currentMonday);
-      const sunday = new Date(currentMonday);
-      sunday.setDate(currentMonday.getDate() + 6);
-      weekInfo.textContent = `Semaine du ${currentMonday.toLocaleDateString('fr-FR')} au ${sunday.toLocaleDateString('fr-FR')}`;
-      buildDaysUI();
-      loadExistingForWeek();
-    }
-
-    // ---------- Clients ----------
-    async function loadClients() {
-      const { data } = await supabaseClient.from('clients_actifs').select('*').order('nom', { ascending: true });
-      clientsActifs = data || [];
-      renderTabs();
-    }
-
-    function renderTabs() {
-      clientTabs.innerHTML = clientsActifs.map(c => `
-        <button data-email="${c.email}" class="client-tab px-4 py-2 rounded-full text-sm border transition-colors ${
-          selectedClientEmail === c.email ? 'bg-brand-blue text-white border-brand-blue' : 'border-[color:var(--border-strong)] hover:border-brand-blue'
-        }">${c.nom || c.email}</button>
-      `).join('') + `
-        <button id="show-add-client" class="px-4 py-2 rounded-full text-sm border border-dashed border-[color:var(--border-strong)] hover:border-brand-blue transition-colors">+ Ajouter</button>
-      `;
-
-      document.querySelectorAll('.client-tab').forEach(btn => {
-        btn.addEventListener('click', () => selectClient(btn.dataset.email));
-      });
-      document.getElementById('show-add-client').addEventListener('click', () => {
-        addClientForm.classList.toggle('hidden');
-      });
-    }
-
-    function selectClient(email) {
-      selectedClientEmail = email;
-      const client = clientsActifs.find(c => c.email === email);
-      selectedClientLabel.textContent = `Client sélectionné : ${client?.nom ? client.nom + ' — ' : ''}${email}`;
-      addClientForm.classList.add('hidden');
-      clientWorkspace.classList.remove('hidden');
-      renderTabs();
-      switchTab('programmation');
-      setWeek(getMondayFromDateStr(formatDateKey(new Date())));
-    }
-
-    document.getElementById('confirm-add-client').addEventListener('click', async () => {
-      const email = document.getElementById('new-client-email').value.trim().toLowerCase();
-      const nom = document.getElementById('new-client-nom').value.trim();
-      if (!email) { alert("L'email est obligatoire."); return; }
-
-      const { error } = await supabaseClient.from('clients_actifs').insert({ email, nom });
-      if (error) { alert("Erreur : " + error.message); return; }
-
-      document.getElementById('new-client-email').value = '';
-      document.getElementById('new-client-nom').value = '';
-      await loadClients();
-      selectClient(email);
-    });
-
-    document.getElementById('remove-client-btn').addEventListener('click', async () => {
-      if (!selectedClientEmail) return;
-      if (!confirm(`Retirer ${selectedClientEmail} du suivi ? (ses séances déjà créées ne seront pas supprimées)`)) return;
-      await supabaseClient.from('clients_actifs').delete().eq('email', selectedClientEmail);
-      selectedClientEmail = null;
-      clientWorkspace.classList.add('hidden');
-      await loadClients();
-    });
-
-    // ---------- Navigation semaine ----------
-    document.getElementById('prev-week-btn').addEventListener('click', () => {
-      const d = new Date(currentMonday);
-      d.setDate(d.getDate() - 7);
-      setWeek(d);
-    });
-    document.getElementById('next-week-btn').addEventListener('click', () => {
-      const d = new Date(currentMonday);
-      d.setDate(d.getDate() + 7);
-      setWeek(d);
-    });
-    weekPicker.addEventListener('change', () => {
-      if (!weekPicker.value) return;
-      setWeek(getMondayFromDateStr(weekPicker.value));
-    });
-
-    document.getElementById('duplicate-week-btn').addEventListener('click', async () => {
-      if (!selectedClientEmail || !currentMonday) return;
-      if (!confirm("Dupliquer tous les exercices de cette semaine vers la semaine suivante ?")) return;
-
-      const { data: exosActuels } = await supabaseClient
-        .from('programmes')
-        .select('*')
-        .eq('client_email', selectedClientEmail)
-        .eq('semaine_debut', formatDateKey(currentMonday));
-
-      if (!exosActuels || exosActuels.length === 0) {
-        alert("Aucun exercice à dupliquer cette semaine.");
-        return;
-      }
-
-      const nextMonday = new Date(currentMonday);
-      nextMonday.setDate(nextMonday.getDate() + 7);
-      const nextMondayKey = formatDateKey(nextMonday);
-
-      const copies = exosActuels.map(e => ({
-        client_email: e.client_email,
-        jour: e.jour,
-        semaine_debut: nextMondayKey,
-        exercice: e.exercice,
-        series: e.series,
-        repetitions: e.repetitions,
-        temps_repos: e.temps_repos,
-        rpe: e.rpe,
-        tempo: e.tempo,
-        lien_video: e.lien_video,
-        description: e.description,
-        ordre: e.ordre
-      }));
-
-      const { error } = await supabaseClient.from('programmes').insert(copies);
-      if (error) { alert("Erreur : " + error.message); return; }
-
-      alert(`${copies.length} exercice(s) dupliqué(s) vers la semaine suivante.`);
-      setWeek(nextMonday);
-    });
-
-    // ---------- Construction des jours ----------
-    function buildDaysUI() {
-      daysContainer.innerHTML = jours.map((jour, i) => {
-        const d = new Date(currentMonday);
-        d.setDate(currentMonday.getDate() + i);
-        const dateLabel = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
-
-        return `
-          <div class="rounded-xl border border-[color:var(--border)] p-4" data-jour="${jour}">
-            <div class="flex items-center justify-between mb-3">
-              <h3 class="font-heading uppercase font-bold text-sm">${jour} <span class="text-[color:var(--fg-40)] font-normal normal-case">— ${dateLabel}</span></h3>
-            </div>
-
-            <div class="mb-4">
-              <label class="block text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-1.5">Commentaire sur la composition de cette séance</label>
-              <textarea class="jour-commentaire w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" rows="2" placeholder="Ex : cette semaine on insiste sur le haut du corps, garde de la marge sur le squat..."></textarea>
-              <div class="flex items-center gap-2 mt-1.5">
-                <button class="save-comment-btn text-xs px-3 py-1.5 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">Enregistrer le commentaire</button>
-                <span class="comment-confirm hidden text-xs text-[color:var(--accent)] font-medium">Enregistré ✓</span>
-              </div>
-            </div>
-
-            <div class="existing-list flex flex-col gap-2 mb-3"></div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
-              <input type="text" placeholder="Exercice" class="ex-exercice px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="number" placeholder="Séries" class="ex-series px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="text" placeholder="Répétitions" class="ex-repetitions px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="text" placeholder="Repos" class="ex-repos px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="text" placeholder="RPE" class="ex-rpe px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="text" placeholder="Tempo" class="ex-tempo px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="text" placeholder="Lien vidéo" class="ex-video px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-2">
-              <textarea placeholder="Explication de l'exercice (consignes, points d'attention...)" rows="2" class="ex-description px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-4"></textarea>
-            </div>
-            <div class="flex items-center gap-3">
-              <button class="save-exercise-btn text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium" data-editing-id="">
-                + Ajouter cet exercice
-              </button>
-              <button class="cancel-edit-btn hidden text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
-                Annuler la modification
-              </button>
-              <span class="save-confirm hidden text-xs text-[color:var(--accent)] font-medium">Enregistré ✓</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      document.querySelectorAll('.save-exercise-btn').forEach(btn => {
-        btn.addEventListener('click', () => saveExercise(btn));
-      });
-      document.querySelectorAll('.cancel-edit-btn').forEach(btn => {
-        btn.addEventListener('click', () => resetForm(btn.closest('[data-jour]')));
-      });
-      document.querySelectorAll('.save-comment-btn').forEach(btn => {
-        btn.addEventListener('click', () => saveComment(btn));
-      });
-    }
-
-    async function saveComment(btn) {
-      const card = btn.closest('[data-jour]');
-      const jour = card.dataset.jour;
-      if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
-
-      const commentaire = card.querySelector('.jour-commentaire').value.trim();
-      const confirmSpan = card.querySelector('.comment-confirm');
-
-      btn.disabled = true;
-      btn.textContent = 'Enregistrement...';
-
-      const { error } = await supabaseClient.from('notes_jour').upsert({
-        client_email: selectedClientEmail,
-        semaine_debut: formatDateKey(currentMonday),
-        jour: jour,
-        commentaire: commentaire,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'client_email,semaine_debut,jour' });
-
-      btn.disabled = false;
-      btn.textContent = 'Enregistrer le commentaire';
-
-      if (error) { alert("Erreur : " + error.message); return; }
-
-      confirmSpan.classList.remove('hidden');
-      setTimeout(() => confirmSpan.classList.add('hidden'), 2500);
-    }
-
-    function resetForm(card) {
-      card.querySelectorAll('.ex-exercice, .ex-series, .ex-repetitions, .ex-repos, .ex-rpe, .ex-tempo, .ex-video, .ex-description').forEach(input => input.value = '');
-      const btn = card.querySelector('.save-exercise-btn');
-      btn.dataset.editingId = '';
-      btn.textContent = '+ Ajouter cet exercice';
-      card.querySelector('.cancel-edit-btn').classList.add('hidden');
-    }
-
-    async function saveExercise(btn) {
-      const card = btn.closest('[data-jour]');
-      const jour = card.dataset.jour;
-
-      if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
-
-      const exercice = card.querySelector('.ex-exercice').value.trim();
-      if (!exercice) { alert("Le nom de l'exercice est obligatoire."); return; }
-
-      const payload = {
-        client_email: selectedClientEmail,
-        jour: jour,
-        semaine_debut: formatDateKey(currentMonday),
-        exercice: exercice,
-        series: Number(card.querySelector('.ex-series').value) || 0,
-        repetitions: card.querySelector('.ex-repetitions').value.trim(),
-        temps_repos: card.querySelector('.ex-repos').value.trim(),
-        rpe: card.querySelector('.ex-rpe').value.trim(),
-        tempo: card.querySelector('.ex-tempo').value.trim(),
-        lien_video: card.querySelector('.ex-video').value.trim(),
-        description: card.querySelector('.ex-description').value.trim(),
-        ordre: jours.indexOf(jour)
-      };
-
-      const editingId = btn.dataset.editingId;
-      const confirmSpan = card.querySelector('.save-confirm');
-      btn.disabled = true;
-      btn.textContent = editingId ? 'Mise à jour...' : 'Ajout...';
-
-      let error;
-      if (editingId) {
-        ({ error } = await supabaseClient.from('programmes').update(payload).eq('id', editingId));
-      } else {
-        ({ error } = await supabaseClient.from('programmes').insert(payload));
-      }
-
-      btn.disabled = false;
-
-      if (error) {
-        alert("Erreur : " + error.message);
-        btn.textContent = editingId ? 'Mettre à jour cet exercice' : '+ Ajouter cet exercice';
-        return;
-      }
-
-      confirmSpan.classList.remove('hidden');
-      setTimeout(() => confirmSpan.classList.add('hidden'), 2500);
-
-      resetForm(card);
-      loadExistingForWeek();
-    }
-
-    function editExercise(exo, card) {
-      card.querySelector('.ex-exercice').value = exo.exercice || '';
-      card.querySelector('.ex-series').value = exo.series || '';
-      card.querySelector('.ex-repetitions').value = exo.repetitions || '';
-      card.querySelector('.ex-repos').value = exo.temps_repos || '';
-      card.querySelector('.ex-rpe').value = exo.rpe || '';
-      card.querySelector('.ex-tempo').value = exo.tempo || '';
-      card.querySelector('.ex-video').value = exo.lien_video || '';
-      card.querySelector('.ex-description').value = exo.description || '';
-
-      const btn = card.querySelector('.save-exercise-btn');
-      btn.dataset.editingId = exo.id;
-      btn.textContent = 'Mettre à jour cet exercice';
-      card.querySelector('.cancel-edit-btn').classList.remove('hidden');
-
-      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    async function loadExistingForWeek() {
-      if (!selectedClientEmail || !currentMonday) return;
-
-      const { data: exos } = await supabaseClient
-        .from('programmes')
-        .select('*')
-        .eq('client_email', selectedClientEmail)
-        .eq('semaine_debut', formatDateKey(currentMonday));
-
-      const { data: notes } = await supabaseClient
-        .from('notes_jour')
-        .select('*')
-        .eq('client_email', selectedClientEmail)
-        .eq('semaine_debut', formatDateKey(currentMonday));
-
-      document.querySelectorAll('.existing-list').forEach(el => el.innerHTML = '');
-      document.querySelectorAll('.jour-commentaire').forEach(el => el.value = '');
-
-      (notes || []).forEach(note => {
-        const card = document.querySelector(`[data-jour="${note.jour}"]`);
-        if (!card) return;
-        card.querySelector('.jour-commentaire').value = note.commentaire || '';
-      });
-
-      (exos || []).forEach(exo => {
-        const card = document.querySelector(`[data-jour="${exo.jour}"]`);
-        if (!card) return;
-        const list = card.querySelector('.existing-list');
-
-        const row = document.createElement('button');
-        row.type = 'button';
-        row.className = "edit-row-btn text-left w-full text-sm bg-[color:var(--card)] hover:bg-[color:var(--card-hover)] transition-colors rounded-lg px-3 py-2";
-        row.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="font-medium">${exo.exercice}</span>
-            <span class="delete-btn text-red-400 hover:text-red-300 text-xs ml-3 shrink-0" data-id="${exo.id}">Supprimer</span>
-          </div>
-          <div class="text-xs text-[color:var(--fg-50)] mt-0.5">
-            ${exo.series}x${exo.repetitions}${exo.temps_repos ? ` · repos ${exo.temps_repos}` : ''}${exo.rpe ? ` · RPE ${exo.rpe}` : ''}${exo.tempo ? ` · tempo ${exo.tempo}` : ''}
-          </div>
-          ${exo.description ? `<div class="text-xs text-[color:var(--fg-40)] mt-1 italic">${exo.description}</div>` : ''}
-        `;
-        row.addEventListener('click', () => editExercise(exo, card));
-        row.querySelector('.delete-btn').addEventListener('click', async (e) => {
-          e.stopPropagation();
-          await supabaseClient.from('programmes').delete().eq('id', exo.id);
-          loadExistingForWeek();
-        });
-
-        list.appendChild(row);
-      });
-    }
-
-    // ---------- RECORDS (PR) ----------
-    const prExercice = document.getElementById('pr-exercice');
-    const prValeur = document.getElementById('pr-valeur');
-    const prUnite = document.getElementById('pr-unite');
-    const prDate = document.getElementById('pr-date');
-    const prNotes = document.getElementById('pr-notes');
-    const savePrBtn = document.getElementById('save-pr-btn');
-    const cancelPrEdit = document.getElementById('cancel-pr-edit');
-    const prConfirm = document.getElementById('pr-confirm');
-    const prList = document.getElementById('pr-list');
-
-    function resetPrForm() {
-      prExercice.value = '';
-      prValeur.value = '';
-      prUnite.value = 'kg';
-      prDate.value = formatDateKey(new Date());
-      prNotes.value = '';
-      savePrBtn.dataset.editingId = '';
-      savePrBtn.textContent = '+ Ajouter ce record';
-      cancelPrEdit.classList.add('hidden');
-    }
-
-    cancelPrEdit.addEventListener('click', resetPrForm);
-
-    savePrBtn.addEventListener('click', async () => {
-      if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
-      const exercice = prExercice.value.trim();
-      const valeur = parseFloat(prValeur.value);
-      if (!exercice || isNaN(valeur)) { alert("Renseigne au moins l'exercice et la valeur."); return; }
-
-      const payload = {
-        client_email: selectedClientEmail,
-        exercice: exercice,
-        valeur: valeur,
-        unite: prUnite.value,
-        date_record: prDate.value || formatDateKey(new Date()),
-        notes: prNotes.value.trim(),
-        updated_at: new Date().toISOString()
-      };
-
-      const editingId = savePrBtn.dataset.editingId;
-      savePrBtn.disabled = true;
-
-      let error;
-      if (editingId) {
-        ({ error } = await supabaseClient.from('records').update(payload).eq('id', editingId));
-      } else {
-        ({ error } = await supabaseClient.from('records').insert(payload));
-      }
-
-      savePrBtn.disabled = false;
-
-      if (error) { alert("Erreur : " + error.message); return; }
-
-      prConfirm.classList.remove('hidden');
-      setTimeout(() => prConfirm.classList.add('hidden'), 2000);
-
-      resetPrForm();
-      loadRecords();
-    });
-
-    async function loadRecords() {
-      if (!selectedClientEmail) return;
-
-      const { data, error } = await supabaseClient
-        .from('records')
-        .select('*')
-        .eq('client_email', selectedClientEmail)
-        .order('date_record', { ascending: false });
-
-      if (error) { console.error(error); return; }
-
-      if (!data || data.length === 0) {
-        prList.innerHTML = `<p class="text-sm text-[color:var(--fg-40)] text-center py-6">Aucun record enregistré pour ce client.</p>`;
-        return;
-      }
-
-      prList.innerHTML = data.map(r => `
-        <button type="button" class="pr-row w-full text-left flex items-center justify-between rounded-lg border border-[color:var(--border)] px-4 py-3 hover:border-brand-blue transition-colors" data-id="${r.id}">
-          <div>
-            <span class="font-medium text-sm">${r.exercice}</span>
-            <span class="text-xs text-[color:var(--fg-40)] ml-2">${new Date(r.date_record).toLocaleDateString('fr-FR')}</span>
-            ${r.notes ? `<div class="text-xs text-[color:var(--fg-40)] italic mt-0.5">${r.notes}</div>` : ''}
-          </div>
-          <div class="flex items-center gap-3 shrink-0">
-            <span class="font-heading font-bold text-[color:var(--accent)]">${r.valeur} ${r.unite}</span>
-            <span class="pr-delete text-red-400 hover:text-red-300 text-xs" data-id="${r.id}">Supprimer</span>
-          </div>
-        </button>
-      `).join('');
-
-      document.querySelectorAll('.pr-row').forEach(row => {
-        row.addEventListener('click', (e) => {
-          if (e.target.classList.contains('pr-delete')) return;
-          const record = data.find(r => r.id === row.dataset.id);
-          prExercice.value = record.exercice;
-          prValeur.value = record.valeur;
-          prUnite.value = record.unite;
-          prDate.value = record.date_record;
-          prNotes.value = record.notes || '';
-          savePrBtn.dataset.editingId = record.id;
-          savePrBtn.textContent = 'Mettre à jour ce record';
-          cancelPrEdit.classList.remove('hidden');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-      });
-
-      document.querySelectorAll('.pr-delete').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          await supabaseClient.from('records').delete().eq('id', btn.dataset.id);
-          loadRecords();
-        });
-      });
-    }
-
-    // ---------- Accès ----------
-    async function checkAccess() {
-      const { data: { user } } = await supabaseClient.auth.getUser();
-      if (!user || user.email !== ADMIN_EMAIL) {
-        document.getElementById('denied').classList.remove('hidden');
-        return;
-      }
-      document.getElementById('main-content').classList.remove('hidden');
-      loadClients();
-    }
-
-    checkAccess();
-  </script>
-
-</body>
-</html>
+    const mouvements = {
+      "Haltérophilie": [
+        { fr: "Arraché", en: "Snatch" }, { fr: "Arraché suspendu", en: "Hang Snatch" },
+        { fr: "Arraché puissance", en: "Power Snatch" }, { fr: "Arraché puissance suspendu", en: "Hang Power Snatch" },
+        { fr: "Tirage d'arraché", en: "Snatch Pull" }, { fr: "Épaulé", en: "Clean" },
+        { fr: "Épaulé suspendu", en: "Hang Clean" }, { fr: "Épaulé puissance", en: "Power Clean" },
+        { fr: "Épaulé puissance suspendu", en: "Hang Power Clean" }, { fr: "Tirage d'épaulé", en: "Clean Pull" },
+        { fr: "Jeté", en: "Jerk" }, { fr: "Jeté fente", en: "Split Jerk" }, { fr: "Jeté puissance", en: "Power Jerk" },
+        { fr: "Poussée-jeté", en: "Push Jerk" }, { fr: "Épaulé-jeté", en: "Clean & Jerk" },
+        { fr: "Squat clavicule", en: "Front Squat" }, { fr: "Squat nuque", en: "Back Squat" }, { fr: "Squat overhead", en: "Overhead Squat" }
+      ],
+      "Renforcement": [
+        { fr: "Squat arrière", en: "Back Squat" }, { fr: "Squat avant", en: "Front Squat" }, { fr: "Squat overhead", en: "Overhead Squat" },
+        { fr: "Soulevé de terre", en: "Deadlift" }, { fr: "Soulevé de terre sumo", en: "Sumo Deadlift" },
+        { fr: "Développé couché", en: "Bench Press" }, { fr: "Développé militaire strict", en: "Strict Press" },
+        { fr: "Développé militaire poussé", en: "Push Press" }, { fr: "Thruster", en: "Thruster" },
+        { fr: "Good Morning", en: "Good Morning" }, { fr: "Fentes bulgares", en: "Bulgarian Split Squat" }
+      ],
+      "Gymnastique (suspendu / retourné)": [
+        { fr: "Traction stricte", en: "Strict Pull-up" }, { fr: "Traction kipping", en: "Kipping Pull-up" },
+        { fr: "Traction papillon", en: "Butterfly Pull-up" }, { fr: "Traction poitrine à la barre", en: "Chest to Bar" },
+        { fr: "Muscle-up barre", en: "Bar Muscle-up" }, { fr: "Muscle-up anneaux", en: "Ring Muscle-up" },
+        { fr: "Relevé de jambes à la barre", en: "Toes to Bar" }, { fr: "Pompe poirier", en: "Handstand Push-up" },
+        { fr: "Marche sur les mains", en: "Handstand Walk" }, { fr: "Poirier (tenue)", en: "Handstand Hold" },
+        { fr: "Grimper de corde", en: "Rope Climb" }, { fr: "Squat pistol", en: "Pistol Squat" }, { fr: "Dips aux anneaux", en: "Ring Dips" }
+      ],
+      "Cardio / Benchmarks CrossFit": [
+        { fr: "Rameur 500m", en: "Row 500m" }, { fr: "Rameur 1000m", en: "Row 1km" }, { fr: "Rameur 2000m", en: "Row 2km" },
+        { fr: "Rameur 5000m", en: "Row 5km" }, { fr: "Course 1 mile", en: "Run 1 Mile" }, { fr: "Course 5km", en: "Run 5k" },
+        { fr: "Assault Bike (calories)", en: "Assault Bike Calories" }, { fr: "Double-unders max",
