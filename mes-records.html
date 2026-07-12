@@ -106,14 +106,13 @@
             <h2 class="font-heading uppercase text-lg font-bold mb-4 text-[color:var(--accent)] tracking-wide">${cat}</h2>
             <div class="rounded-xl border border-[color:var(--border)] divide-y divide-[color:var(--border)]">
               ${list.map(m => {
-                const safeId = m.fr.replace(/[^a-zA-Z0-9]/g, '');
                 if (isForce) {
                   const r1 = findRecord(m.fr, 1), r3 = findRecord(m.fr, 3), r5 = findRecord(m.fr, 5);
                   return `
                     <div class="px-4 py-3 flex flex-wrap items-center justify-between gap-2" data-exercice="${m.fr}" data-categorie="${cat}" data-force="1">
                       <div class="min-w-[130px]">
-                        <p class="text-sm font-medium">${m.fr}</p>
-                        <p class="text-xs text-[color:var(--fg-40)]">${m.en}</p>
+                        <p class="text-sm font-medium">${m.en}</p>
+                        <p class="text-xs text-[color:var(--fg-40)]">${m.fr}</p>
                       </div>
                       <div class="flex items-center gap-1.5">
                         <div class="text-center">
@@ -137,8 +136,8 @@
                   return `
                     <div class="px-4 py-3 flex flex-wrap items-center justify-between gap-2" data-exercice="${m.fr}" data-categorie="${cat}" data-force="0">
                       <div class="min-w-[130px]">
-                        <p class="text-sm font-medium">${m.fr}</p>
-                        <p class="text-xs text-[color:var(--fg-40)]">${m.en}</p>
+                        <p class="text-sm font-medium">${m.en}</p>
+                        <p class="text-xs text-[color:var(--fg-40)]">${m.fr}</p>
                       </div>
                       <div class="flex items-center gap-1.5">
                         <input type="number" step="0.5" class="simple-value w-20 px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue" placeholder="Valeur" value="${r0 ? r0.valeur : ''}">
@@ -172,7 +171,6 @@
       const isForce = row.dataset.force === '1';
 
       btn.disabled = true;
-      const original = btn.textContent;
       btn.textContent = '…';
 
       if (isForce) {
