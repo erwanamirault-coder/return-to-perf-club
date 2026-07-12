@@ -10,7 +10,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css">
+<link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://assets.calendly.com/assets/external/widget.js" async></script>
 
 <script>
   tailwind.config = {
@@ -99,7 +101,18 @@
   <script src="supabase-config.js"></script>
   <script src="theme.js"></script>
   <script>
-    const CALENDLY_URL = "https://calendly.com/erwan-amirault/45min";
+    const CALENDLY_URL = "https://calendly.com/erwan-amirault/30min";
+
+    function waitForCalendlyAndInit() {
+      if (window.Calendly) {
+        Calendly.initInlineWidget({
+          url: CALENDLY_URL,
+          parentElement: document.querySelector('.calendly-inline-widget')
+        });
+      } else {
+        setTimeout(waitForCalendlyAndInit, 200);
+      }
+    }
     const offsetJour = { "Lundi": 0, "Mardi": 1, "Mercredi": 2, "Jeudi": 3, "Vendredi": 4, "Samedi": 5, "Dimanche": 6 };
 
     let currentUserEmail = null;
@@ -188,20 +201,19 @@
           <p class="text-[color:var(--fg-70)] text-sm sm:text-base leading-relaxed mb-10 max-w-sm mx-auto">
             Les statistiques sont réservées aux clients suivis. Réservons un appel pour faire le point ensemble sur tes objectifs.
           </p>
-          <div class="rounded-2xl border border-brand-blue-dark bg-brand-blue/5 p-8 max-w-sm mx-auto">
+          <div class="rounded-2xl border border-brand-blue-dark bg-brand-blue/5 p-4 sm:p-6 max-w-lg mx-auto">
             <h2 class="font-heading uppercase text-lg font-bold mb-2">Appel bilan offert</h2>
-            <p class="text-sm text-[color:var(--fg-60)] mb-6">
+            <p class="text-sm text-[color:var(--fg-60)] mb-4">
               30 minutes pour discuter de ta situation et voir comment on peut travailler ensemble.
             </p>
-            <a href="${CALENDLY_URL}" target="_blank" class="inline-block w-full px-8 py-4 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-sm text-white">
-              Je réserve mon appel bilan offert !
-            </a>
+            <div class="calendly-inline-widget" data-url="${CALENDLY_URL}" style="min-width:280px;height:650px;"></div>
           </div>
           <a href="dashboard.html" class="inline-block mt-10 text-sm text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
             Retour à mon espace
           </a>
         </div>
       `;
+      waitForCalendlyAndInit();
     }
 
     async function load() {
