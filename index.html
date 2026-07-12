@@ -4,13 +4,15 @@
 <script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bilan de tes capacités</title>
+<title>Bilan de tes capacités — Erwan Amirault</title>
 <meta name="description" content="Fais le bilan complet de ta mobilité : épaules, hanches, chevilles, genoux, colonne. Gratuit, en moins de 10 minutes.">
 
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css">
+<script src="supabase-config.js"></script>
 
 <script>
   tailwind.config = {
@@ -34,23 +36,117 @@
 
 <style>
   body { font-family: 'Poppins', sans-serif; }
-  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+  h1, h2, h3, .font-heading { font-family: 'Oswald', sans-serif; }
 </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-  <header class="flex items-center justify-between px-6 sm:px-10 py-5">
-    <span class="font-heading uppercase font-bold text-sm tracking-wide">Bilan de tes capacités</span>
-    <div class="flex items-center gap-5 text-sm">
-      <a href="a-propos.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">À propos</a>
-      <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+<!-- ============ DÉBUT BANDEAU + MENU (à recopier tel quel sur chaque page) ============ -->
+
+<!-- Bandeau annonce -->
+<a href="cadeau.html" class="block bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-center text-xs sm:text-sm font-medium py-2 px-4">
+  🎁 Bilan de mobilité offert — 10 minutes, 100% gratuit. J'en profite →
+</a>
+
+<!-- Barre de navigation -->
+<nav class="bg-brand-blue-dark text-white">
+  <div class="flex items-center justify-between px-6 sm:px-10 py-3">
+    <a href="index.html" class="font-heading uppercase font-bold text-sm tracking-wide text-white">
+      Bilan de tes capacités
+    </a>
+
+    <!-- Liens desktop -->
+    <div class="hidden md:flex items-center gap-6 text-sm">
+      <span id="desktop-public" class="flex items-center gap-6">
+        <a href="index.html" class="hover:text-brand-blue-light transition-colors">Accueil</a>
+        <a href="cadeau.html" class="hover:text-brand-blue-light transition-colors">Bilan gratuit</a>
+        <a href="a-propos.html" class="hover:text-brand-blue-light transition-colors">À propos</a>
+        <a href="login.html" class="bg-white text-brand-blue-dark px-4 py-1.5 rounded-lg font-semibold hover:bg-brand-blue-light hover:text-white transition-colors">Se connecter</a>
+      </span>
+      <span id="desktop-private" class="hidden items-center gap-6">
+        <a href="dashboard.html" class="hover:text-brand-blue-light transition-colors">Mon espace</a>
+        <a href="choix-bilan.html" class="hover:text-brand-blue-light transition-colors">Bilan</a>
+        <a href="programme.html" class="hover:text-brand-blue-light transition-colors">Programmation</a>
+        <a href="mes-records.html" class="hover:text-brand-blue-light transition-colors">Records</a>
+        <a href="admin.html" id="admin-link-desktop" class="hidden hover:text-brand-blue-light transition-colors">Admin</a>
+        <a href="#" id="logout-desktop" class="bg-white text-brand-blue-dark px-4 py-1.5 rounded-lg font-semibold hover:bg-brand-blue-light hover:text-white transition-colors">Déconnexion</a>
+      </span>
+      <button id="theme-toggle" class="w-9 h-9 rounded-full border border-white/30 flex items-center justify-center hover:border-white transition-colors shrink-0"></button>
     </div>
-  </header>
 
-  <main class="flex-1 flex flex-col items-center justify-center px-6 py-10 text-center max-w-xl mx-auto">
+    <!-- Mobile : toggle thème + burger -->
+    <div class="flex items-center gap-3 md:hidden">
+      <button id="theme-toggle-mobile" class="w-9 h-9 rounded-full border border-white/30 flex items-center justify-center hover:border-white transition-colors shrink-0"></button>
+      <button id="nav-burger" class="w-9 h-9 flex items-center justify-center text-2xl leading-none">☰</button>
+    </div>
+  </div>
 
-    <div class="mb-8">
-      <svg width="72" height="72" viewBox="0 0 5000 5000" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <!-- Panneau mobile -->
+  <div id="mobile-panel" class="md:hidden hidden flex-col gap-4 px-6 pb-5 text-sm">
+    <div id="mobile-public" class="flex flex-col gap-4">
+      <a href="index.html" class="hover:text-brand-blue-light transition-colors">Accueil</a>
+      <a href="cadeau.html" class="hover:text-brand-blue-light transition-colors">Bilan gratuit</a>
+      <a href="a-propos.html" class="hover:text-brand-blue-light transition-colors">À propos</a>
+      <a href="login.html" class="bg-white text-brand-blue-dark px-4 py-2 rounded-lg font-semibold text-center">Se connecter</a>
+    </div>
+    <div id="mobile-private" class="hidden flex-col gap-4">
+      <a href="dashboard.html" class="hover:text-brand-blue-light transition-colors">Mon espace</a>
+      <a href="choix-bilan.html" class="hover:text-brand-blue-light transition-colors">Bilan</a>
+      <a href="programme.html" class="hover:text-brand-blue-light transition-colors">Programmation</a>
+      <a href="mes-records.html" class="hover:text-brand-blue-light transition-colors">Records</a>
+      <a href="admin.html" id="admin-link-mobile" class="hidden hover:text-brand-blue-light transition-colors">Admin</a>
+      <a href="#" id="logout-mobile" class="bg-white text-brand-blue-dark px-4 py-2 rounded-lg font-semibold text-center">Déconnexion</a>
+    </div>
+  </div>
+</nav>
+
+<script>
+  // Détection connexion + affichage des bons liens
+  (async function initNav() {
+    const els = {
+      dp: document.getElementById('desktop-public'),
+      dv: document.getElementById('desktop-private'),
+      mp: document.getElementById('mobile-public'),
+      mv: document.getElementById('mobile-private'),
+      adminD: document.getElementById('admin-link-desktop'),
+      adminM: document.getElementById('admin-link-mobile'),
+    };
+    try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session && session.user) {
+        els.dp.classList.add('hidden'); els.dp.classList.remove('flex');
+        els.dv.classList.remove('hidden'); els.dv.classList.add('flex');
+        els.mp.classList.add('hidden'); els.mp.classList.remove('flex');
+        els.mv.classList.remove('hidden'); els.mv.classList.add('flex');
+        const email = (session.user.email || '').toLowerCase().trim();
+        if (email === 'erwan20b@gmail.com') {
+          els.adminD.classList.remove('hidden');
+          els.adminM.classList.remove('hidden');
+        }
+      }
+    } catch (e) { /* pas connecté : on garde les liens publics */ }
+  })();
+
+  document.getElementById('nav-burger').addEventListener('click', function () {
+    const panel = document.getElementById('mobile-panel');
+    panel.classList.toggle('hidden');
+    panel.classList.toggle('flex');
+  });
+
+  async function handleLogout(e) {
+    e.preventDefault();
+    await supabaseClient.auth.signOut();
+    window.location.href = 'index.html';
+  }
+  document.getElementById('logout-desktop').addEventListener('click', handleLogout);
+  document.getElementById('logout-mobile').addEventListener('click', handleLogout);
+</script>
+<!-- ============ FIN BANDEAU + MENU ============ -->
+
+  <main class="flex-1 flex flex-col items-center px-6 py-14 text-center">
+
+    <div class="mb-6">
+      <svg width="64" height="64" viewBox="0 0 5000 5000" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
           <g transform="matrix(1.49977,0,0,1.36765,-875.914,-643.774)">
               <ellipse cx="2258.65" cy="2294.96" rx="1278.02" ry="1389.04" style="fill:white;"/>
           </g>
@@ -71,47 +167,85 @@
     </div>
 
     <span class="inline-block mb-6 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold border border-brand-blue-dark text-[color:var(--accent)]">
-      Bilan de tes capacités
+      Coach en réathlétisation &amp; performance
     </span>
 
-    <h1 class="font-heading uppercase text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-6">
+    <h1 class="font-heading uppercase text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-6 max-w-2xl">
       Ta mobilité fait la différence dans <span class="text-brand-blue">ton sport.</span>
     </h1>
 
-    <p class="text-[color:var(--fg-70)] text-base sm:text-lg leading-relaxed mb-2 max-w-md">
-      Épaules, hanches, chevilles, genoux, colonne : chaque articulation limitée oblige ton corps à compenser ailleurs.
-      C'est souvent pour ça que tu te blesses, que tu stagnes, ou que tu traînes des douleurs sans explication.
-    </p>
-    <p class="text-[color:var(--fg-70)] text-base sm:text-lg leading-relaxed mb-8 max-w-md">
-      Fais le bilan complet, articulation par articulation, et obtiens ton score.
+    <p class="text-[color:var(--fg-70)] text-base sm:text-lg leading-relaxed mb-12 max-w-md">
+      Épaules, hanches, chevilles, genoux, colonne : chaque articulation limitée oblige ton corps à compenser ailleurs. C'est souvent pour ça que tu te blesses, que tu stagnes, ou que tu traînes des douleurs sans explication.
     </p>
 
-    <div class="flex items-center gap-6 mb-10 text-sm font-medium text-[color:var(--accent)]">
-      <span class="flex items-center gap-2">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/></svg>
-        Moins de 10 min
-      </span>
-      <span class="flex items-center gap-2">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        100% Gratuit
-      </span>
+    <!-- Blocs d'orientation -->
+    <h2 class="font-heading uppercase text-xl sm:text-2xl font-bold mb-6">Tu es plutôt...</h2>
+    <div class="grid sm:grid-cols-2 gap-5 w-full max-w-2xl mb-16">
+
+      <a href="signup.html" class="group text-left p-6 rounded-2xl bg-[color:var(--card)] border border-[color:var(--border)] hover:border-brand-blue transition-colors">
+        <svg width="32" height="32" fill="none" viewBox="0 0 24 24" class="mb-4 text-brand-blue"><path d="M19 14c1.5-1.5 3-3.5 3-5.5A3.5 3.5 0 0 0 15 6c0 0-2 2-3 3-1-1-3-3-3-3a3.5 3.5 0 0 0-3.5 2.5C5.5 10.5 5 13 6.5 14.5L12 20l7-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <h3 class="font-heading uppercase font-bold text-lg mb-2">Je reviens d'une blessure</h3>
+        <p class="text-sm text-[color:var(--fg-60)] mb-4">
+          Reprends confiance dans ton corps, retrouve tes appuis et progresse sans te reblesser.
+        </p>
+        <span class="text-sm font-semibold text-brand-blue group-hover:text-brand-blue-dark transition-colors">Faire mon bilan gratuit →</span>
+      </a>
+
+      <a href="signup.html" class="group text-left p-6 rounded-2xl bg-[color:var(--card)] border border-[color:var(--border)] hover:border-brand-blue transition-colors">
+        <svg width="32" height="32" fill="none" viewBox="0 0 24 24" class="mb-4 text-brand-blue"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <h3 class="font-heading uppercase font-bold text-lg mb-2">Je veux performer / m'entraîner</h3>
+        <p class="text-sm text-[color:var(--fg-60)] mb-4">
+          Optimise ta mobilité pour gagner en performance sur le judo, le CrossFit ou l'haltérophilie.
+        </p>
+        <span class="text-sm font-semibold text-brand-blue group-hover:text-brand-blue-dark transition-colors">Faire mon bilan gratuit →</span>
+      </a>
+
     </div>
 
-    <a href="signup.html" class="w-full sm:w-auto px-10 py-4 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-white mb-4">
-      Créer mon compte
-    </a>
-    <a href="login.html" class="text-sm text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
-      J'ai déjà un compte
-    </a>
+    <!-- Encart Bilan gratuit -->
+    <div class="w-full max-w-xl p-8 sm:p-10 rounded-2xl bg-[color:var(--card)] border-2 border-brand-blue">
+      <span class="inline-block mb-4 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold bg-brand-blue text-white">
+        🎁 Cadeau offert
+      </span>
+      <h2 class="font-heading uppercase text-2xl sm:text-3xl font-bold leading-tight mb-4">
+        Fais ton <span class="text-brand-blue">bilan de mobilité</span> gratuit
+      </h2>
+      <p class="text-[color:var(--fg-70)] text-base leading-relaxed mb-6 max-w-md mx-auto">
+        Évalue tes 5 articulations en moins de 10 minutes et obtiens ton score global. 100% gratuit, sans engagement.
+      </p>
+      <div class="flex items-center justify-center gap-6 mb-8 text-sm font-medium text-[color:var(--accent)]">
+        <span class="flex items-center gap-2">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/></svg>
+          Moins de 10 min
+        </span>
+        <span class="flex items-center gap-2">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          100% Gratuit
+        </span>
+      </div>
+      <a href="signup.html" class="block w-full sm:w-auto sm:inline-block px-10 py-4 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-white mb-4">
+        Créer mon compte gratuit
+      </a>
+      <br>
+      <a href="login.html" class="text-sm text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
+        J'ai déjà un compte
+      </a>
+    </div>
 
   </main>
 
-  <footer class="text-center px-6 pb-8">
+  <footer class="text-center px-6 py-8">
     <p class="text-xs text-[color:var(--fg-40)] italic max-w-sm mx-auto">
       La blessure n'est qu'une étape, pas toute l'histoire. Alors changeons-la ensemble.
     </p>
   </footer>
 
   <script src="theme.js"></script>
+  <script>
+    // Le bouton mobile reprend le même comportement que le bouton desktop
+    document.getElementById('theme-toggle-mobile').addEventListener('click', function() {
+      document.getElementById('theme-toggle').click();
+    });
+  </script>
 </body>
 </html>
