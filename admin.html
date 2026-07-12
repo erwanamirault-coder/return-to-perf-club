@@ -89,10 +89,11 @@
         <div id="days-container" class="flex flex-col gap-4"></div>
       </div>
 
-      <!-- SECTION RECORDS -->
+      <!-- SECTION RECORDS (identique au client) -->
       <div id="section-records" class="hidden">
-        <p class="text-sm text-[color:var(--fg-50)] text-center mb-8">Fais défiler et remplis les records de ton client au fur et à mesure. Chaque ligne s'enregistre indépendamment.</p>
-        <div id="categories-container" class="flex flex-col gap-10"></div>
+        <p class="text-sm text-[color:var(--fg-50)] text-center mb-6">Tape ✎ pour saisir rapidement une valeur, ou clique sur le mouvement pour voir l'évolution complète du client.</p>
+        <div id="category-tabs" class="flex flex-wrap gap-2 justify-center mb-8"></div>
+        <div id="movement-list" class="flex flex-col gap-0 rounded-xl border border-[color:var(--border)] overflow-hidden divide-y divide-[color:var(--border)]"></div>
       </div>
 
     </div>
@@ -140,7 +141,8 @@
         { fr: "WOD Grace (temps)", en: "Grace Time" }, { fr: "WOD Murph (temps)", en: "Murph Time" }, { fr: "WOD Helen (temps)", en: "Helen Time" }
       ]
     };
-    const categoriesForce = ["Haltérophilie / Weightlifting", "Renforcement"];
+    const categoriesChargeSeule = ["Haltérophilie / Weightlifting"];
+    const categoriesForceRM = ["Renforcement"];
 
     const clientTabs = document.getElementById('client-tabs');
     const addClientForm = document.getElementById('add-client-form');
@@ -149,12 +151,26 @@
     const weekPicker = document.getElementById('week-picker');
     const weekInfo = document.getElementById('week-info');
     const selectedClientLabel = document.getElementById('selected-client-label');
+    const categoryTabs = document.getElementById('category-tabs');
+    const movementList = document.getElementById('movement-list');
 
     let clientsActifs = [];
     let selectedClientEmail = null;
     let currentMonday = null;
     let allRecords = [];
+    let currentCategory = Object.keys(mouvements)[0];
+    let openRow = null;
 
+    Object.keys(mouvements).forEach(cat => {
+      const btn = document.createElement('button');
+      btn.textContent = cat;
+      btn.className = "cat-tab px-4 py-2 rounded-full text-xs font-medium border transition-colors";
+      btn.dataset.cat = cat;
+      btn.addEventListener('click', () => { currentCategory = cat; openRow = null; renderCatTabs(); renderMovementList(); });
+      categoryTabs.appendChild(btn);
+    });
+
+    // ---------- Onglets Programmation / Records ----------
     document.getElementById('tab-programmation').addEventListener('click', () => switchTab('programmation'));
     document.getElementById('tab-records').addEventListener('click', () => switchTab('records'));
 
@@ -502,118 +518,201 @@
       });
     }
 
-    function findRecord(exercice, rm) {
-      return allRecords.find(r => r.exercice === exercice && r.repetitions_max === rm);
+    // ---------- RECORDS (identique à la version client) ----------
+    function renderCatTabs() {
+      document.querySelectorAll('.cat-tab').forEach(btn => {
+        const active = btn.dataset.cat === currentCategory;
+        btn.classList.toggle('bg-brand-blue', active);
+        btn.classList.toggle('text-white', active);
+        btn.classList.toggle('border-brand-blue', active);
+        btn.classList.toggle('border-[color:var(--border-strong)]', !active);
+      });
     }
 
-    function buildRecordsUI() {
-      const container = document.getElementById('categories-container');
-      container.innerHTML = Object.entries(mouvements).map(([cat, list]) => {
-        const isForce = categoriesForce.includes(cat);
+    function bestValue(exercice, rm) {
+      const matches = allRecords.filter(r => r.exercice === exercice && (rm === undefined ? true : r.repetitions_max === rm));
+      if (matches.length === 0) return null;
+      return matches.reduce((best, r) => (r.valeur > best.valeur ? r : best));
+    }
+
+    function movementKind(cat) {
+      if (categoriesChargeSeule.includes(cat)) return 'kg-simple';
+      if (categoriesForceRM.includes(cat)) return 'kg-rm';
+      return 'unite-libre';
+    }
+
+    function renderMovementList() {
+      const kind = movementKind(currentCategory);
+
+      movementList.innerHTML = mouvements[currentCategory].map(m => {
+        const isOpen = openRow === m.fr;
+        let bestDisplay = '—';
+
+        if (kind === 'kg-rm') {
+          const b1 = bestValue(m.fr, 1);
+          bestDisplay = b1 ? `${b1.valeur} kg (1RM)` : '—';
+        } else {
+          const b = bestValue(m.fr);
+          bestDisplay = b ? `${b.valeur} ${b.unite}` : '—';
+        }
 
         return `
           <div>
-            <h2 class="font-heading uppercase text-lg font-bold mb-4 text-[color:var(--accent)] tracking-wide">${cat}</h2>
-            <div class="rounded-xl border border-[color:var(--border)] divide-y divide-[color:var(--border)]">
-              ${list.map(m => {
-                if (isForce) {
-                  const r1 = findRecord(m.fr, 1), r3 = findRecord(m.fr, 3), r5 = findRecord(m.fr, 5);
-                  return `
-                    <div class="px-4 py-3 flex flex-wrap items-center justify-between gap-2" data-exercice="${m.fr}" data-categorie="${cat}" data-force="1">
-                      <div class="min-w-[130px]">
-                        <p class="text-sm font-medium">${m.en}</p>
-                        <p class="text-xs text-[color:var(--fg-40)]">${m.fr}</p>
-                      </div>
-                      <div class="flex items-center gap-1.5">
-                        <div class="text-center">
-                          <label class="block text-[9px] uppercase text-[color:var(--fg-40)]">1RM</label>
-                          <input type="number" step="0.5" class="rm-input w-14 px-1.5 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-xs text-center outline-none focus:border-brand-blue" data-rm="1" value="${r1 ? r1.valeur : ''}">
-                        </div>
-                        <div class="text-center">
-                          <label class="block text-[9px] uppercase text-[color:var(--fg-40)]">3RM</label>
-                          <input type="number" step="0.5" class="rm-input w-14 px-1.5 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-xs text-center outline-none focus:border-brand-blue" data-rm="3" value="${r3 ? r3.valeur : ''}">
-                        </div>
-                        <div class="text-center">
-                          <label class="block text-[9px] uppercase text-[color:var(--fg-40)]">5RM</label>
-                          <input type="number" step="0.5" class="rm-input w-14 px-1.5 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-xs text-center outline-none focus:border-brand-blue" data-rm="5" value="${r5 ? r5.valeur : ''}">
-                        </div>
-                        <button class="save-row-btn w-8 h-8 rounded-md bg-brand-blue hover:bg-brand-blue-dark text-white text-sm flex items-center justify-center shrink-0" title="Enregistrer">✓</button>
-                      </div>
-                    </div>
-                  `;
-                } else {
-                  const r0 = findRecord(m.fr, 0);
-                  return `
-                    <div class="px-4 py-3 flex flex-wrap items-center justify-between gap-2" data-exercice="${m.fr}" data-categorie="${cat}" data-force="0">
-                      <div class="min-w-[130px]">
-                        <p class="text-sm font-medium">${m.en}</p>
-                        <p class="text-xs text-[color:var(--fg-40)]">${m.fr}</p>
-                      </div>
-                      <div class="flex items-center gap-1.5">
-                        <input type="number" step="0.5" class="simple-value w-20 px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue" placeholder="Valeur" value="${r0 ? r0.valeur : ''}">
-                        <select class="simple-unite px-1.5 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
-                          <option value="reps" ${r0?.unite === 'reps' ? 'selected' : ''}>reps</option>
-                          <option value="sec" ${r0?.unite === 'sec' ? 'selected' : ''}>sec</option>
-                          <option value="m" ${r0?.unite === 'm' ? 'selected' : ''}>m</option>
-                          <option value="cal" ${r0?.unite === 'cal' ? 'selected' : ''}>cal</option>
-                          <option value="kg" ${r0?.unite === 'kg' ? 'selected' : ''}>kg</option>
-                        </select>
-                        <button class="save-row-btn w-8 h-8 rounded-md bg-brand-blue hover:bg-brand-blue-dark text-white text-sm flex items-center justify-center shrink-0" title="Enregistrer">✓</button>
-                      </div>
-                    </div>
-                  `;
-                }
-              }).join('')}
+            <div class="flex items-center justify-between px-4 py-3.5 hover:bg-[color:var(--card)] transition-colors">
+              <button type="button" class="open-detail-btn text-left flex-1" data-exercice="${m.fr}" data-en="${m.en}">
+                <p class="text-sm font-medium">${m.en}</p>
+                <p class="text-xs text-[color:var(--fg-40)]">${m.fr}</p>
+              </button>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="font-heading font-bold text-[color:var(--accent)] text-sm">${bestDisplay}</span>
+                <button type="button" class="toggle-quick-btn w-7 h-7 rounded-full border border-[color:var(--border-strong)] hover:border-brand-blue flex items-center justify-center text-xs" data-exercice="${m.fr}">✎</button>
+                <button type="button" class="open-detail-btn text-[color:var(--fg-30)]" data-exercice="${m.fr}" data-en="${m.en}">›</button>
+              </div>
             </div>
+
+            ${isOpen ? renderQuickForm(m, kind) : ''}
           </div>
         `;
       }).join('');
 
-      document.querySelectorAll('.save-row-btn').forEach(btn => {
-        btn.addEventListener('click', () => saveRecordRow(btn));
+      document.querySelectorAll('.toggle-quick-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          openRow = openRow === btn.dataset.exercice ? null : btn.dataset.exercice;
+          renderMovementList();
+        });
+      });
+
+      document.querySelectorAll('.open-detail-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const p = new URLSearchParams({
+            exercice: btn.dataset.exercice, en: btn.dataset.en,
+            categorie: currentCategory, kind: kind, client: selectedClientEmail
+          });
+          window.location.href = `pr-detail.html?${p.toString()}`;
+        });
+      });
+
+      document.querySelectorAll('.quick-save-btn').forEach(btn => {
+        btn.addEventListener('click', () => saveQuickRecord(btn, kind));
       });
     }
 
-    async function saveRecordRow(btn) {
-      if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
-      const row = btn.closest('[data-exercice]');
-      const exercice = row.dataset.exercice;
-      const categorie = row.dataset.categorie;
-      const isForce = row.dataset.force === '1';
+    function renderQuickForm(m, kind) {
+      const today = new Date().toISOString().split('T')[0];
 
-      btn.disabled = true;
-      btn.textContent = '…';
-
-      if (isForce) {
-        const inputs = row.querySelectorAll('.rm-input');
-        const entries = Array.from(inputs)
-          .map(input => ({ rm: Number(input.dataset.rm), val: input.value }))
-          .filter(e => e.val !== '' && !isNaN(parseFloat(e.val)));
-
-        for (const e of entries) {
-          await supabaseClient.from('records').upsert({
-            client_email: selectedClientEmail, categorie: categorie, exercice: exercice,
-            valeur: parseFloat(e.val), unite: 'kg', repetitions_max: e.rm,
-            date_record: new Date().toISOString().split('T')[0], updated_at: new Date().toISOString()
-          }, { onConflict: 'client_email,exercice,repetitions_max' });
-        }
-      } else {
-        const valeur = parseFloat(row.querySelector('.simple-value').value);
-        const unite = row.querySelector('.simple-unite').value;
-        if (!isNaN(valeur)) {
-          await supabaseClient.from('records').upsert({
-            client_email: selectedClientEmail, categorie: categorie, exercice: exercice,
-            valeur: valeur, unite: unite, repetitions_max: 0,
-            date_record: new Date().toISOString().split('T')[0], updated_at: new Date().toISOString()
-          }, { onConflict: 'client_email,exercice,repetitions_max' });
-        }
+      if (kind === 'kg-simple') {
+        return `
+          <div class="quick-form-wrapper px-4 pb-4 flex flex-wrap items-end gap-2 bg-[color:var(--card)]" data-exercice="${m.fr}">
+            <div>
+              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Charge (kg)</label>
+              <input type="number" step="0.5" class="quick-valeur w-24 px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            </div>
+            <div>
+              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Date</label>
+              <input type="date" class="quick-date px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" value="${today}">
+            </div>
+            <button type="button" class="quick-save-btn px-4 py-1.5 rounded-md bg-brand-blue hover:bg-brand-blue-dark text-white text-sm font-medium" data-exercice="${m.fr}">Enregistrer</button>
+          </div>
+        `;
       }
 
-      btn.disabled = false;
-      btn.textContent = '✓';
-      btn.classList.add('bg-brand-blue-dark');
-      setTimeout(() => btn.classList.remove('bg-brand-blue-dark'), 800);
+      if (kind === 'kg-rm') {
+        return `
+          <div class="quick-form-wrapper px-4 pb-4 flex flex-wrap items-end gap-2 bg-[color:var(--card)]" data-exercice="${m.fr}">
+            <div>
+              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">RM</label>
+              <select class="quick-rm px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+                <option value="1">1RM</option>
+                <option value="3">3RM</option>
+                <option value="5">5RM</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Charge (kg)</label>
+              <input type="number" step="0.5" class="quick-valeur w-24 px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            </div>
+            <div>
+              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Date</label>
+              <input type="date" class="quick-date px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" value="${today}">
+            </div>
+            <button type="button" class="quick-save-btn px-4 py-1.5 rounded-md bg-brand-blue hover:bg-brand-blue-dark text-white text-sm font-medium" data-exercice="${m.fr}">Enregistrer</button>
+          </div>
+        `;
+      }
 
+      return `
+        <div class="quick-form-wrapper px-4 pb-4 flex flex-wrap items-end gap-2 bg-[color:var(--card)]" data-exercice="${m.fr}">
+          <div>
+            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Valeur</label>
+            <input type="number" step="0.5" class="quick-valeur w-24 px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Unité</label>
+            <select class="quick-unite px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <option value="reps">reps</option>
+              <option value="sec">sec</option>
+              <option value="m">m</option>
+              <option value="cal">cal</option>
+              <option value="kg">kg</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Date</label>
+            <input type="date" class="quick-date px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" value="${today}">
+          </div>
+          <button type="button" class="quick-save-btn px-4 py-1.5 rounded-md bg-brand-blue hover:bg-brand-blue-dark text-white text-sm font-medium" data-exercice="${m.fr}">Enregistrer</button>
+        </div>
+      `;
+    }
+
+    async function saveQuickRecord(btn, kind) {
+      if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
+
+      const wrapper = btn.parentElement;
+      const exercice = btn.dataset.exercice;
+
+      const valeurInput = wrapper.querySelector('.quick-valeur');
+      const dateInput = wrapper.querySelector('.quick-date');
+
+      if (!valeurInput || !dateInput) {
+        alert("Erreur interne : champs introuvables. Recharge la page et réessaie.");
+        return;
+      }
+
+      const valeur = parseFloat(valeurInput.value);
+      const date = dateInput.value || new Date().toISOString().split('T')[0];
+
+      if (isNaN(valeur)) { alert("Renseigne une valeur."); return; }
+
+      let unite = 'kg';
+      let rm = 0;
+
+      if (kind === 'kg-rm') {
+        rm = Number(wrapper.querySelector('.quick-rm').value);
+      } else if (kind === 'unite-libre') {
+        unite = wrapper.querySelector('.quick-unite').value;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '...';
+
+      const { error } = await supabaseClient.from('records').insert({
+        client_email: selectedClientEmail,
+        categorie: currentCategory,
+        exercice: exercice,
+        valeur: valeur,
+        unite: unite,
+        repetitions_max: rm,
+        date_record: date,
+        updated_at: new Date().toISOString()
+      });
+
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer';
+
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      openRow = null;
       await loadRecords();
     }
 
@@ -622,7 +721,8 @@
       const { data } = await supabaseClient
         .from('records').select('*').eq('client_email', selectedClientEmail);
       allRecords = data || [];
-      buildRecordsUI();
+      renderCatTabs();
+      renderMovementList();
     }
 
     async function checkAccess() {
