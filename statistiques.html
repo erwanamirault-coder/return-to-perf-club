@@ -105,6 +105,11 @@
 
     function waitForCalendlyAndInit() {
       if (window.Calendly) {
+        const widgetEl = document.getElementById('calendly-widget');
+        if (widgetEl) {
+          // Sur mobile, le calendrier et les créneaux s'empilent verticalement : il faut plus de hauteur.
+          widgetEl.style.height = window.innerWidth < 640 ? '1150px' : '750px';
+        }
         Calendly.initInlineWidget({
           url: CALENDLY_URL,
           parentElement: document.querySelector('.calendly-inline-widget')
@@ -201,12 +206,12 @@
           <p class="text-[color:var(--fg-70)] text-sm sm:text-base leading-relaxed mb-10 max-w-sm mx-auto">
             Les statistiques sont réservées aux clients suivis. Réservons un appel pour faire le point ensemble sur tes objectifs.
           </p>
-          <div class="rounded-2xl border border-brand-blue-dark bg-brand-blue/5 p-4 sm:p-6 max-w-lg mx-auto">
+          <div class="rounded-2xl border border-brand-blue-dark bg-brand-blue/5 p-4 sm:p-6 w-full">
             <h2 class="font-heading uppercase text-lg font-bold mb-2">Appel bilan offert</h2>
             <p class="text-sm text-[color:var(--fg-60)] mb-4">
               30 minutes pour discuter de ta situation et voir comment on peut travailler ensemble.
             </p>
-            <div class="calendly-inline-widget" data-url="${CALENDLY_URL}" style="min-width:280px;height:650px;"></div>
+            <div id="calendly-widget" class="calendly-inline-widget" data-url="${CALENDLY_URL}" style="width:100%;min-width:280px;height:700px;"></div>
           </div>
           <a href="dashboard.html" class="inline-block mt-10 text-sm text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
             Retour à mon espace
