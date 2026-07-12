@@ -64,10 +64,10 @@
         { fr: "Épaulé puissance suspendu", en: "Hang Power Clean" }, { fr: "Tirage d'épaulé", en: "Clean Pull" },
         { fr: "Jeté", en: "Jerk" }, { fr: "Jeté fente", en: "Split Jerk" }, { fr: "Jeté puissance", en: "Power Jerk" },
         { fr: "Poussée-jeté", en: "Push Jerk" }, { fr: "Épaulé-jeté", en: "Clean & Jerk" },
-        { fr: "Squat clavicule (WL)", en: "Front Squat (WL)" }, { fr: "Squat nuque (WL)", en: "Back Squat (WL)" }, { fr: "Squat overhead", en: "Overhead Squat" }
+        { fr: "Squat clavicule", en: "Front Squat" }, { fr: "Squat nuque", en: "Back Squat" }, { fr: "Squat overhead", en: "Overhead Squat" }
       ],
       "Renforcement": [
-        { fr: "Squat arrière", en: "Back Squat" }, { fr: "Squat avant", en: "Front Squat" },
+        { fr: "Squat arrière", en: "Back Squat" }, { fr: "Squat avant", en: "Front Squat" }, { fr: "Squat overhead", en: "Overhead Squat" },
         { fr: "Soulevé de terre", en: "Deadlift" }, { fr: "Soulevé de terre sumo", en: "Sumo Deadlift" },
         { fr: "Développé couché", en: "Bench Press" }, { fr: "Développé militaire strict", en: "Strict Press" },
         { fr: "Développé militaire poussé", en: "Push Press" }, { fr: "Thruster", en: "Thruster" },
@@ -119,14 +119,8 @@
       });
     }
 
-    // IMPORTANT : on filtre toujours aussi par catégorie, pour ne jamais mélanger
-    // deux mouvements homonymes appartenant à des catégories différentes.
-    function bestValue(exercice, cat, rm) {
-      const matches = allRecords.filter(r =>
-        r.exercice === exercice &&
-        r.categorie === cat &&
-        (rm === undefined ? true : r.repetitions_max === rm)
-      );
+    function bestValue(exercice, rm) {
+      const matches = allRecords.filter(r => r.exercice === exercice && (rm === undefined ? true : r.repetitions_max === rm));
       if (matches.length === 0) return null;
       return matches.reduce((best, r) => (r.valeur > best.valeur ? r : best));
     }
@@ -145,15 +139,15 @@
         let bestDisplay = '—';
 
         if (kind === 'kg-rm') {
-          const b1 = bestValue(m.fr, currentCategory, 1);
+          const b1 = bestValue(m.fr, 1);
           bestDisplay = b1 ? `${b1.valeur} kg (1RM)` : '—';
         } else {
-          const b = bestValue(m.fr, currentCategory);
+          const b = bestValue(m.fr);
           bestDisplay = b ? `${b.valeur} ${b.unite}` : '—';
         }
 
         return `
-          <div data-exercice="${m.fr}">
+          <div>
             <div class="flex items-center justify-between px-4 py-3.5 hover:bg-[color:var(--card)] transition-colors">
               <button type="button" class="open-detail-btn text-left flex-1" data-exercice="${m.fr}" data-en="${m.en}">
                 <p class="text-sm font-medium">${m.en}</p>
@@ -198,7 +192,7 @@
 
       if (kind === 'kg-simple') {
         return `
-          <div class="px-4 pb-4 flex flex-wrap items-end gap-2 bg-[color:var(--card)]">
+          <div class="quick-form-wrapper px-4 pb-4 flex flex-wrap items-end gap-2 bg-[color:var(--card)]" data-exercice="${m.fr}">
             <div>
               <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Charge (kg)</label>
               <input type="number" step="0.5" class="quick-valeur w-24 px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
@@ -214,7 +208,7 @@
 
       if (kind === 'kg-rm') {
         return `
-          <div class="px-4 pb-4 flex flex-wrap items-end gap-2 bg-[color:var(--card)]">
+          <div class="quick-form-wrapper px-4 pb-4 flex flex-wrap items-end gap-2 bg-[color:var(--card)]" data-exercice="${m.fr}">
             <div>
               <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">RM</label>
               <select class="quick-rm px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
@@ -237,7 +231,7 @@
       }
 
       return `
-        <div class="px-4 pb-4 flex flex-wrap items-end gap-2 bg-[color:var(--card)]">
+        <div class="quick-form-wrapper px-4 pb-4 flex flex-wrap items-end gap-2 bg-[color:var(--card)]" data-exercice="${m.fr}">
           <div>
             <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Valeur</label>
             <input type="number" step="0.5" class="quick-valeur w-24 px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
@@ -262,8 +256,10 @@
     }
 
     async function saveQuick(btn, kind) {
+      // CORRECTION : on prend le parent direct du bouton (le bloc du formulaire), pas closest() qui se matchait sur le bouton lui-même
+      const wrapper = btn.parentElement;
       const exercice = btn.dataset.exercice;
-      const wrapper = btn.closest('[data-exercice]');
+
       const valeurInput = wrapper.querySelector('.quick-valeur');
       const dateInput = wrapper.querySelector('.quick-date');
 
@@ -275,7 +271,7 @@
       const valeur = parseFloat(valeurInput.value);
       const date = dateInput.value || new Date().toISOString().split('T')[0];
 
-      if (isNaN(valeur)) { alert("Renseigne une valeur numérique."); return; }
+      if (isNaN(valeur)) { alert("Renseigne une valeur."); return; }
 
       let unite = 'kg';
       let rm = 0;
@@ -303,22 +299,17 @@
       btn.disabled = false;
       btn.textContent = 'Enregistrer';
 
-      if (error) {
-        alert("Erreur lors de l'enregistrement : " + error.message);
-        return;
-      }
+      if (error) { alert("Erreur : " + error.message); return; }
 
       openRow = null;
       await loadRecords();
     }
 
     async function loadRecords() {
-      const { data, error } = await supabaseClient
+      const { data } = await supabaseClient
         .from('records')
         .select('*')
         .eq('client_email', currentUserEmail);
-
-      if (error) { console.error(error); return; }
       allRecords = data || [];
       renderTabs();
       renderList();
