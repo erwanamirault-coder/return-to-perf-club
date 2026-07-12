@@ -36,10 +36,7 @@
 
   <header class="flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
     <a id="back-link" href="mes-records.html" class="text-xl">←</a>
-    <div class="text-center">
-      <h1 id="page-title" class="font-heading uppercase font-bold text-sm tracking-wide"></h1>
-      <p id="client-label" class="hidden text-[10px] text-[color:var(--fg-40)]"></p>
-    </div>
+    <h1 id="page-title" class="font-heading uppercase font-bold text-sm tracking-wide"></h1>
     <button id="add-toggle" class="w-9 h-9 rounded-full bg-brand-blue text-white flex items-center justify-center text-lg font-bold">+</button>
   </header>
 
@@ -80,12 +77,10 @@
     const nomEn = params.get('en');
     const categorie = params.get('categorie');
     const kind = params.get('kind');
+    const clientParam = params.get('client'); // présent seulement si on vient de l'admin
     const isForceRM = kind === 'kg-rm';
-    const clientOverride = params.get('client'); // présent uniquement si on vient de l'admin
 
-    let currentUserEmail = null;   // toujours l'utilisateur connecté
-    let targetEmail = null;        // le compte dont on regarde les records (= client s'il y a override)
-    let isAdminView = false;
+    let currentUserEmail = null; // celui dont on affiche les données (soi-même ou un client)
     let allEntries = [];
     let selectedRm = isForceRM ? 1 : 0;
 
@@ -238,7 +233,7 @@
       saveEntryBtn.textContent = 'Enregistrement...';
 
       const { error } = await supabaseClient.from('records').insert({
-        client_email: targetEmail,
+        client_email: currentUserEmail,
         categorie: categorie,
         exercice: exercice,
         valeur: valeur,
@@ -262,14 +257,11 @@
     });
 
     async function loadEntries() {
-      const { data, error } = await supabaseClient
+      const { data } = await supabaseClient
         .from('records')
         .select('*')
-        .eq('client_email', targetEmail)
-        .eq('exercice', exercice)
-        .eq('categorie', categorie);
-
-      if (error) { console.error(error); return; }
+        .eq('client_email', currentUserEmail)
+        .eq('exercice', exercice);
       allEntries = data || [];
       render();
     }
@@ -277,17 +269,16 @@
     async function load() {
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) { window.location.href = 'login.html'; return; }
-      currentUserEmail = user.email.trim().toLowerCase();
 
-      if (clientOverride && currentUserEmail === ADMIN_EMAIL) {
-        // Mode admin : on regarde les records d'un client précis
-        isAdminView = true;
-        targetEmail = clientOverride.toLowerCase();
+      const isAdmin = user.email === ADMIN_EMAIL;
+
+      if (clientParam && isAdmin) {
+        // On est admin et on regarde le graphique d'un client précis
+        currentUserEmail = clientParam.trim().toLowerCase();
         document.getElementById('back-link').href = 'admin.html';
-        document.getElementById('client-label').textContent = `Client : ${targetEmail}`;
-        document.getElementById('client-label').classList.remove('hidden');
       } else {
-        targetEmail = currentUserEmail;
+        // Vue normale (le client regarde ses propres données)
+        currentUserEmail = user.email.trim().toLowerCase();
       }
 
       buildAddForm();
