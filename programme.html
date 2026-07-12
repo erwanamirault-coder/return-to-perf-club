@@ -46,6 +46,12 @@
   <main class="px-6 py-12 max-w-2xl mx-auto">
     <h1 class="font-heading uppercase text-2xl font-bold mb-8 text-center">Ma programmation</h1>
 
+    <!-- Records personnels -->
+    <div id="records-section" class="hidden mb-10">
+      <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">🏆 Mes records</h2>
+      <div id="records-list" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
+    </div>
+
     <div id="week-nav" class="flex items-center justify-between mb-5">
       <button id="prev-week" class="w-8 h-8 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors text-sm">‹</button>
       <h2 id="week-label" class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold"></h2>
@@ -64,6 +70,7 @@
     const CALENDLY_URL = "https://calendly.com/erwan-amirault/45min";
 
     let seancesParDate = {};
+    let notesParDate = {};
     let retoursMap = {};
     let currentUserEmail = null;
     let currentWeekStart = getMonday(new Date());
@@ -91,15 +98,12 @@
       return `${y}-${m}-${day}`;
     }
 
-    function calculerDate(s) {
-      if (s.date_seance) return s.date_seance;
-      if (s.semaine_debut && s.jour && offsetJour[s.jour] !== undefined) {
-        const [y, m, d] = s.semaine_debut.split('-').map(Number);
-        const lundi = new Date(y, m - 1, d);
-        lundi.setDate(lundi.getDate() + offsetJour[s.jour]);
-        return formatDateKey(lundi);
-      }
-      return null;
+    function calculerDate(semaine_debut, jour) {
+      if (!semaine_debut || !jour || offsetJour[jour] === undefined) return null;
+      const [y, m, d] = semaine_debut.split('-').map(Number);
+      const lundi = new Date(y, m - 1, d);
+      lundi.setDate(lundi.getDate() + offsetJour[jour]);
+      return formatDateKey(lundi);
     }
 
     function renderWeek() {
@@ -151,6 +155,7 @@
       }
 
       const exos = seancesParDate[selectedDate];
+      const noteJour = notesParDate[selectedDate];
       const [y, m, d] = selectedDate.split('-').map(Number);
       const dateObj = new Date(y, m - 1, d);
       const dateLabel = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -165,6 +170,14 @@
 
       dayDetail.innerHTML = `
         <h3 class="font-heading uppercase text-base font-bold mb-4 text-[color:var(--accent)]">${dateLabel}</h3>
+
+        ${noteJour ? `
+          <div class="rounded-xl border border-brand-blue-dark bg-brand-blue/5 p-4 mb-4">
+            <p class="text-xs uppercase tracking-widest text-[color:var(--accent)] font-semibold mb-1.5">Mot de ton coach</p>
+            <p class="text-sm text-[color:var(--fg-70)] leading-relaxed">${noteJour}</p>
+          </div>
+        ` : ''}
+
         <div class="flex flex-col gap-4">
           ${exos.map(e => `
             <div class="rounded-xl border border-[color:var(--border)] p-4">
@@ -260,6 +273,24 @@
       `;
     }
 
+    async function loadRecords() {
+      const { data } = await supabaseClient
+        .from('records')
+        .select('*')
+        .eq('client_email', currentUserEmail)
+        .order('date_record', { ascending: false });
+
+      if (!data || data.length === 0) return;
+
+      document.getElementById('records-section').classList.remove('hidden');
+      document.getElementById('records-list').innerHTML = data.map(r => `
+        <div class="rounded-lg border border-[color:var(--border)] p-3 text-center">
+          <p class="text-xs text-[color:var(--fg-50)] truncate mb-1">${r.exercice}</p>
+          <p class="font-heading font-bold text-[color:var(--accent)]">${r.valeur} ${r.unite}</p>
+        </div>
+      `).join('');
+    }
+
     async function load() {
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) { window.location.href = 'login.html'; return; }
@@ -276,6 +307,8 @@
         return;
       }
 
+      await loadRecords();
+
       const { data: seances } = await supabaseClient
         .from('programmes')
         .select('*')
@@ -283,10 +316,21 @@
 
       seancesParDate = {};
       (seances || []).forEach(s => {
-        const key = calculerDate(s);
+        const key = calculerDate(s.semaine_debut, s.jour);
         if (!key) return;
         if (!seancesParDate[key]) seancesParDate[key] = [];
         seancesParDate[key].push(s);
+      });
+
+      const { data: notes } = await supabaseClient
+        .from('notes_jour')
+        .select('*');
+
+      notesParDate = {};
+      (notes || []).forEach(n => {
+        const key = calculerDate(n.semaine_debut, n.jour);
+        if (!key || !n.commentaire) return;
+        notesParDate[key] = n.commentaire;
       });
 
       const { data: retours } = await supabaseClient
