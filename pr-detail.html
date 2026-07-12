@@ -67,10 +67,13 @@
 
   </main>
 
+  <div id="calendly-content" class="px-6 py-12 max-w-lg mx-auto hidden"></div>
+
   <script src="supabase-config.js"></script>
   <script src="theme.js"></script>
   <script>
     const ADMIN_EMAIL = "erwan20b@gmail.com";
+    const CALENDLY_URL = "https://calendly.com/erwan-amirault/45min";
 
     const params = new URLSearchParams(window.location.search);
     const exercice = params.get('exercice');
@@ -266,6 +269,36 @@
       render();
     }
 
+    function renderCalendlyBlock() {
+      document.getElementById('page-content').classList.add('hidden');
+      document.getElementById('add-toggle').classList.add('hidden');
+      const el = document.getElementById('calendly-content');
+      el.classList.remove('hidden');
+      el.innerHTML = `
+        <div class="text-center py-10">
+          <span class="inline-block mb-6 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold border border-brand-blue-dark text-[color:var(--accent)]">
+            Bilan de tes capacités
+          </span>
+          <h1 class="font-heading uppercase text-2xl sm:text-3xl font-bold mb-4">Pas encore de suivi actif</h1>
+          <p class="text-[color:var(--fg-70)] text-sm sm:text-base leading-relaxed mb-10 max-w-sm mx-auto">
+            Les records personnels sont réservés aux clients suivis. Réservons un appel pour faire le point ensemble sur tes objectifs.
+          </p>
+          <div class="rounded-2xl border border-brand-blue-dark bg-brand-blue/5 p-8 max-w-sm mx-auto">
+            <h2 class="font-heading uppercase text-lg font-bold mb-2">Appel bilan offert</h2>
+            <p class="text-sm text-[color:var(--fg-60)] mb-6">
+              30 minutes pour discuter de ta situation et voir comment on peut travailler ensemble.
+            </p>
+            <a href="${CALENDLY_URL}" target="_blank" class="inline-block w-full px-8 py-4 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-sm text-white">
+              Je réserve mon appel bilan offert !
+            </a>
+          </div>
+          <a href="dashboard.html" class="inline-block mt-10 text-sm text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
+            Retour à mon espace
+          </a>
+        </div>
+      `;
+    }
+
     async function load() {
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) { window.location.href = 'login.html'; return; }
@@ -273,12 +306,23 @@
       const isAdmin = user.email === ADMIN_EMAIL;
 
       if (clientParam && isAdmin) {
-        // On est admin et on regarde le graphique d'un client précis
+        // Toi en tant qu'admin, tu regardes toujours les données d'un client sans restriction
         currentUserEmail = clientParam.trim().toLowerCase();
         document.getElementById('back-link').href = 'admin.html';
       } else {
-        // Vue normale (le client regarde ses propres données)
+        // Vue normale (le client regarde ses propres données) : on vérifie qu'il est bien suivi
         currentUserEmail = user.email.trim().toLowerCase();
+
+        const { data: clientActif } = await supabaseClient
+          .from('clients_actifs')
+          .select('email')
+          .ilike('email', currentUserEmail)
+          .maybeSingle();
+
+        if (!clientActif) {
+          renderCalendlyBlock();
+          return;
+        }
       }
 
       buildAddForm();
