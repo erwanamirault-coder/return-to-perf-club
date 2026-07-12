@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Record — Bilan de tes capacités</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000', white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
+    <a href="mes-records.html" class="text-xl">←</a>
+    <h1 id="page-title" class="font-heading uppercase font-bold text-sm tracking-wide"></h1>
+    <button id="add-toggle" class="w-9 h-9 rounded-full bg-brand-blue text-white flex items-center justify-center text-lg font-bold">+</button>
+  </header>
+
+  <main id="page-content" class="px-6 py-8 max-w-lg mx-auto hidden">
+
+    <!-- Onglets RM (uniquement pour force) -->
+    <div id="rm-tabs" class="hidden grid grid-cols-3 gap-2 mb-6"></div>
+
+    <!-- Formulaire d'ajout -->
+    <div id="add-form" class="hidden rounded-xl border border-[color:var(--border)] p-4 mb-6">
+      <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-3">Nouvelle valeur</p>
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <input type="number" step="0.5" id="new-valeur" placeholder="Valeur" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="date" id="new-date" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="save-entry-btn" class="text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">Enregistrer</button>
+        <span id="save-confirm" class="hidden text-xs text-[color:var(--accent)] font-medium">Enregistré ✓</span>
+      </div>
+    </div>
+
+    <!-- Valeur actuelle -->
+    <div class="text-center mb-6">
+      <p id="current-value" class="font-heading text-5xl font-bold text-brand-blue">—</p>
+    </div>
+
+    <!-- Graphique SVG -->
+    <div class="rounded-xl border border-[color:var(--border)] p-4 mb-8">
+      <svg id="chart-svg" viewBox="0 0 300 150" class="w-full h-auto"></svg>
+      <p id="chart-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] py-8">Pas encore assez de données pour un graphique.</p>
+    </div>
+
+    <!-- Historique -->
+    <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">Historique</h2>
+    <div id="history-list" class="flex flex-col gap-2"></div>
+
+  </main>
+
+  <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const exercice = params.get('exercice');
+    const nomEn = params.get('en');
+    const categorie = params.get('categorie');
+    const isForce = params.get('force') === '1';
+
+    let currentUserEmail = null;
+    let allEntries = [];
+    let selectedRm = isForce ? 1 : 0;
+
+    document.getElementById('page-title').textContent = nomEn || exercice;
+
+    const rmTabs = document.getElementById('rm-tabs');
+    const addForm = document.getElementById('add-form');
+    const addToggle = document.getElementById('add-toggle');
+    const newValeur = document.getElementById('new-valeur');
+    const newDate = document.getElementById('new-date');
+    const saveEntryBtn = document.getElementById('save-entry-btn');
+    const saveConfirm = document.getElementById('save-confirm');
+    const currentValue = document.getElementById('current-value');
+    const chartSvg = document.getElementById('chart-svg');
+    const chartEmpty = document.getElementById('chart-empty');
+    const historyList = document.getElementById('history-list');
+
+    addToggle.addEventListener('click', () => {
+      addForm.classList.toggle('hidden');
+      newDate.value = new Date().toISOString().split('T')[0];
+    });
+
+    if (isForce) {
+      rmTabs.classList.remove('hidden');
+      [1, 3, 5].forEach(rm => {
+        const btn = document.createElement('button');
+        btn.textContent = `${rm}RM`;
+        btn.dataset.rm = rm;
+        btn.className = "rm-tab-btn py-3 rounded-lg border text-sm font-semibold transition-colors";
+        btn.addEventListener('click', () => { selectedRm = rm; render(); });
+        rmTabs.appendChild(btn);
+      });
+    }
+
+    function entriesForRm(rm) {
+      return allEntries
+        .filter(e => (isForce ? e.repetitions_max === rm : true))
+        .sort((a, b) => new Date(a.date_record) - new Date(b.date_record));
+    }
+
+    function render() {
+      if (isForce) {
+        document.querySelectorAll('.rm-tab-btn').forEach(btn => {
+          const active = Number(btn.dataset.rm) === selectedRm;
+          btn.classList.toggle('bg-brand-blue', active);
+          btn.classList.toggle('text-white', active);
+          btn.classList.toggle('border-brand-blue', active);
+          btn.classList.toggle('border-[color:var(--border-strong)]', !active);
+          const entries = entriesForRm(Number(btn.dataset.rm));
+          const best = entries.length ? Math.max(...entries.map(e => e.valeur)) : null;
+          btn.innerHTML = `${btn.dataset.rm}RM<br><span class="text-xs font-normal">${best ?? '—'}</span>`;
+        });
+      }
+
+      const entries = entriesForRm(selectedRm);
+
+      if (entries.length === 0) {
+        currentValue.textContent = '—';
+        chartSvg.innerHTML = '';
+        chartEmpty.classList.remove('hidden');
+        historyList.innerHTML = `<p class="text-sm text-[color:var(--fg-40)] text-center py-4">Aucune valeur enregistrée.</p>`;
+        return;
+      }
+
+      const best = Math.max(...entries.map(e => e.valeur));
+      const unite = entries[0].unite;
+      currentValue.textContent = `${best} ${unite}`;
+
+      // Graphique
+      if (entries.length >= 2) {
+        chartEmpty.classList.add('hidden');
+        const values = entries.map(e => e.valeur);
+        const min = Math.min(...values), max = Math.max(...values);
+        const range = max - min || 1;
+        const w = 300, h = 150, pad = 15;
+
+        const points = entries.map((e, i) => {
+          const x = pad + (i / (entries.length - 1)) * (w - pad * 2);
+          const y = h - pad - ((e.valeur - min) / range) * (h - pad * 2);
+          return `${x},${y}`;
+        });
+
+        const dots = entries.map((e, i) => {
+          const [x, y] = points[i].split(',');
+          return `<circle cx="${x}" cy="${y}" r="3" fill="#2D7AED" />`;
+        }).join('');
+
+        chartSvg.innerHTML = `
+          <polyline points="${points.join(' ')}" fill="none" stroke="#2D7AED" stroke-width="2" />
+          ${dots}
+        `;
+      } else {
+        chartSvg.innerHTML = '';
+        chartEmpty.classList.remove('hidden');
+      }
+
+      // Historique (plus récent en premier)
+      historyList.innerHTML = [...entries].reverse().map(e => `
+        <div class="flex items-center justify-between rounded-lg border border-[color:var(--border)] px-4 py-2.5">
+          <div class="flex items-center gap-2">
+            ${isForce ? `<span class="px-2 py-0.5 rounded-full bg-[color:var(--card)] text-[10px] font-bold">${e.repetitions_max}RM</span>` : ''}
+            <span class="text-sm text-[color:var(--fg-60)]">${new Date(e.date_record).toLocaleDateString('fr-FR')}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="font-heading font-bold text-sm">${e.valeur} ${e.unite}</span>
+            <span class="delete-entry text-red-400 hover:text-red-300 text-xs" data-id="${e.id}">✕</span>
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.delete-entry').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          await supabaseClient.from('records').delete().eq('id', btn.dataset.id);
+          await loadEntries();
+        });
+      });
+    }
+
+    saveEntryBtn.addEventListener('click', async () => {
+      const valeur = parseFloat(newValeur.value);
+      if (isNaN(valeur)) { alert("Renseigne une valeur."); return; }
+
+      saveEntryBtn.disabled = true;
+      saveEntryBtn.textContent = 'Enregistrement...';
+
+      const { error } = await supabaseClient.from('records').insert({
+        client_email: currentUserEmail,
+        categorie: categorie,
+        exercice: exercice,
+        valeur: valeur,
+        unite: isForce ? 'kg' : 'reps',
+        repetitions_max: isForce ? selectedRm : 0,
+        date_record: newDate.value || new Date().toISOString().split('T')[0],
+        updated_at: new Date().toISOString()
+      });
+
+      saveEntryBtn.disabled = false;
+      saveEntryBtn.textContent = 'Enregistrer';
+
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      saveConfirm.classList.remove('hidden');
+      setTimeout(() => saveConfirm.classList.add('hidden'), 2000);
+      newValeur.value = '';
+      addForm.classList.add('hidden');
+
+      await loadEntries();
+    });
+
+    async function loadEntries() {
+      const { data } = await supabaseClient
+        .from('records')
+        .select('*')
+        .eq('client_email', currentUserEmail)
+        .eq('exercice', exercice);
+      allEntries = data || [];
+      render();
+    }
+
+    async function load() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) { window.location.href = 'login.html'; return; }
+      currentUserEmail = user.email.trim().toLowerCase();
+
+      document.getElementById('page-content').classList.remove('hidden');
+      await loadEntries();
+    }
+
+    load();
+  </script>
+
+</body>
+</html>
