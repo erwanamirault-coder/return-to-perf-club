@@ -196,4 +196,627 @@
       "Cardio / Benchmarks CrossFit": [
         { fr: "Rameur 500m", en: "Row 500m" }, { fr: "Rameur 1000m", en: "Row 1km" }, { fr: "Rameur 2000m", en: "Row 2km" },
         { fr: "Rameur 5000m", en: "Row 5km" }, { fr: "Course 1 mile", en: "Run 1 Mile" }, { fr: "Course 5km", en: "Run 5k" },
-        { fr: "Assault Bike (calories)", en: "Assault Bike Calories" }, { fr: "Double-unders max",
+        { fr: "Assault Bike (calories)", en: "Assault Bike Calories" }, { fr: "Double-unders max", en: "Max Double-unders" },
+        { fr: "Burpees max en 5 min", en: "Max Burpees in 5min" }, { fr: "WOD Fran (temps)", en: "Fran Time" },
+        { fr: "WOD Grace (temps)", en: "Grace Time" }, { fr: "WOD Murph (temps)", en: "Murph Time" }, { fr: "WOD Helen (temps)", en: "Helen Time" }
+      ]
+    };
+    const categoriesForce = ["Haltérophilie", "Renforcement"];
+
+    const clientTabs = document.getElementById('client-tabs');
+    const addClientForm = document.getElementById('add-client-form');
+    const clientWorkspace = document.getElementById('client-workspace');
+    const daysContainer = document.getElementById('days-container');
+    const weekPicker = document.getElementById('week-picker');
+    const weekInfo = document.getElementById('week-info');
+    const selectedClientLabel = document.getElementById('selected-client-label');
+
+    let clientsActifs = [];
+    let selectedClientEmail = null;
+    let currentMonday = null;
+    let allRecords = [];
+
+    // ---------- Onglets Programmation / Records ----------
+    document.getElementById('tab-programmation').addEventListener('click', () => switchTab('programmation'));
+    document.getElementById('tab-records').addEventListener('click', () => switchTab('records'));
+
+    function switchTab(tab) {
+      const isProg = tab === 'programmation';
+      document.getElementById('section-programmation').classList.toggle('hidden', !isProg);
+      document.getElementById('section-records').classList.toggle('hidden', isProg);
+      document.getElementById('tab-programmation').classList.toggle('border-brand-blue', isProg);
+      document.getElementById('tab-programmation').classList.toggle('text-[color:var(--accent)]', isProg);
+      document.getElementById('tab-programmation').classList.toggle('border-transparent', !isProg);
+      document.getElementById('tab-programmation').classList.toggle('text-[color:var(--fg-50)]', !isProg);
+      document.getElementById('tab-records').classList.toggle('border-brand-blue', !isProg);
+      document.getElementById('tab-records').classList.toggle('text-[color:var(--accent)]', !isProg);
+      document.getElementById('tab-records').classList.toggle('border-transparent', isProg);
+      document.getElementById('tab-records').classList.toggle('text-[color:var(--fg-50)]', isProg);
+      if (!isProg) loadRecords();
+    }
+
+    function getMondayFromDateStr(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      const day = date.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      date.setDate(date.getDate() + diff);
+      return date;
+    }
+
+    function formatDateKey(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function setWeek(mondayDate) {
+      currentMonday = mondayDate;
+      weekPicker.value = formatDateKey(currentMonday);
+      const sunday = new Date(currentMonday);
+      sunday.setDate(currentMonday.getDate() + 6);
+      weekInfo.textContent = `Semaine du ${currentMonday.toLocaleDateString('fr-FR')} au ${sunday.toLocaleDateString('fr-FR')}`;
+      buildDaysUI();
+      loadExistingForWeek();
+    }
+
+    async function loadClients() {
+      const { data } = await supabaseClient.from('clients_actifs').select('*').order('nom', { ascending: true });
+      clientsActifs = data || [];
+      renderTabs();
+    }
+
+    function renderTabs() {
+      clientTabs.innerHTML = clientsActifs.map(c => `
+        <button data-email="${c.email}" class="client-tab px-4 py-2 rounded-full text-sm border transition-colors ${
+          selectedClientEmail === c.email ? 'bg-brand-blue text-white border-brand-blue' : 'border-[color:var(--border-strong)] hover:border-brand-blue'
+        }">${c.nom || c.email}</button>
+      `).join('') + `
+        <button id="show-add-client" class="px-4 py-2 rounded-full text-sm border border-dashed border-[color:var(--border-strong)] hover:border-brand-blue transition-colors">+ Ajouter</button>
+      `;
+
+      document.querySelectorAll('.client-tab').forEach(btn => {
+        btn.addEventListener('click', () => selectClient(btn.dataset.email));
+      });
+      document.getElementById('show-add-client').addEventListener('click', () => {
+        addClientForm.classList.toggle('hidden');
+      });
+    }
+
+    function selectClient(email) {
+      selectedClientEmail = email;
+      const client = clientsActifs.find(c => c.email === email);
+      selectedClientLabel.textContent = `Client sélectionné : ${client?.nom ? client.nom + ' — ' : ''}${email}`;
+      addClientForm.classList.add('hidden');
+      clientWorkspace.classList.remove('hidden');
+      renderTabs();
+      switchTab('programmation');
+      setWeek(getMondayFromDateStr(formatDateKey(new Date())));
+    }
+
+    document.getElementById('confirm-add-client').addEventListener('click', async () => {
+      const email = document.getElementById('new-client-email').value.trim().toLowerCase();
+      const nom = document.getElementById('new-client-nom').value.trim();
+      if (!email) { alert("L'email est obligatoire."); return; }
+
+      const { error } = await supabaseClient.from('clients_actifs').insert({ email, nom });
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      document.getElementById('new-client-email').value = '';
+      document.getElementById('new-client-nom').value = '';
+      await loadClients();
+      selectClient(email);
+    });
+
+    document.getElementById('remove-client-btn').addEventListener('click', async () => {
+      if (!selectedClientEmail) return;
+      if (!confirm(`Retirer ${selectedClientEmail} du suivi ? (ses séances déjà créées ne seront pas supprimées)`)) return;
+      await supabaseClient.from('clients_actifs').delete().eq('email', selectedClientEmail);
+      selectedClientEmail = null;
+      clientWorkspace.classList.add('hidden');
+      await loadClients();
+    });
+
+    document.getElementById('prev-week-btn').addEventListener('click', () => {
+      const d = new Date(currentMonday);
+      d.setDate(d.getDate() - 7);
+      setWeek(d);
+    });
+    document.getElementById('next-week-btn').addEventListener('click', () => {
+      const d = new Date(currentMonday);
+      d.setDate(d.getDate() + 7);
+      setWeek(d);
+    });
+    weekPicker.addEventListener('change', () => {
+      if (!weekPicker.value) return;
+      setWeek(getMondayFromDateStr(weekPicker.value));
+    });
+
+    document.getElementById('duplicate-week-btn').addEventListener('click', async () => {
+      if (!selectedClientEmail || !currentMonday) return;
+      if (!confirm("Dupliquer tous les exercices de cette semaine vers la semaine suivante ?")) return;
+
+      const { data: exosActuels } = await supabaseClient
+        .from('programmes')
+        .select('*')
+        .eq('client_email', selectedClientEmail)
+        .eq('semaine_debut', formatDateKey(currentMonday));
+
+      if (!exosActuels || exosActuels.length === 0) {
+        alert("Aucun exercice à dupliquer cette semaine.");
+        return;
+      }
+
+      const nextMonday = new Date(currentMonday);
+      nextMonday.setDate(nextMonday.getDate() + 7);
+      const nextMondayKey = formatDateKey(nextMonday);
+
+      const copies = exosActuels.map(e => ({
+        client_email: e.client_email, jour: e.jour, semaine_debut: nextMondayKey,
+        exercice: e.exercice, series: e.series, repetitions: e.repetitions,
+        temps_repos: e.temps_repos, rpe: e.rpe, tempo: e.tempo,
+        lien_video: e.lien_video, description: e.description, ordre: e.ordre
+      }));
+
+      const { error } = await supabaseClient.from('programmes').insert(copies);
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      alert(`${copies.length} exercice(s) dupliqué(s) vers la semaine suivante.`);
+      setWeek(nextMonday);
+    });
+
+    function buildDaysUI() {
+      daysContainer.innerHTML = jours.map((jour, i) => {
+        const d = new Date(currentMonday);
+        d.setDate(currentMonday.getDate() + i);
+        const dateLabel = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+
+        return `
+          <div class="rounded-xl border border-[color:var(--border)] p-4" data-jour="${jour}">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-heading uppercase font-bold text-sm">${jour} <span class="text-[color:var(--fg-40)] font-normal normal-case">— ${dateLabel}</span></h3>
+            </div>
+
+            <div class="mb-4">
+              <label class="block text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-1.5">Commentaire sur la composition de cette séance</label>
+              <textarea class="jour-commentaire w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" rows="2" placeholder="Ex : cette semaine on insiste sur le haut du corps, garde de la marge sur le squat..."></textarea>
+              <div class="flex items-center gap-2 mt-1.5">
+                <button class="save-comment-btn text-xs px-3 py-1.5 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">Enregistrer le commentaire</button>
+                <span class="comment-confirm hidden text-xs text-[color:var(--accent)] font-medium">Enregistré ✓</span>
+              </div>
+            </div>
+
+            <div class="existing-list flex flex-col gap-2 mb-3"></div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
+              <input type="text" placeholder="Exercice" class="ex-exercice px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="number" placeholder="Séries" class="ex-series px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="Répétitions" class="ex-repetitions px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="Repos" class="ex-repos px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="RPE" class="ex-rpe px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="Tempo" class="ex-tempo px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="Lien vidéo" class="ex-video px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-2">
+              <textarea placeholder="Explication de l'exercice (consignes, points d'attention...)" rows="2" class="ex-description px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-4"></textarea>
+            </div>
+            <div class="flex items-center gap-3">
+              <button class="save-exercise-btn text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium" data-editing-id="">
+                + Ajouter cet exercice
+              </button>
+              <button class="cancel-edit-btn hidden text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
+                Annuler la modification
+              </button>
+              <span class="save-confirm hidden text-xs text-[color:var(--accent)] font-medium">Enregistré ✓</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.save-exercise-btn').forEach(btn => btn.addEventListener('click', () => saveExercise(btn)));
+      document.querySelectorAll('.cancel-edit-btn').forEach(btn => btn.addEventListener('click', () => resetForm(btn.closest('[data-jour]'))));
+      document.querySelectorAll('.save-comment-btn').forEach(btn => btn.addEventListener('click', () => saveComment(btn)));
+    }
+
+    async function saveComment(btn) {
+      const card = btn.closest('[data-jour]');
+      const jour = card.dataset.jour;
+      if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
+
+      const commentaire = card.querySelector('.jour-commentaire').value.trim();
+      const confirmSpan = card.querySelector('.comment-confirm');
+
+      btn.disabled = true;
+      btn.textContent = 'Enregistrement...';
+
+      const { error } = await supabaseClient.from('notes_jour').upsert({
+        client_email: selectedClientEmail, semaine_debut: formatDateKey(currentMonday),
+        jour: jour, commentaire: commentaire, updated_at: new Date().toISOString()
+      }, { onConflict: 'client_email,semaine_debut,jour' });
+
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer le commentaire';
+
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      confirmSpan.classList.remove('hidden');
+      setTimeout(() => confirmSpan.classList.add('hidden'), 2500);
+    }
+
+    function resetForm(card) {
+      card.querySelectorAll('.ex-exercice, .ex-series, .ex-repetitions, .ex-repos, .ex-rpe, .ex-tempo, .ex-video, .ex-description').forEach(input => input.value = '');
+      const btn = card.querySelector('.save-exercise-btn');
+      btn.dataset.editingId = '';
+      btn.textContent = '+ Ajouter cet exercice';
+      card.querySelector('.cancel-edit-btn').classList.add('hidden');
+    }
+
+    async function saveExercise(btn) {
+      const card = btn.closest('[data-jour]');
+      const jour = card.dataset.jour;
+
+      if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
+
+      const exercice = card.querySelector('.ex-exercice').value.trim();
+      if (!exercice) { alert("Le nom de l'exercice est obligatoire."); return; }
+
+      const payload = {
+        client_email: selectedClientEmail, jour: jour, semaine_debut: formatDateKey(currentMonday),
+        exercice: exercice, series: Number(card.querySelector('.ex-series').value) || 0,
+        repetitions: card.querySelector('.ex-repetitions').value.trim(),
+        temps_repos: card.querySelector('.ex-repos').value.trim(),
+        rpe: card.querySelector('.ex-rpe').value.trim(),
+        tempo: card.querySelector('.ex-tempo').value.trim(),
+        lien_video: card.querySelector('.ex-video').value.trim(),
+        description: card.querySelector('.ex-description').value.trim(),
+        ordre: jours.indexOf(jour)
+      };
+
+      const editingId = btn.dataset.editingId;
+      const confirmSpan = card.querySelector('.save-confirm');
+      btn.disabled = true;
+      btn.textContent = editingId ? 'Mise à jour...' : 'Ajout...';
+
+      let error;
+      if (editingId) {
+        ({ error } = await supabaseClient.from('programmes').update(payload).eq('id', editingId));
+      } else {
+        ({ error } = await supabaseClient.from('programmes').insert(payload));
+      }
+
+      btn.disabled = false;
+
+      if (error) {
+        alert("Erreur : " + error.message);
+        btn.textContent = editingId ? 'Mettre à jour cet exercice' : '+ Ajouter cet exercice';
+        return;
+      }
+
+      confirmSpan.classList.remove('hidden');
+      setTimeout(() => confirmSpan.classList.add('hidden'), 2500);
+
+      resetForm(card);
+      loadExistingForWeek();
+    }
+
+    function editExercise(exo, card) {
+      card.querySelector('.ex-exercice').value = exo.exercice || '';
+      card.querySelector('.ex-series').value = exo.series || '';
+      card.querySelector('.ex-repetitions').value = exo.repetitions || '';
+      card.querySelector('.ex-repos').value = exo.temps_repos || '';
+      card.querySelector('.ex-rpe').value = exo.rpe || '';
+      card.querySelector('.ex-tempo').value = exo.tempo || '';
+      card.querySelector('.ex-video').value = exo.lien_video || '';
+      card.querySelector('.ex-description').value = exo.description || '';
+
+      const btn = card.querySelector('.save-exercise-btn');
+      btn.dataset.editingId = exo.id;
+      btn.textContent = 'Mettre à jour cet exercice';
+      card.querySelector('.cancel-edit-btn').classList.remove('hidden');
+
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    async function loadExistingForWeek() {
+      if (!selectedClientEmail || !currentMonday) return;
+
+      const { data: exos } = await supabaseClient
+        .from('programmes').select('*')
+        .eq('client_email', selectedClientEmail).eq('semaine_debut', formatDateKey(currentMonday));
+
+      const { data: notes } = await supabaseClient
+        .from('notes_jour').select('*')
+        .eq('client_email', selectedClientEmail).eq('semaine_debut', formatDateKey(currentMonday));
+
+      document.querySelectorAll('.existing-list').forEach(el => el.innerHTML = '');
+      document.querySelectorAll('.jour-commentaire').forEach(el => el.value = '');
+
+      (notes || []).forEach(note => {
+        const card = document.querySelector(`[data-jour="${note.jour}"]`);
+        if (!card) return;
+        card.querySelector('.jour-commentaire').value = note.commentaire || '';
+      });
+
+      (exos || []).forEach(exo => {
+        const card = document.querySelector(`[data-jour="${exo.jour}"]`);
+        if (!card) return;
+        const list = card.querySelector('.existing-list');
+
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = "edit-row-btn text-left w-full text-sm bg-[color:var(--card)] hover:bg-[color:var(--card-hover)] transition-colors rounded-lg px-3 py-2";
+        row.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-medium">${exo.exercice}</span>
+            <span class="delete-btn text-red-400 hover:text-red-300 text-xs ml-3 shrink-0" data-id="${exo.id}">Supprimer</span>
+          </div>
+          <div class="text-xs text-[color:var(--fg-50)] mt-0.5">
+            ${exo.series}x${exo.repetitions}${exo.temps_repos ? ` · repos ${exo.temps_repos}` : ''}${exo.rpe ? ` · RPE ${exo.rpe}` : ''}${exo.tempo ? ` · tempo ${exo.tempo}` : ''}
+          </div>
+          ${exo.description ? `<div class="text-xs text-[color:var(--fg-40)] mt-1 italic">${exo.description}</div>` : ''}
+        `;
+        row.addEventListener('click', () => editExercise(exo, card));
+        row.querySelector('.delete-btn').addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await supabaseClient.from('programmes').delete().eq('id', exo.id);
+          loadExistingForWeek();
+        });
+
+        list.appendChild(row);
+      });
+    }
+
+    // ---------- RECORDS (identique au client, mais pour selectedClientEmail) ----------
+    const categorieSelect = document.getElementById('pr-categorie');
+    const exerciceSelect = document.getElementById('pr-exercice');
+    const modeForce = document.getElementById('mode-force');
+    const modeSimple = document.getElementById('mode-simple');
+    const rm1 = document.getElementById('rm-1');
+    const rm3 = document.getElementById('rm-3');
+    const rm5 = document.getElementById('rm-5');
+    const rmDate = document.getElementById('rm-date');
+    const rmNotes = document.getElementById('rm-notes');
+    const saveRmBtn = document.getElementById('save-rm-btn');
+    const rmConfirm = document.getElementById('rm-confirm');
+
+    const prValeur = document.getElementById('pr-valeur');
+    const prUnite = document.getElementById('pr-unite');
+    const prDate = document.getElementById('pr-date');
+    const prNotes = document.getElementById('pr-notes');
+    const savePrBtn = document.getElementById('save-pr-btn');
+    const cancelPrEdit = document.getElementById('cancel-pr-edit');
+    const prConfirm = document.getElementById('pr-confirm');
+    const recordsByCategory = document.getElementById('records-by-category');
+
+    Object.keys(mouvements).forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat; opt.textContent = cat;
+      categorieSelect.appendChild(opt);
+    });
+
+    categorieSelect.addEventListener('change', () => {
+      const cat = categorieSelect.value;
+      exerciceSelect.innerHTML = '';
+      modeForce.classList.add('hidden');
+      modeSimple.classList.add('hidden');
+      if (!cat) { exerciceSelect.innerHTML = '<option value="">Choisis d\'abord une catégorie</option>'; return; }
+      exerciceSelect.innerHTML = '<option value="">Choisis un mouvement...</option>' +
+        mouvements[cat].map(m => `<option value="${m.fr}">${m.fr} — ${m.en}</option>`).join('');
+    });
+
+    exerciceSelect.addEventListener('change', () => {
+      const cat = categorieSelect.value;
+      const isForce = categoriesForce.includes(cat);
+      modeForce.classList.toggle('hidden', !exerciceSelect.value || !isForce);
+      modeSimple.classList.toggle('hidden', !exerciceSelect.value || isForce);
+
+      if (exerciceSelect.value && isForce) {
+        const exo = exerciceSelect.value;
+        const r1 = allRecords.find(r => r.exercice === exo && r.repetitions_max === 1);
+        const r3 = allRecords.find(r => r.exercice === exo && r.repetitions_max === 3);
+        const r5 = allRecords.find(r => r.exercice === exo && r.repetitions_max === 5);
+        rm1.value = r1 ? r1.valeur : '';
+        rm3.value = r3 ? r3.valeur : '';
+        rm5.value = r5 ? r5.valeur : '';
+        rmDate.value = new Date().toISOString().split('T')[0];
+        rmNotes.value = (r1 || r3 || r5)?.notes || '';
+      }
+    });
+
+    saveRmBtn.addEventListener('click', async () => {
+      if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
+      const categorie = categorieSelect.value;
+      const exercice = exerciceSelect.value;
+      if (!categorie || !exercice) { alert("Choisis une catégorie et un mouvement."); return; }
+
+      const entries = [
+        { rm: 1, val: rm1.value }, { rm: 3, val: rm3.value }, { rm: 5, val: rm5.value }
+      ].filter(e => e.val !== '' && !isNaN(parseFloat(e.val)));
+
+      if (entries.length === 0) { alert("Renseigne au moins une valeur (1RM, 3RM ou 5RM)."); return; }
+
+      saveRmBtn.disabled = true;
+      saveRmBtn.textContent = 'Enregistrement...';
+
+      const date_record = rmDate.value || new Date().toISOString().split('T')[0];
+      const notes = rmNotes.value.trim();
+
+      for (const e of entries) {
+        await supabaseClient.from('records').upsert({
+          client_email: selectedClientEmail, categorie: categorie, exercice: exercice,
+          valeur: parseFloat(e.val), unite: 'kg', repetitions_max: e.rm,
+          date_record: date_record, notes: notes, updated_at: new Date().toISOString()
+        }, { onConflict: 'client_email,exercice,repetitions_max' });
+      }
+
+      saveRmBtn.disabled = false;
+      saveRmBtn.textContent = 'Enregistrer';
+      rmConfirm.classList.remove('hidden');
+      setTimeout(() => rmConfirm.classList.add('hidden'), 2000);
+
+      loadRecords();
+    });
+
+    function resetPrForm() {
+      prValeur.value = ''; prUnite.value = 'reps'; prDate.value = new Date().toISOString().split('T')[0]; prNotes.value = '';
+      savePrBtn.dataset.editingId = ''; savePrBtn.textContent = '+ Enregistrer ce record';
+      cancelPrEdit.classList.add('hidden');
+    }
+    cancelPrEdit.addEventListener('click', resetPrForm);
+
+    savePrBtn.addEventListener('click', async () => {
+      if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
+      const categorie = categorieSelect.value;
+      const exercice = exerciceSelect.value;
+      const valeur = parseFloat(prValeur.value);
+      if (!categorie || !exercice || isNaN(valeur)) { alert("Choisis une catégorie, un mouvement, et renseigne une valeur."); return; }
+
+      const payload = {
+        client_email: selectedClientEmail, categorie: categorie, exercice: exercice,
+        valeur: valeur, unite: prUnite.value, repetitions_max: null,
+        date_record: prDate.value || new Date().toISOString().split('T')[0],
+        notes: prNotes.value.trim(), updated_at: new Date().toISOString()
+      };
+
+      const editingId = savePrBtn.dataset.editingId;
+      savePrBtn.disabled = true;
+
+      let error;
+      if (editingId) {
+        ({ error } = await supabaseClient.from('records').update(payload).eq('id', editingId));
+      } else {
+        ({ error } = await supabaseClient.from('records').insert(payload));
+      }
+
+      savePrBtn.disabled = false;
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      prConfirm.classList.remove('hidden');
+      setTimeout(() => prConfirm.classList.add('hidden'), 2000);
+      resetPrForm();
+      loadRecords();
+    });
+
+    async function loadRecords() {
+      if (!selectedClientEmail) return;
+      const { data, error } = await supabaseClient
+        .from('records').select('*')
+        .eq('client_email', selectedClientEmail).order('date_record', { ascending: false });
+
+      if (error) { console.error(error); return; }
+      allRecords = data || [];
+
+      if (allRecords.length === 0) {
+        recordsByCategory.innerHTML = `<p class="text-sm text-[color:var(--fg-40)] text-center py-6">Aucun record enregistré pour ce client.</p>`;
+        return;
+      }
+
+      const parCategorie = {};
+      allRecords.forEach(r => {
+        const cat = r.categorie || 'Autre';
+        if (!parCategorie[cat]) parCategorie[cat] = [];
+        parCategorie[cat].push(r);
+      });
+
+      recordsByCategory.innerHTML = Object.entries(parCategorie).map(([cat, records]) => {
+        const isForce = categoriesForce.includes(cat);
+
+        if (isForce) {
+          const parExercice = {};
+          records.forEach(r => {
+            if (!parExercice[r.exercice]) parExercice[r.exercice] = {};
+            parExercice[r.exercice][r.repetitions_max] = r.valeur;
+          });
+
+          return `
+            <div>
+              <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--accent)] tracking-wide">${cat}</h2>
+              <div class="rounded-xl border border-[color:var(--border)] overflow-hidden">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="bg-[color:var(--card)] text-[color:var(--fg-50)] text-xs uppercase">
+                      <th class="text-left px-4 py-2.5">Mouvement</th>
+                      <th class="text-center px-2 py-2.5">1RM</th>
+                      <th class="text-center px-2 py-2.5">3RM</th>
+                      <th class="text-center px-2 py-2.5">5RM</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${Object.entries(parExercice).map(([exo, rms]) => `
+                      <tr class="border-t border-[color:var(--border)]">
+                        <td class="px-4 py-2.5 font-medium">${exo}</td>
+                        <td class="text-center px-2 py-2.5 text-[color:var(--accent)] font-heading font-bold">${rms[1] ?? '—'}</td>
+                        <td class="text-center px-2 py-2.5 text-[color:var(--accent)] font-heading font-bold">${rms[3] ?? '—'}</td>
+                        <td class="text-center px-2 py-2.5 text-[color:var(--accent)] font-heading font-bold">${rms[5] ?? '—'}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div>
+            <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--accent)] tracking-wide">${cat}</h2>
+            <div class="flex flex-col gap-2">
+              ${records.map(r => `
+                <button type="button" class="pr-row w-full text-left flex items-center justify-between rounded-lg border border-[color:var(--border)] px-4 py-3 hover:border-brand-blue transition-colors" data-id="${r.id}">
+                  <div>
+                    <span class="font-medium text-sm">${r.exercice}</span>
+                    <span class="text-xs text-[color:var(--fg-40)] ml-2">${new Date(r.date_record).toLocaleDateString('fr-FR')}</span>
+                    ${r.notes ? `<div class="text-xs text-[color:var(--fg-40)] italic mt-0.5">${r.notes}</div>` : ''}
+                  </div>
+                  <div class="flex items-center gap-3 shrink-0">
+                    <span class="font-heading font-bold text-[color:var(--accent)]">${r.valeur} ${r.unite}</span>
+                    <span class="pr-delete text-red-400 hover:text-red-300 text-xs" data-id="${r.id}">Supprimer</span>
+                  </div>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.pr-row').forEach(row => {
+        row.addEventListener('click', (e) => {
+          if (e.target.classList.contains('pr-delete')) return;
+          const record = allRecords.find(r => r.id === row.dataset.id);
+          categorieSelect.value = record.categorie;
+          categorieSelect.dispatchEvent(new Event('change'));
+          exerciceSelect.value = record.exercice;
+          exerciceSelect.dispatchEvent(new Event('change'));
+          prValeur.value = record.valeur;
+          prUnite.value = record.unite;
+          prDate.value = record.date_record;
+          prNotes.value = record.notes || '';
+          savePrBtn.dataset.editingId = record.id;
+          savePrBtn.textContent = 'Mettre à jour ce record';
+          cancelPrEdit.classList.remove('hidden');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+
+      document.querySelectorAll('.pr-delete').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await supabaseClient.from('records').delete().eq('id', btn.dataset.id);
+          loadRecords();
+        });
+      });
+    }
+
+    async function checkAccess() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user || user.email !== ADMIN_EMAIL) {
+        document.getElementById('denied').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('main-content').classList.remove('hidden');
+      loadClients();
+    }
+
+    checkAccess();
+  </script>
+
+</body>
+</html>
