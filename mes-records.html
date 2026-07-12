@@ -44,9 +44,12 @@
 
   <main id="page-content" class="px-6 py-12 max-w-2xl mx-auto hidden">
     <h1 class="font-heading uppercase text-2xl font-bold mb-2 text-center">🏆 Mes records</h1>
-    <p class="text-sm text-[color:var(--fg-50)] text-center mb-10">Fais défiler et remplis tes records au fur et à mesure. Chaque ligne s'enregistre indépendamment.</p>
+    <p class="text-sm text-[color:var(--fg-50)] text-center mb-8">Clique sur un mouvement pour voir ton évolution et ajouter une nouvelle valeur.</p>
 
-    <div id="categories-container" class="flex flex-col gap-10"></div>
+    <!-- Onglets catégories -->
+    <div id="category-tabs" class="flex flex-wrap gap-2 justify-center mb-8"></div>
+
+    <div id="movement-list" class="rounded-xl border border-[color:var(--border)] divide-y divide-[color:var(--border)]"></div>
 
   </main>
 
@@ -91,138 +94,65 @@
 
     let currentUserEmail = null;
     let allRecords = [];
+    let currentCategory = Object.keys(mouvements)[0];
 
-    function findRecord(exercice, rm) {
-      return allRecords.find(r => r.exercice === exercice && r.repetitions_max === rm);
-    }
+    const categoryTabs = document.getElementById('category-tabs');
+    const movementList = document.getElementById('movement-list');
 
-    function buildPage() {
-      const container = document.getElementById('categories-container');
-      container.innerHTML = Object.entries(mouvements).map(([cat, list]) => {
-        const isForce = categoriesForce.includes(cat);
+    Object.keys(mouvements).forEach(cat => {
+      const btn = document.createElement('button');
+      btn.textContent = cat;
+      btn.className = "cat-tab px-4 py-2 rounded-full text-xs font-medium border transition-colors";
+      btn.dataset.cat = cat;
+      btn.addEventListener('click', () => { currentCategory = cat; renderTabs(); renderList(); });
+      categoryTabs.appendChild(btn);
+    });
 
-        return `
-          <div>
-            <h2 class="font-heading uppercase text-lg font-bold mb-4 text-[color:var(--accent)] tracking-wide">${cat}</h2>
-            <div class="rounded-xl border border-[color:var(--border)] divide-y divide-[color:var(--border)]">
-              ${list.map(m => {
-                if (isForce) {
-                  const r1 = findRecord(m.fr, 1), r3 = findRecord(m.fr, 3), r5 = findRecord(m.fr, 5);
-                  return `
-                    <div class="px-4 py-3 flex flex-wrap items-center justify-between gap-2" data-exercice="${m.fr}" data-categorie="${cat}" data-force="1">
-                      <div class="min-w-[130px]">
-                        <p class="text-sm font-medium">${m.en}</p>
-                        <p class="text-xs text-[color:var(--fg-40)]">${m.fr}</p>
-                      </div>
-                      <div class="flex items-center gap-1.5">
-                        <div class="text-center">
-                          <label class="block text-[9px] uppercase text-[color:var(--fg-40)]">1RM</label>
-                          <input type="number" step="0.5" class="rm-input w-14 px-1.5 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-xs text-center outline-none focus:border-brand-blue" data-rm="1" value="${r1 ? r1.valeur : ''}">
-                        </div>
-                        <div class="text-center">
-                          <label class="block text-[9px] uppercase text-[color:var(--fg-40)]">3RM</label>
-                          <input type="number" step="0.5" class="rm-input w-14 px-1.5 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-xs text-center outline-none focus:border-brand-blue" data-rm="3" value="${r3 ? r3.valeur : ''}">
-                        </div>
-                        <div class="text-center">
-                          <label class="block text-[9px] uppercase text-[color:var(--fg-40)]">5RM</label>
-                          <input type="number" step="0.5" class="rm-input w-14 px-1.5 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-xs text-center outline-none focus:border-brand-blue" data-rm="5" value="${r5 ? r5.valeur : ''}">
-                        </div>
-                        <button class="save-row-btn w-8 h-8 rounded-md bg-brand-blue hover:bg-brand-blue-dark text-white text-sm flex items-center justify-center shrink-0" title="Enregistrer">✓</button>
-                      </div>
-                    </div>
-                  `;
-                } else {
-                  const r0 = findRecord(m.fr, 0);
-                  return `
-                    <div class="px-4 py-3 flex flex-wrap items-center justify-between gap-2" data-exercice="${m.fr}" data-categorie="${cat}" data-force="0">
-                      <div class="min-w-[130px]">
-                        <p class="text-sm font-medium">${m.en}</p>
-                        <p class="text-xs text-[color:var(--fg-40)]">${m.fr}</p>
-                      </div>
-                      <div class="flex items-center gap-1.5">
-                        <input type="number" step="0.5" class="simple-value w-20 px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue" placeholder="Valeur" value="${r0 ? r0.valeur : ''}">
-                        <select class="simple-unite px-1.5 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
-                          <option value="reps" ${r0?.unite === 'reps' ? 'selected' : ''}>reps</option>
-                          <option value="sec" ${r0?.unite === 'sec' ? 'selected' : ''}>sec</option>
-                          <option value="m" ${r0?.unite === 'm' ? 'selected' : ''}>m</option>
-                          <option value="cal" ${r0?.unite === 'cal' ? 'selected' : ''}>cal</option>
-                          <option value="kg" ${r0?.unite === 'kg' ? 'selected' : ''}>kg</option>
-                        </select>
-                        <button class="save-row-btn w-8 h-8 rounded-md bg-brand-blue hover:bg-brand-blue-dark text-white text-sm flex items-center justify-center shrink-0" title="Enregistrer">✓</button>
-                      </div>
-                    </div>
-                  `;
-                }
-              }).join('')}
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      document.querySelectorAll('.save-row-btn').forEach(btn => {
-        btn.addEventListener('click', () => saveRow(btn));
+    function renderTabs() {
+      document.querySelectorAll('.cat-tab').forEach(btn => {
+        const active = btn.dataset.cat === currentCategory;
+        btn.classList.toggle('bg-brand-blue', active);
+        btn.classList.toggle('text-white', active);
+        btn.classList.toggle('border-brand-blue', active);
+        btn.classList.toggle('border-[color:var(--border-strong)]', !active);
       });
     }
 
-    async function saveRow(btn) {
-      const row = btn.closest('[data-exercice]');
-      const exercice = row.dataset.exercice;
-      const categorie = row.dataset.categorie;
-      const isForce = row.dataset.force === '1';
-
-      btn.disabled = true;
-      btn.textContent = '…';
-
-      if (isForce) {
-        const inputs = row.querySelectorAll('.rm-input');
-        const entries = Array.from(inputs)
-          .map(input => ({ rm: Number(input.dataset.rm), val: input.value }))
-          .filter(e => e.val !== '' && !isNaN(parseFloat(e.val)));
-
-        for (const e of entries) {
-          await supabaseClient.from('records').upsert({
-            client_email: currentUserEmail,
-            categorie: categorie,
-            exercice: exercice,
-            valeur: parseFloat(e.val),
-            unite: 'kg',
-            repetitions_max: e.rm,
-            date_record: new Date().toISOString().split('T')[0],
-            updated_at: new Date().toISOString()
-          }, { onConflict: 'client_email,exercice,repetitions_max' });
-        }
-      } else {
-        const valeur = parseFloat(row.querySelector('.simple-value').value);
-        const unite = row.querySelector('.simple-unite').value;
-        if (!isNaN(valeur)) {
-          await supabaseClient.from('records').upsert({
-            client_email: currentUserEmail,
-            categorie: categorie,
-            exercice: exercice,
-            valeur: valeur,
-            unite: unite,
-            repetitions_max: 0,
-            date_record: new Date().toISOString().split('T')[0],
-            updated_at: new Date().toISOString()
-          }, { onConflict: 'client_email,exercice,repetitions_max' });
-        }
-      }
-
-      btn.disabled = false;
-      btn.textContent = '✓';
-      btn.classList.add('bg-brand-blue-dark');
-      setTimeout(() => btn.classList.remove('bg-brand-blue-dark'), 800);
-
-      await loadRecords();
+    function bestValue(exercice) {
+      const matches = allRecords.filter(r => r.exercice === exercice);
+      if (matches.length === 0) return null;
+      return matches.reduce((best, r) => (r.valeur > best.valeur ? r : best));
     }
 
-    async function loadRecords() {
-      const { data } = await supabaseClient
-        .from('records')
-        .select('*')
-        .eq('client_email', currentUserEmail);
-      allRecords = data || [];
-      buildPage();
+    function renderList() {
+      const isForce = categoriesForce.includes(currentCategory);
+      movementList.innerHTML = mouvements[currentCategory].map(m => {
+        const best = bestValue(m.fr);
+        return `
+          <button type="button" class="movement-row w-full text-left flex items-center justify-between px-4 py-3.5 hover:bg-[color:var(--card)] transition-colors" data-exercice="${m.fr}" data-en="${m.en}" data-categorie="${currentCategory}" data-force="${isForce ? 1 : 0}">
+            <div>
+              <p class="text-sm font-medium">${m.en}</p>
+              <p class="text-xs text-[color:var(--fg-40)]">${m.fr}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="font-heading font-bold text-[color:var(--accent)]">${best ? best.valeur + ' ' + best.unite : '—'}</span>
+              <span class="text-[color:var(--fg-30)]">›</span>
+            </div>
+          </button>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.movement-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const params = new URLSearchParams({
+            exercice: row.dataset.exercice,
+            en: row.dataset.en,
+            categorie: row.dataset.categorie,
+            force: row.dataset.force
+          });
+          window.location.href = `pr-detail.html?${params.toString()}`;
+        });
+      });
     }
 
     async function load() {
@@ -230,8 +160,15 @@
       if (!user) { window.location.href = 'login.html'; return; }
       currentUserEmail = user.email.trim().toLowerCase();
 
+      const { data } = await supabaseClient
+        .from('records')
+        .select('*')
+        .eq('client_email', currentUserEmail);
+      allRecords = data || [];
+
       document.getElementById('page-content').classList.remove('hidden');
-      await loadRecords();
+      renderTabs();
+      renderList();
     }
 
     load();
