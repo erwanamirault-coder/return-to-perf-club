@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistiques — Bilan de tes capacités</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000', white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
+    <span class="font-heading uppercase font-bold text-sm tracking-wide">Bilan de tes capacités</span>
+    <div class="flex items-center gap-4 text-sm">
+      <a href="dashboard.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Mon espace</a>
+      <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+    </div>
+  </header>
+
+  <main id="page-content" class="px-6 py-12 max-w-2xl mx-auto hidden">
+    <h1 class="font-heading uppercase text-2xl font-bold mb-2 text-center">📊 Mes statistiques</h1>
+    <p class="text-sm text-[color:var(--fg-50)] text-center mb-10">RPE et tonnage, basés sur ta programmation.</p>
+
+    <!-- Cartes semaine / mois -->
+    <div class="grid sm:grid-cols-2 gap-4 mb-12">
+
+      <div class="rounded-xl border border-[color:var(--border)] p-5">
+        <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-4">Cette semaine</p>
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm text-[color:var(--fg-60)]">RPE moyen</span>
+          <span id="week-rpe" class="font-heading font-bold text-xl text-[color:var(--accent)]">—</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-[color:var(--fg-60)]">Tonnage total</span>
+          <span id="week-tonnage" class="font-heading font-bold text-xl text-[color:var(--accent)]">—</span>
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-[color:var(--border)] p-5">
+        <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-4">Ce mois-ci</p>
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm text-[color:var(--fg-60)]">RPE moyen</span>
+          <span id="month-rpe" class="font-heading font-bold text-xl text-[color:var(--accent)]">—</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-[color:var(--fg-60)]">Tonnage total</span>
+          <span id="month-tonnage" class="font-heading font-bold text-xl text-[color:var(--accent)]">—</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tendance Tonnage -->
+    <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">Évolution du tonnage (8 dernières semaines)</h2>
+    <div class="rounded-xl border border-[color:var(--border)] p-4 mb-3">
+      <svg id="chart-tonnage" viewBox="0 0 300 150" class="w-full h-auto"></svg>
+      <p id="chart-tonnage-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] py-8">Pas encore assez de données.</p>
+    </div>
+    <div id="tonnage-labels" class="flex justify-between text-[10px] text-[color:var(--fg-40)] mb-10 px-1"></div>
+
+    <!-- Tendance RPE -->
+    <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">Évolution du RPE moyen (8 dernières semaines)</h2>
+    <div class="rounded-xl border border-[color:var(--border)] p-4 mb-3">
+      <svg id="chart-rpe" viewBox="0 0 300 150" class="w-full h-auto"></svg>
+      <p id="chart-rpe-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] py-8">Pas encore assez de données.</p>
+    </div>
+    <div id="rpe-labels" class="flex justify-between text-[10px] text-[color:var(--fg-40)] mb-6 px-1"></div>
+
+    <p id="data-note" class="text-xs text-[color:var(--fg-40)] italic text-center"></p>
+
+  </main>
+
+  <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    const CALENDLY_URL = "https://calendly.com/erwan-amirault/45min";
+    const offsetJour = { "Lundi": 0, "Mardi": 1, "Mercredi": 2, "Jeudi": 3, "Vendredi": 4, "Samedi": 5, "Dimanche": 6 };
+
+    let currentUserEmail = null;
+
+    function getMonday(d) {
+      const day = d.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      const monday = new Date(d);
+      monday.setDate(d.getDate() + diff);
+      return monday;
+    }
+
+    function formatDateKey(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function calculerDate(semaine_debut, jour) {
+      if (!semaine_debut || !jour || offsetJour[jour] === undefined) return null;
+      const [y, m, d] = semaine_debut.split('-').map(Number);
+      const lundi = new Date(y, m - 1, d);
+      lundi.setDate(lundi.getDate() + offsetJour[jour]);
+      return formatDateKey(lundi);
+    }
+
+    function parseFirstNumber(str) {
+      if (str === null || str === undefined || str === '') return null;
+      const match = String(str).match(/[\d.]+/);
+      return match ? parseFloat(match[0]) : null;
+    }
+
+    function tonnageOf(exo) {
+      const charge = (exo.charge !== null && exo.charge !== undefined) ? parseFloat(exo.charge) : null;
+      const reps = parseFirstNumber(exo.repetitions);
+      const series = parseFloat(exo.series) || 0;
+      if (charge === null || reps === null || isNaN(charge) || isNaN(reps)) return null;
+      return charge * reps * series;
+    }
+
+    function drawLineChart(svgEl, emptyEl, values) {
+      const pts = values.filter(v => v !== null && v !== undefined && !isNaN(v));
+      if (pts.length < 2) {
+        svgEl.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+      emptyEl.classList.add('hidden');
+
+      // On garde les positions même pour les semaines sans donnée (trou dans la ligne)
+      const w = 300, h = 150, pad = 15;
+      const validIndexes = values.map((v, i) => v !== null && v !== undefined && !isNaN(v) ? i : null).filter(i => i !== null);
+      const validValues = validIndexes.map(i => values[i]);
+      const min = Math.min(...validValues), max = Math.max(...validValues);
+      const range = (max - min) || 1;
+      const n = values.length;
+
+      const coords = values.map((v, i) => {
+        if (v === null || v === undefined || isNaN(v)) return null;
+        const x = pad + (i / (n - 1)) * (w - pad * 2);
+        const y = h - pad - ((v - min) / range) * (h - pad * 2);
+        return { x, y };
+      });
+
+      let path = '';
+      let started = false;
+      coords.forEach(c => {
+        if (!c) { started = false; return; }
+        path += (started ? 'L' : 'M') + c.x + ',' + c.y + ' ';
+        started = true;
+      });
+
+      const dots = coords.filter(c => c).map(c => `<circle cx="${c.x}" cy="${c.y}" r="3" fill="#2D7AED" />`).join('');
+
+      svgEl.innerHTML = `<path d="${path.trim()}" fill="none" stroke="#2D7AED" stroke-width="2" />${dots}`;
+    }
+
+    function renderCalendlyBlock() {
+      document.querySelector('main').innerHTML = `
+        <div class="text-center py-10">
+          <span class="inline-block mb-6 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold border border-brand-blue-dark text-[color:var(--accent)]">
+            Bilan de tes capacités
+          </span>
+          <h1 class="font-heading uppercase text-2xl sm:text-3xl font-bold mb-4">Pas encore de suivi actif</h1>
+          <p class="text-[color:var(--fg-70)] text-sm sm:text-base leading-relaxed mb-10 max-w-sm mx-auto">
+            Les statistiques sont réservées aux clients suivis. Réservons un appel pour faire le point ensemble sur tes objectifs.
+          </p>
+          <div class="rounded-2xl border border-brand-blue-dark bg-brand-blue/5 p-8 max-w-sm mx-auto">
+            <h2 class="font-heading uppercase text-lg font-bold mb-2">Appel bilan offert</h2>
+            <p class="text-sm text-[color:var(--fg-60)] mb-6">
+              30 minutes pour discuter de ta situation et voir comment on peut travailler ensemble.
+            </p>
+            <a href="${CALENDLY_URL}" target="_blank" class="inline-block w-full px-8 py-4 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-sm text-white">
+              Je réserve mon appel bilan offert !
+            </a>
+          </div>
+          <a href="dashboard.html" class="inline-block mt-10 text-sm text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
+            Retour à mon espace
+          </a>
+        </div>
+      `;
+    }
+
+    async function load() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) { window.location.href = 'login.html'; return; }
+      currentUserEmail = user.email.trim().toLowerCase();
+
+      const { data: clientActif } = await supabaseClient
+        .from('clients_actifs')
+        .select('email')
+        .ilike('email', currentUserEmail)
+        .maybeSingle();
+
+      if (!clientActif) {
+        renderCalendlyBlock();
+        return;
+      }
+
+      document.getElementById('page-content').classList.remove('hidden');
+
+      const { data: programmes } = await supabaseClient
+        .from('programmes')
+        .select('*')
+        .eq('client_email', currentUserEmail);
+
+      const exos = programmes || [];
+
+      // On calcule la vraie date de chaque exercice
+      exos.forEach(e => { e._date = calculerDate(e.semaine_debut, e.jour); });
+
+      const today = new Date();
+      const monday = getMonday(today);
+      const mondayKey = formatDateKey(monday);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      const sundayKey = formatDateKey(sunday);
+
+      const currentMonthPrefix = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+      const exosSemaine = exos.filter(e => e._date && e._date >= mondayKey && e._date <= sundayKey);
+      const exosMois = exos.filter(e => e._date && e._date.startsWith(currentMonthPrefix));
+
+      function computeStats(list) {
+        const rpes = list.map(e => parseFirstNumber(e.rpe)).filter(v => v !== null);
+        const tonnages = list.map(tonnageOf).filter(v => v !== null);
+        const rpeAvg = rpes.length ? (rpes.reduce((a, b) => a + b, 0) / rpes.length) : null;
+        const tonnageSum = tonnages.length ? tonnages.reduce((a, b) => a + b, 0) : null;
+        return { rpeAvg, tonnageSum, excluded: list.length - tonnages.length };
+      }
+
+      const statsSemaine = computeStats(exosSemaine);
+      const statsMois = computeStats(exosMois);
+
+      document.getElementById('week-rpe').textContent = statsSemaine.rpeAvg !== null ? statsSemaine.rpeAvg.toFixed(1) : '—';
+      document.getElementById('week-tonnage').textContent = statsSemaine.tonnageSum !== null ? Math.round(statsSemaine.tonnageSum).toLocaleString('fr-FR') + ' kg' : '—';
+      document.getElementById('month-rpe').textContent = statsMois.rpeAvg !== null ? statsMois.rpeAvg.toFixed(1) : '—';
+      document.getElementById('month-tonnage').textContent = statsMois.tonnageSum !== null ? Math.round(statsMois.tonnageSum).toLocaleString('fr-FR') + ' kg' : '—';
+
+      // Tendance sur les 8 dernières semaines programmées
+      const semaines = [...new Set(exos.map(e => e.semaine_debut))]
+        .filter(Boolean)
+        .sort()
+        .slice(-8);
+
+      const tonnageValues = semaines.map(sem => {
+        const list = exos.filter(e => e.semaine_debut === sem);
+        const t = list.map(tonnageOf).filter(v => v !== null);
+        return t.length ? t.reduce((a, b) => a + b, 0) : null;
+      });
+
+      const rpeValues = semaines.map(sem => {
+        const list = exos.filter(e => e.semaine_debut === sem);
+        const r = list.map(e => parseFirstNumber(e.rpe)).filter(v => v !== null);
+        return r.length ? (r.reduce((a, b) => a + b, 0) / r.length) : null;
+      });
+
+      drawLineChart(document.getElementById('chart-tonnage'), document.getElementById('chart-tonnage-empty'), tonnageValues);
+      drawLineChart(document.getElementById('chart-rpe'), document.getElementById('chart-rpe-empty'), rpeValues);
+
+      const labelsHtml = semaines.map(sem => {
+        const [y, m, d] = sem.split('-');
+        return `<span>${d}/${m}</span>`;
+      }).join('');
+      document.getElementById('tonnage-labels').innerHTML = semaines.length ? labelsHtml : '';
+      document.getElementById('rpe-labels').innerHTML = semaines.length ? labelsHtml : '';
+
+      const totalExcluded = statsSemaine.excluded + statsMois.excluded;
+      document.getElementById('data-note').textContent = totalExcluded > 0
+        ? "Certains exercices sans charge ou sans répétitions chiffrées ne sont pas comptés dans le tonnage."
+        : "";
+    }
+
+    load();
+  </script>
+
+</body>
+</html>
