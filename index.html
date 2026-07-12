@@ -37,6 +37,16 @@
 <style>
   body { font-family: 'Poppins', sans-serif; }
   h1, h2, h3, .font-heading { font-family: 'Oswald', sans-serif; }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
 </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -166,23 +176,23 @@
       </svg>
     </div>
 
-    <span class="inline-block mb-6 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold border border-brand-blue-dark text-[color:var(--accent)]">
+    <span class="reveal inline-block mb-6 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold border border-brand-blue-dark text-[color:var(--accent)]">
       Coach en réathlétisation &amp; performance
     </span>
 
-    <h1 class="font-heading uppercase text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-6 max-w-2xl">
+    <h1 class="reveal font-heading uppercase text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-6 max-w-2xl" style="transition-delay:0.1s">
       Ta mobilité fait la différence dans <span class="text-brand-blue">ton sport.</span>
     </h1>
 
-    <p class="text-[color:var(--fg-70)] text-base sm:text-lg leading-relaxed mb-12 max-w-md">
+    <p class="reveal text-[color:var(--fg-70)] text-base sm:text-lg leading-relaxed mb-12 max-w-md" style="transition-delay:0.2s">
       Épaules, hanches, chevilles, genoux, colonne : chaque articulation limitée oblige ton corps à compenser ailleurs. C'est souvent pour ça que tu te blesses, que tu stagnes, ou que tu traînes des douleurs sans explication.
     </p>
 
     <!-- Blocs d'orientation -->
-    <h2 class="font-heading uppercase text-xl sm:text-2xl font-bold mb-6">Tu es plutôt...</h2>
+    <h2 class="reveal font-heading uppercase text-xl sm:text-2xl font-bold mb-6">Tu es plutôt...</h2>
     <div class="grid sm:grid-cols-2 gap-5 w-full max-w-2xl mb-16">
 
-      <a href="signup.html" class="group text-left p-6 rounded-2xl bg-[color:var(--card)] border border-[color:var(--border)] hover:border-brand-blue transition-colors">
+      <a href="signup.html" class="reveal group text-left p-6 rounded-2xl bg-[color:var(--card)] border border-[color:var(--border)] hover:border-brand-blue transition-colors">
         <svg width="32" height="32" fill="none" viewBox="0 0 24 24" class="mb-4 text-brand-blue"><path d="M19 14c1.5-1.5 3-3.5 3-5.5A3.5 3.5 0 0 0 15 6c0 0-2 2-3 3-1-1-3-3-3-3a3.5 3.5 0 0 0-3.5 2.5C5.5 10.5 5 13 6.5 14.5L12 20l7-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
         <h3 class="font-heading uppercase font-bold text-lg mb-2">Je reviens d'une blessure</h3>
         <p class="text-sm text-[color:var(--fg-60)] mb-4">
@@ -191,7 +201,7 @@
         <span class="text-sm font-semibold text-brand-blue group-hover:text-brand-blue-dark transition-colors">Faire mon bilan gratuit →</span>
       </a>
 
-      <a href="signup.html" class="group text-left p-6 rounded-2xl bg-[color:var(--card)] border border-[color:var(--border)] hover:border-brand-blue transition-colors">
+      <a href="signup.html" class="reveal group text-left p-6 rounded-2xl bg-[color:var(--card)] border border-[color:var(--border)] hover:border-brand-blue transition-colors" style="transition-delay:0.1s">
         <svg width="32" height="32" fill="none" viewBox="0 0 24 24" class="mb-4 text-brand-blue"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
         <h3 class="font-heading uppercase font-bold text-lg mb-2">Je veux performer / m'entraîner</h3>
         <p class="text-sm text-[color:var(--fg-60)] mb-4">
@@ -203,7 +213,7 @@
     </div>
 
     <!-- Encart Bilan gratuit -->
-    <div class="w-full max-w-xl p-8 sm:p-10 rounded-2xl bg-[color:var(--card)] border-2 border-brand-blue">
+    <div class="reveal w-full max-w-xl p-8 sm:p-10 rounded-2xl bg-[color:var(--card)] border-2 border-brand-blue">
       <span class="inline-block mb-4 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold bg-brand-blue text-white">
         🎁 Cadeau offert
       </span>
@@ -246,6 +256,18 @@
     document.getElementById('theme-toggle-mobile').addEventListener('click', function() {
       document.getElementById('theme-toggle').click();
     });
+
+    // Animation au scroll : les éléments ".reveal" apparaissent quand ils entrent dans l'écran
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
   </script>
 </body>
 </html>
