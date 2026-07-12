@@ -309,7 +309,7 @@
       const copies = exosActuels.map(e => ({
         client_email: e.client_email, jour: e.jour, semaine_debut: nextMondayKey,
         exercice: e.exercice, series: e.series, repetitions: e.repetitions,
-        temps_repos: e.temps_repos, rpe: e.rpe, tempo: e.tempo,
+        temps_repos: e.temps_repos, rpe: e.rpe, tempo: e.tempo, charge: e.charge,
         lien_video: e.lien_video, description: e.description, ordre: e.ordre
       }));
 
@@ -346,12 +346,14 @@
               <input type="text" placeholder="Exercice" class="ex-exercice px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
               <input type="number" placeholder="Séries" class="ex-series px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
               <input type="text" placeholder="Répétitions" class="ex-repetitions px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="number" step="0.5" placeholder="Charge (kg)" class="ex-charge px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
               <input type="text" placeholder="Repos" class="ex-repos px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
               <input type="text" placeholder="RPE" class="ex-rpe px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
               <input type="text" placeholder="Tempo" class="ex-tempo px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
               <input type="text" placeholder="Lien vidéo" class="ex-video px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-2">
               <textarea placeholder="Explication de l'exercice (consignes, points d'attention...)" rows="2" class="ex-description px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-4"></textarea>
             </div>
+            <p class="text-[10px] text-[color:var(--fg-40)] mb-2">💡 La charge sert au calcul du tonnage (Statistiques). Laisse vide si non applicable (cardio, gym au poids du corps...).</p>
             <div class="flex items-center gap-3">
               <button class="save-exercise-btn text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium" data-editing-id="">
                 + Ajouter cet exercice
@@ -396,7 +398,7 @@
     }
 
     function resetForm(card) {
-      card.querySelectorAll('.ex-exercice, .ex-series, .ex-repetitions, .ex-repos, .ex-rpe, .ex-tempo, .ex-video, .ex-description').forEach(input => input.value = '');
+      card.querySelectorAll('.ex-exercice, .ex-series, .ex-repetitions, .ex-charge, .ex-repos, .ex-rpe, .ex-tempo, .ex-video, .ex-description').forEach(input => input.value = '');
       const btn = card.querySelector('.save-exercise-btn');
       btn.dataset.editingId = '';
       btn.textContent = '+ Ajouter cet exercice';
@@ -412,10 +414,13 @@
       const exercice = card.querySelector('.ex-exercice').value.trim();
       if (!exercice) { alert("Le nom de l'exercice est obligatoire."); return; }
 
+      const chargeValue = card.querySelector('.ex-charge').value.trim();
+
       const payload = {
         client_email: selectedClientEmail, jour: jour, semaine_debut: formatDateKey(currentMonday),
         exercice: exercice, series: Number(card.querySelector('.ex-series').value) || 0,
         repetitions: card.querySelector('.ex-repetitions').value.trim(),
+        charge: chargeValue === '' ? null : parseFloat(chargeValue),
         temps_repos: card.querySelector('.ex-repos').value.trim(),
         rpe: card.querySelector('.ex-rpe').value.trim(),
         tempo: card.querySelector('.ex-tempo').value.trim(),
@@ -455,6 +460,7 @@
       card.querySelector('.ex-exercice').value = exo.exercice || '';
       card.querySelector('.ex-series').value = exo.series || '';
       card.querySelector('.ex-repetitions').value = exo.repetitions || '';
+      card.querySelector('.ex-charge').value = (exo.charge !== null && exo.charge !== undefined) ? exo.charge : '';
       card.querySelector('.ex-repos').value = exo.temps_repos || '';
       card.querySelector('.ex-rpe').value = exo.rpe || '';
       card.querySelector('.ex-tempo').value = exo.tempo || '';
@@ -503,7 +509,7 @@
             <span class="delete-btn text-red-400 hover:text-red-300 text-xs ml-3 shrink-0" data-id="${exo.id}">Supprimer</span>
           </div>
           <div class="text-xs text-[color:var(--fg-50)] mt-0.5">
-            ${exo.series}x${exo.repetitions}${exo.temps_repos ? ` · repos ${exo.temps_repos}` : ''}${exo.rpe ? ` · RPE ${exo.rpe}` : ''}${exo.tempo ? ` · tempo ${exo.tempo}` : ''}
+            ${exo.series}x${exo.repetitions}${(exo.charge !== null && exo.charge !== undefined) ? ` · ${exo.charge}kg` : ''}${exo.temps_repos ? ` · repos ${exo.temps_repos}` : ''}${exo.rpe ? ` · RPE ${exo.rpe}` : ''}${exo.tempo ? ` · tempo ${exo.tempo}` : ''}
           </div>
           ${exo.description ? `<div class="text-xs text-[color:var(--fg-40)] mt-1 italic">${exo.description}</div>` : ''}
         `;
