@@ -46,12 +46,6 @@
   <main class="px-6 py-12 max-w-2xl mx-auto">
     <h1 class="font-heading uppercase text-2xl font-bold mb-8 text-center">Ma programmation</h1>
 
-    <!-- Records personnels -->
-    <div id="records-section" class="hidden mb-10">
-      <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">🏆 Mes records</h2>
-      <div id="records-list" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
-    </div>
-
     <div id="week-nav" class="flex items-center justify-between mb-5">
       <button id="prev-week" class="w-8 h-8 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors text-sm">‹</button>
       <h2 id="week-label" class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold"></h2>
@@ -273,24 +267,6 @@
       `;
     }
 
-    async function loadRecords() {
-      const { data } = await supabaseClient
-        .from('records')
-        .select('*')
-        .eq('client_email', currentUserEmail)
-        .order('date_record', { ascending: false });
-
-      if (!data || data.length === 0) return;
-
-      document.getElementById('records-section').classList.remove('hidden');
-      document.getElementById('records-list').innerHTML = data.map(r => `
-        <div class="rounded-lg border border-[color:var(--border)] p-3 text-center">
-          <p class="text-xs text-[color:var(--fg-50)] truncate mb-1">${r.exercice}</p>
-          <p class="font-heading font-bold text-[color:var(--accent)]">${r.valeur} ${r.unite}</p>
-        </div>
-      `).join('');
-    }
-
     async function load() {
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) { window.location.href = 'login.html'; return; }
@@ -306,8 +282,6 @@
         renderCalendlyBlock();
         return;
       }
-
-      await loadRecords();
 
       const { data: seances } = await supabaseClient
         .from('programmes')
