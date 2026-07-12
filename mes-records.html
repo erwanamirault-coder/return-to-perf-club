@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mes records — Bilan de tes capacités</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000', white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
+    <span class="font-heading uppercase font-bold text-sm tracking-wide">Bilan de tes capacités</span>
+    <div class="flex items-center gap-4 text-sm">
+      <a href="programme.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Ma programmation</a>
+      <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+    </div>
+  </header>
+
+  <main id="page-content" class="px-6 py-12 max-w-2xl mx-auto hidden">
+    <h1 class="font-heading uppercase text-2xl font-bold mb-8 text-center">🏆 Mes records</h1>
+
+    <!-- Choix catégorie + mouvement (commun) -->
+    <div class="rounded-xl border border-[color:var(--border)] p-4 mb-8">
+      <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-3">Ajouter / mettre à jour un record</p>
+      <div class="grid sm:grid-cols-2 gap-2 mb-4">
+        <select id="pr-categorie" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <option value="">Choisis une catégorie...</option>
+        </select>
+        <select id="pr-exercice" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <option value="">Choisis d'abord une catégorie</option>
+        </select>
+      </div>
+
+      <!-- Mode FORCE : 1RM / 3RM / 5RM -->
+      <div id="mode-force" class="hidden">
+        <p class="text-xs text-[color:var(--fg-40)] mb-2">Renseigne une, deux ou les trois valeurs (en kg) :</p>
+        <div class="grid grid-cols-3 gap-2 mb-3">
+          <div>
+            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">1RM</label>
+            <input type="number" step="0.5" id="rm-1" placeholder="kg" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">3RM</label>
+            <input type="number" step="0.5" id="rm-3" placeholder="kg" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">5RM</label>
+            <input type="number" step="0.5" id="rm-5" placeholder="kg" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+        </div>
+        <input type="date" id="rm-date" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-3">
+        <input type="text" id="rm-notes" placeholder="Note (optionnel)" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-3">
+        <div class="flex items-center gap-3">
+          <button id="save-rm-btn" class="text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">
+            Enregistrer
+          </button>
+          <span id="rm-confirm" class="hidden text-xs text-[color:var(--accent)] font-medium">Enregistré ✓</span>
+        </div>
+      </div>
+
+      <!-- Mode SIMPLE : valeur unique (gym, cardio...) -->
+      <div id="mode-simple" class="hidden">
+        <div class="grid sm:grid-cols-3 gap-2 mb-3">
+          <input type="number" step="0.5" id="pr-valeur" placeholder="Valeur" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <select id="pr-unite" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            <option value="reps">répétitions</option>
+            <option value="sec">secondes (temps)</option>
+            <option value="m">mètres</option>
+            <option value="cal">calories</option>
+            <option value="kg">kg</option>
+          </select>
+          <input type="date" id="pr-date" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        </div>
+        <input type="text" id="pr-notes" placeholder="Note (optionnel)" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-3">
+        <div class="flex items-center gap-3">
+          <button id="save-pr-btn" data-editing-id="" class="text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">
+            + Enregistrer ce record
+          </button>
+          <button id="cancel-pr-edit" class="hidden text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] underline underline-offset-4">Annuler</button>
+          <span id="pr-confirm" class="hidden text-xs text-[color:var(--accent)] font-medium">Enregistré ✓</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liste des records existants -->
+    <div id="records-by-category" class="flex flex-col gap-8"></div>
+
+  </main>
+
+  <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    const mouvements = {
+      "Haltérophilie": [
+        { fr: "Arraché", en: "Snatch" },
+        { fr: "Arraché suspendu", en: "Hang Snatch" },
+        { fr: "Arraché puissance", en: "Power Snatch" },
+        { fr: "Arraché puissance suspendu", en: "Hang Power Snatch" },
+        { fr: "Tirage d'arraché", en: "Snatch Pull" },
+        { fr: "Épaulé", en: "Clean" },
+        { fr: "Épaulé suspendu", en: "Hang Clean" },
+        { fr: "Épaulé puissance", en: "Power Clean" },
+        { fr: "Épaulé puissance suspendu", en: "Hang Power Clean" },
+        { fr: "Tirage d'épaulé", en: "Clean Pull" },
+        { fr: "Jeté", en: "Jerk" },
+        { fr: "Jeté fente", en: "Split Jerk" },
+        { fr: "Jeté puissance", en: "Power Jerk" },
+        { fr: "Poussée-jeté", en: "Push Jerk" },
+        { fr: "Épaulé-jeté", en: "Clean & Jerk" },
+        { fr: "Squat clavicule", en: "Front Squat" },
+        { fr: "Squat nuque", en: "Back Squat" },
+        { fr: "Squat overhead", en: "Overhead Squat" }
+      ],
+      "Renforcement": [
+        { fr: "Squat arrière", en: "Back Squat" },
+        { fr: "Squat avant", en: "Front Squat" },
+        { fr: "Squat overhead", en: "Overhead Squat" },
+        { fr: "Soulevé de terre", en: "Deadlift" },
+        { fr: "Soulevé de terre sumo", en: "Sumo Deadlift" },
+        { fr: "Développé couché", en: "Bench Press" },
+        { fr: "Développé militaire strict", en: "Strict Press" },
+        { fr: "Développé militaire poussé", en: "Push Press" },
+        { fr: "Thruster", en: "Thruster" },
+        { fr: "Good Morning", en: "Good Morning" },
+        { fr: "Fentes bulgares", en: "Bulgarian Split Squat" }
+      ],
+      "Gymnastique (suspendu / retourné)": [
+        { fr: "Traction stricte", en: "Strict Pull-up" },
+        { fr: "Traction kipping", en: "Kipping Pull-up" },
+        { fr: "Traction papillon", en: "Butterfly Pull-up" },
+        { fr: "Traction poitrine à la barre", en: "Chest to Bar" },
+        { fr: "Muscle-up barre", en: "Bar Muscle-up" },
+        { fr: "Muscle-up anneaux", en: "Ring Muscle-up" },
+        { fr: "Relevé de jambes à la barre", en: "Toes to Bar" },
+        { fr: "Pompe poirier", en: "Handstand Push-up" },
+        { fr: "Marche sur les mains", en: "Handstand Walk" },
+        { fr: "Poirier (tenue)", en: "Handstand Hold" },
+        { fr: "Grimper de corde", en: "Rope Climb" },
+        { fr: "Squat pistol", en: "Pistol Squat" },
+        { fr: "Dips aux anneaux", en: "Ring Dips" }
+      ],
+      "Cardio / Benchmarks CrossFit": [
+        { fr: "Rameur 500m", en: "Row 500m" },
+        { fr: "Rameur 1000m", en: "Row 1km" },
+        { fr: "Rameur 2000m", en: "Row 2km" },
+        { fr: "Rameur 5000m", en: "Row 5km" },
+        { fr: "Course 1 mile", en: "Run 1 Mile" },
+        { fr: "Course 5km", en: "Run 5k" },
+        { fr: "Assault Bike (calories)", en: "Assault Bike Calories" },
+        { fr: "Double-unders max", en: "Max Double-unders" },
+        { fr: "Burpees max en 5 min", en: "Max Burpees in 5min" },
+        { fr: "WOD Fran (temps)", en: "Fran Time" },
+        { fr: "WOD Grace (temps)", en: "Grace Time" },
+        { fr: "WOD Murph (temps)", en: "Murph Time" },
+        { fr: "WOD Helen (temps)", en: "Helen Time" }
+      ]
+    };
+
+    const categoriesForce = ["Haltérophilie", "Renforcement"];
+
+    const categorieSelect = document.getElementById('pr-categorie');
+    const exerciceSelect = document.getElementById('pr-exercice');
+    const modeForce = document.getElementById('mode-force');
+    const modeSimple = document.getElementById('mode-simple');
+    const rm1 = document.getElementById('rm-1');
+    const rm3 = document.getElementById('rm-3');
+    const rm5 = document.getElementById('rm-5');
+    const rmDate = document.getElementById('rm-date');
+    const rmNotes = document.getElementById('rm-notes');
+    const saveRmBtn = document.getElementById('save-rm-btn');
+    const rmConfirm = document.getElementById('rm-confirm');
+
+    const prValeur = document.getElementById('pr-valeur');
+    const prUnite = document.getElementById('pr-unite');
+    const prDate = document.getElementById('pr-date');
+    const prNotes = document.getElementById('pr-notes');
+    const savePrBtn = document.getElementById('save-pr-btn');
+    const cancelPrEdit = document.getElementById('cancel-pr-edit');
+    const prConfirm = document.getElementById('pr-confirm');
+
+    const recordsByCategory = document.getElementById('records-by-category');
+
+    let currentUserEmail = null;
+    let allRecords = [];
+
+    Object.keys(mouvements).forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat;
+      opt.textContent = cat;
+      categorieSelect.appendChild(opt);
+    });
+
+    categorieSelect.addEventListener('change', () => {
+      const cat = categorieSelect.value;
+      exerciceSelect.innerHTML = '';
+      modeForce.classList.add('hidden');
+      modeSimple.classList.add('hidden');
+
+      if (!cat) {
+        exerciceSelect.innerHTML = '<option value="">Choisis d\'abord une catégorie</option>';
+        return;
+      }
+
+      exerciceSelect.innerHTML = '<option value="">Choisis un mouvement...</option>' +
+        mouvements[cat].map(m => `<option value="${m.fr}">${m.fr} — ${m.en}</option>`).join('');
+    });
+
+    exerciceSelect.addEventListener('change', () => {
+      const cat = categorieSelect.value;
+      const isForce = categoriesForce.includes(cat);
+      modeForce.classList.toggle('hidden', !exerciceSelect.value || !isForce);
+      modeSimple.classList.toggle('hidden', !exerciceSelect.value || isForce);
+
+      if (exerciceSelect.value) {
+        // Pré-remplit avec les valeurs existantes si le mouvement est déjà enregistré
+        const exo = exerciceSelect.value;
+        if (isForce) {
+          const r1 = allRecords.find(r => r.exercice === exo && r.repetitions_max === 1);
+          const r3 = allRecords.find(r => r.exercice === exo && r.repetitions_max === 3);
+          const r5 = allRecords.find(r => r.exercice === exo && r.repetitions_max === 5);
+          rm1.value = r1 ? r1.valeur : '';
+          rm3.value = r3 ? r3.valeur : '';
+          rm5.value = r5 ? r5.valeur : '';
+          rmDate.value = new Date().toISOString().split('T')[0];
+          rmNotes.value = (r1 || r3 || r5)?.notes || '';
+        }
+      }
+    });
+
+    saveRmBtn.addEventListener('click', async () => {
+      const categorie = categorieSelect.value;
+      const exercice = exerciceSelect.value;
+      if (!categorie || !exercice) { alert("Choisis une catégorie et un mouvement."); return; }
+
+      const entries = [
+        { rm: 1, val: rm1.value },
+        { rm: 3, val: rm3.value },
+        { rm: 5, val: rm5.value }
+      ].filter(e => e.val !== '' && !isNaN(parseFloat(e.val)));
+
+      if (entries.length === 0) { alert("Renseigne au moins une valeur (1RM, 3RM ou 5RM)."); return; }
+
+      saveRmBtn.disabled = true;
+      saveRmBtn.textContent = 'Enregistrement...';
+
+      const date_record = rmDate.value || new Date().toISOString().split('T')[0];
+      const notes = rmNotes.value.trim();
+
+      for (const e of entries) {
+        await supabaseClient.from('records').upsert({
+          client_email: currentUserEmail,
+          categorie: categorie,
+          exercice: exercice,
+          valeur: parseFloat(e.val),
+          unite: 'kg',
+          repetitions_max: e.rm,
+          date_record: date_record,
+          notes: notes,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'client_email,exercice,repetitions_max' });
+      }
+
+      saveRmBtn.disabled = false;
+      saveRmBtn.textContent = 'Enregistrer';
+      rmConfirm.classList.remove('hidden');
+      setTimeout(() => rmConfirm.classList.add('hidden'), 2000);
+
+      loadRecords();
+    });
+
+    function resetPrForm() {
+      prValeur.value = '';
+      prUnite.value = 'reps';
+      prDate.value = new Date().toISOString().split('T')[0];
+      prNotes.value = '';
+      savePrBtn.dataset.editingId = '';
+      savePrBtn.textContent = '+ Enregistrer ce record';
+      cancelPrEdit.classList.add('hidden');
+    }
+
+    cancelPrEdit.addEventListener('click', resetPrForm);
+
+    savePrBtn.addEventListener('click', async () => {
+      const categorie = categorieSelect.value;
+      const exercice = exerciceSelect.value;
+      const valeur = parseFloat(prValeur.value);
+
+      if (!categorie || !exercice || isNaN(valeur)) {
+        alert("Choisis une catégorie, un mouvement, et renseigne une valeur.");
+        return;
+      }
+
+      const payload = {
+        client_email: currentUserEmail,
+        categorie: categorie,
+        exercice: exercice,
+        valeur: valeur,
+        unite: prUnite.value,
+        repetitions_max: null,
+        date_record: prDate.value || new Date().toISOString().split('T')[0],
+        notes: prNotes.value.trim(),
+        updated_at: new Date().toISOString()
+      };
+
+      const editingId = savePrBtn.dataset.editingId;
+      savePrBtn.disabled = true;
+
+      let error;
+      if (editingId) {
+        ({ error } = await supabaseClient.from('records').update(payload).eq('id', editingId));
+      } else {
+        ({ error } = await supabaseClient.from('records').insert(payload));
+      }
+
+      savePrBtn.disabled = false;
+
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      prConfirm.classList.remove('hidden');
+      setTimeout(() => prConfirm.classList.add('hidden'), 2000);
+
+      resetPrForm();
+      loadRecords();
+    });
+
+    async function loadRecords() {
+      const { data, error } = await supabaseClient
+        .from('records')
+        .select('*')
+        .eq('client_email', currentUserEmail)
+        .order('date_record', { ascending: false });
+
+      if (error) { console.error(error); return; }
+      allRecords = data || [];
+
+      if (allRecords.length === 0) {
+        recordsByCategory.innerHTML = `<p class="text-sm text-[color:var(--fg-40)] text-center py-6">Aucun record enregistré pour l'instant.</p>`;
+        return;
+      }
+
+      const parCategorie = {};
+      allRecords.forEach(r => {
+        const cat = r.categorie || 'Autre';
+        if (!parCategorie[cat]) parCategorie[cat] = [];
+        parCategorie[cat].push(r);
+      });
+
+      recordsByCategory.innerHTML = Object.entries(parCategorie).map(([cat, records]) => {
+        const isForce = categoriesForce.includes(cat);
+
+        if (isForce) {
+          // Regroupe par exercice avec 1RM / 3RM / 5RM sur la même ligne
+          const parExercice = {};
+          records.forEach(r => {
+            if (!parExercice[r.exercice]) parExercice[r.exercice] = {};
+            parExercice[r.exercice][r.repetitions_max] = r.valeur;
+          });
+
+          return `
+            <div>
+              <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--accent)] tracking-wide">${cat}</h2>
+              <div class="rounded-xl border border-[color:var(--border)] overflow-hidden">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="bg-[color:var(--card)] text-[color:var(--fg-50)] text-xs uppercase">
+                      <th class="text-left px-4 py-2.5">Mouvement</th>
+                      <th class="text-center px-2 py-2.5">1RM</th>
+                      <th class="text-center px-2 py-2.5">3RM</th>
+                      <th class="text-center px-2 py-2.5">5RM</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${Object.entries(parExercice).map(([exo, rms]) => `
+                      <tr class="border-t border-[color:var(--border)]">
+                        <td class="px-4 py-2.5 font-medium">${exo}</td>
+                        <td class="text-center px-2 py-2.5 text-[color:var(--accent)] font-heading font-bold">${rms[1] ?? '—'}</td>
+                        <td class="text-center px-2 py-2.5 text-[color:var(--accent)] font-heading font-bold">${rms[3] ?? '—'}</td>
+                        <td class="text-center px-2 py-2.5 text-[color:var(--accent)] font-heading font-bold">${rms[5] ?? '—'}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div>
+            <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--accent)] tracking-wide">${cat}</h2>
+            <div class="flex flex-col gap-2">
+              ${records.map(r => `
+                <button type="button" class="pr-row w-full text-left flex items-center justify-between rounded-lg border border-[color:var(--border)] px-4 py-3 hover:border-brand-blue transition-colors" data-id="${r.id}">
+                  <div>
+                    <span class="font-medium text-sm">${r.exercice}</span>
+                    <span class="text-xs text-[color:var(--fg-40)] ml-2">${new Date(r.date_record).toLocaleDateString('fr-FR')}</span>
+                    ${r.notes ? `<div class="text-xs text-[color:var(--fg-40)] italic mt-0.5">${r.notes}</div>` : ''}
+                  </div>
+                  <div class="flex items-center gap-3 shrink-0">
+                    <span class="font-heading font-bold text-[color:var(--accent)]">${r.valeur} ${r.unite}</span>
+                    <span class="pr-delete text-red-400 hover:text-red-300 text-xs" data-id="${r.id}">Supprimer</span>
+                  </div>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.pr-row').forEach(row => {
+        row.addEventListener('click', (e) => {
+          if (e.target.classList.contains('pr-delete')) return;
+          const record = allRecords.find(r => r.id === row.dataset.id);
+          categorieSelect.value = record.categorie;
+          categorieSelect.dispatchEvent(new Event('change'));
+          exerciceSelect.value = record.exercice;
+          exerciceSelect.dispatchEvent(new Event('change'));
+          prValeur.value = record.valeur;
+          prUnite.value = record.unite;
+          prDate.value = record.date_record;
+          prNotes.value = record.notes || '';
+          savePrBtn.dataset.editingId = record.id;
+          savePrBtn.textContent = 'Mettre à jour ce record';
+          cancelPrEdit.classList.remove('hidden');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+
+      document.querySelectorAll('.pr-delete').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await supabaseClient.from('records').delete().eq('id', btn.dataset.id);
+          loadRecords();
+        });
+      });
+    }
+
+    async function load() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) { window.location.href = 'login.html'; return; }
+      currentUserEmail = user.email.trim().toLowerCase();
+
+      prDate.value = new Date().toISOString().split('T')[0];
+      rmDate.value = new Date().toISOString().split('T')[0];
+      document.getElementById('page-content').classList.remove('hidden');
+      loadRecords();
+    }
+
+    load();
+  </script>
+
+</body>
+</html>
