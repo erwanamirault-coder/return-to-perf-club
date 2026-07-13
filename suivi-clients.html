@@ -99,6 +99,23 @@
       </div>
       <div id="rpe-labels" class="flex justify-between text-[10px] text-[color:var(--fg-40)] mb-10 px-1"></div>
 
+      <!-- Détail par séance -->
+      <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">🗓️ Détail par séance</h2>
+      <div class="flex items-center justify-between mb-3">
+        <button id="prev-week-detail" class="w-8 h-8 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors text-sm">‹</button>
+        <h3 id="week-detail-label" class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold"></h3>
+        <button id="next-week-detail" class="w-8 h-8 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors text-sm">›</button>
+      </div>
+      <div id="day-tabs-detail" class="grid grid-cols-7 gap-1.5 mb-5"></div>
+
+      <div id="wellness-detail" class="hidden mb-4 rounded-xl border border-brand-blue-dark bg-brand-blue/5 p-4">
+        <p class="text-xs uppercase tracking-widest text-[color:var(--accent)] font-semibold mb-2">🧘 Wellness du jour</p>
+        <div id="wellness-detail-content" class="flex flex-wrap gap-3 text-sm"></div>
+      </div>
+
+      <div id="seance-detail-table" class="rounded-xl border border-[color:var(--border)] overflow-hidden mb-12"></div>
+      <p id="seance-detail-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] mb-12">Pas de séance ce jour-là.</p>
+
       <!-- Retours clients -->
       <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">💬 Retours de séances</h2>
       <div id="retours-list" class="flex flex-col gap-3"></div>
@@ -118,6 +135,13 @@
 
     let clientsActifs = [];
     let selectedClientEmail = null;
+    let allProgrammesCache = [];
+    let rpeClientByProgId = {};
+    let wellnessByDate = {};
+    let detailWeekStart = getMonday(new Date());
+    let selectedDetailDate = null;
+    const joursOrdre = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+    const joursLettres = ["L", "M", "M", "J", "V", "S", "D"];
 
     const clientTabs = document.getElementById('client-tabs');
     const clientWorkspace = document.getElementById('client-workspace');
@@ -223,14 +247,144 @@
       clientWorkspace.classList.remove('hidden');
       renderTabs();
 
-      await Promise.all([loadStats(), loadRetours()]);
-    }
-
-    async function loadStats() {
       const { data: programmes } = await supabaseClient
         .from('programmes').select('*').eq('client_email', selectedClientEmail);
-      const exos = programmes || [];
-      exos.forEach(e => { e._date = calculerDate(e.semaine_debut, e.jour); });
+      allProgrammesCache = programmes || [];
+      allProgrammesCache.forEach(e => { e._date = calculerDate(e.semaine_debut, e.jour); });
+
+      const { data: retours } = await supabaseClient
+        .from('retours').select('*').eq('client_email', selectedClientEmail);
+      rpeClientByProgId = {};
+      (retours || []).forEach(r => { rpeClientByProgId[r.programme_id] = r; });
+
+      const { data: wellnessRows } = await supabaseClient
+        .from('wellness').select('*').eq('client_email', selectedClientEmail);
+      wellnessByDate = {};
+      (wellnessRows || []).forEach(w => { wellnessByDate[w.date] = w; });
+
+      loadStats();
+      loadRetours(retours || []);
+
+      detailWeekStart = getMonday(new Date());
+      selectedDetailDate = null;
+      renderWeekDetailNav();
+      renderSeanceDetail();
+    }
+
+    function renderWeekDetailNav() {
+      const days = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(detailWeekStart);
+        d.setDate(detailWeekStart.getDate() + i);
+        days.push(d);
+      }
+      const first = days[0], last = days[6];
+      const moisNoms = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+      document.getElementById('week-detail-label').textContent =
+        `${first.getDate()} ${moisNoms[first.getMonth()]} – ${last.getDate()} ${moisNoms[last.getMonth()]} ${last.getFullYear()}`;
+
+      const today = formatDateKey(new Date());
+      const tabsEl = document.getElementById('day-tabs-detail');
+      tabsEl.innerHTML = '';
+
+      days.forEach((d, i) => {
+        const key = formatDateKey(d);
+        const hasSeance = allProgrammesCache.some(e => e._date === key);
+        const isToday = key === today;
+        const isSelected = key === selectedDetailDate;
+
+        const btn = document.createElement('button');
+        btn.className = `flex flex-col items-center gap-1 py-2.5 rounded-lg border transition-colors ${
+          isToday ? 'bg-brand-blue text-white border-brand-blue' :
+          isSelected ? 'border-brand-blue bg-brand-blue/10' : 'border-[color:var(--border)]'
+        } hover:border-brand-blue`;
+        btn.innerHTML = `
+          <span class="text-[10px] uppercase ${isToday ? 'text-white/70' : 'text-[color:var(--fg-40)]'}">${joursLettres[i]}</span>
+          <span class="text-sm font-semibold">${d.getDate()}</span>
+          ${hasSeance ? `<span class="w-1 h-1 rounded-full ${isToday ? 'bg-white' : 'bg-brand-blue'}"></span>` : '<span class="w-1 h-1"></span>'}
+        `;
+        btn.addEventListener('click', () => {
+          selectedDetailDate = key;
+          renderWeekDetailNav();
+          renderSeanceDetail();
+        });
+        tabsEl.appendChild(btn);
+      });
+    }
+
+    document.getElementById('prev-week-detail')?.addEventListener('click', () => {
+      detailWeekStart.setDate(detailWeekStart.getDate() - 7);
+      renderWeekDetailNav();
+    });
+    document.getElementById('next-week-detail')?.addEventListener('click', () => {
+      detailWeekStart.setDate(detailWeekStart.getDate() + 7);
+      renderWeekDetailNav();
+    });
+
+    function renderSeanceDetail() {
+      const table = document.getElementById('seance-detail-table');
+      const emptyMsg = document.getElementById('seance-detail-empty');
+      const wellnessBox = document.getElementById('wellness-detail');
+      const wellnessContent = document.getElementById('wellness-detail-content');
+
+      if (!selectedDetailDate) {
+        table.innerHTML = '';
+        emptyMsg.classList.add('hidden');
+        wellnessBox.classList.add('hidden');
+        return;
+      }
+
+      const w = wellnessByDate[selectedDetailDate];
+      if (w) {
+        wellnessBox.classList.remove('hidden');
+        wellnessContent.innerHTML = `
+          <span>😴 Sommeil : <strong>${escapeHtml(w.sommeil)}</strong>/5</span>
+          <span>🔋 Fatigue : <strong>${escapeHtml(w.fatigue)}</strong>/5</span>
+          <span>💪 Courbatures : <strong>${escapeHtml(w.courbatures)}</strong>/5</span>
+          <span>😰 Stress : <strong>${escapeHtml(w.stress)}</strong>/5</span>
+          <span>🔥 Motivation : <strong>${escapeHtml(w.motivation)}</strong>/5</span>
+          <span class="font-semibold text-[color:var(--accent)]">Score global : ${Number(w.score_global).toFixed(1)}/5</span>
+        `;
+      } else {
+        wellnessBox.classList.add('hidden');
+      }
+
+      const exos = allProgrammesCache
+        .filter(e => e._date === selectedDetailDate)
+        .sort((a, b) => (a.ordre ?? 0) - (b.ordre ?? 0));
+
+      if (exos.length === 0) {
+        table.innerHTML = '';
+        emptyMsg.classList.remove('hidden');
+        return;
+      }
+      emptyMsg.classList.add('hidden');
+
+      table.innerHTML = `
+        <div class="grid grid-cols-5 gap-2 px-3 py-2 text-[10px] uppercase text-[color:var(--fg-40)] border-b border-[color:var(--border)]">
+          <span class="col-span-2">Exercice</span>
+          <span class="text-right">Charge</span>
+          <span class="text-right">Tonnage</span>
+          <span class="text-right">RPE</span>
+        </div>
+        ${exos.map(e => {
+          const tonnage = tonnageOf(e);
+          const retour = rpeClientByProgId[e.id];
+          const rpeClient = retour ? retour.rpe_client : null;
+          return `
+            <div class="grid grid-cols-5 gap-2 px-3 py-2.5 text-sm border-b border-[color:var(--border)] last:border-0">
+              <span class="col-span-2 font-medium">${escapeHtml(e.exercice)}</span>
+              <span class="text-right text-[color:var(--fg-60)]">${(e.charge !== null && e.charge !== undefined) ? escapeHtml(e.charge) + 'kg' : '—'}</span>
+              <span class="text-right text-[color:var(--fg-60)]">${tonnage !== null ? Math.round(tonnage).toLocaleString('fr-FR') + 'kg' : '—'}</span>
+              <span class="text-right font-semibold ${rpeClient !== null && rpeClient !== undefined ? 'text-[color:var(--accent)]' : 'text-[color:var(--fg-30)]'}">${rpeClient !== null && rpeClient !== undefined ? rpeClient : '—'}</span>
+            </div>
+          `;
+        }).join('')}
+      `;
+    }
+
+    function loadStats() {
+      const exos = allProgrammesCache;
 
       const today = new Date();
       const monday = getMonday(today);
@@ -281,22 +435,15 @@
       document.getElementById('rpe-labels').innerHTML = labelsHtml;
     }
 
-    async function loadRetours() {
-      const { data: retours } = await supabaseClient
-        .from('retours').select('*').eq('client_email', selectedClientEmail)
-        .order('updated_at', { ascending: false });
-
-      const { data: programmes } = await supabaseClient
-        .from('programmes').select('id, exercice, jour, semaine_debut')
-        .eq('client_email', selectedClientEmail);
-
+    function loadRetours(retours) {
       const progMap = {};
-      (programmes || []).forEach(p => { progMap[p.id] = p; });
+      allProgrammesCache.forEach(p => { progMap[p.id] = p; });
 
       const list = document.getElementById('retours-list');
       const emptyMsg = document.getElementById('retours-empty');
 
-      const withText = (retours || []).filter(r => r.commentaire && r.commentaire.trim());
+      const withText = (retours || []).filter(r => r.commentaire && r.commentaire.trim())
+        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
 
       if (withText.length === 0) {
         list.innerHTML = '';
@@ -317,7 +464,10 @@
           <div class="rounded-xl border border-[color:var(--border)] p-4">
             <div class="flex items-center justify-between mb-2">
               <span class="font-heading uppercase font-bold text-sm text-[color:var(--accent)]">${exerciceLabel}</span>
-              <span class="text-xs text-[color:var(--fg-40)] capitalize">${dateLabel}</span>
+              <div class="flex items-center gap-2">
+                ${(r.rpe_client !== null && r.rpe_client !== undefined) ? `<span class="text-xs px-2 py-0.5 rounded-full bg-[color:var(--card)] font-semibold">RPE ${r.rpe_client}</span>` : ''}
+                <span class="text-xs text-[color:var(--fg-40)] capitalize">${dateLabel}</span>
+              </div>
             </div>
             <p class="text-sm text-[color:var(--fg-70)] leading-relaxed">${escapeHtml(r.commentaire)}</p>
           </div>
