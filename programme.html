@@ -431,6 +431,7 @@
       const { data: seances } = await supabaseClient
         .from('programmes')
         .select('*')
+        .eq('client_email', currentUserEmail)
         .order('ordre', { ascending: true });
 
       seancesParDate = {};
@@ -443,7 +444,8 @@
 
       const { data: notes } = await supabaseClient
         .from('notes_jour')
-        .select('*');
+        .select('*')
+        .eq('client_email', currentUserEmail);
 
       notesParDate = {};
       (notes || []).forEach(n => {
