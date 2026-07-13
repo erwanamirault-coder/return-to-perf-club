@@ -114,6 +114,143 @@
     const ADMIN_EMAIL = "erwan20b@gmail.com";
     const jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // ---------- Auto-save : brouillon local + sauvegarde différée ----------
+    let autosaveTimers = {};
+    let pendingUnsyncedByJour = {};
+
+    function draftKey(jour) {
+      return `draft:${selectedClientEmail}:${formatDateKey(currentMonday)}:${jour}`;
+    }
+    function collectFormValues(card) {
+      const btn = card.querySelector('.save-exercise-btn');
+      return {
+        exercice: card.querySelector('.ex-exercice').value,
+        series: card.querySelector('.ex-series').value,
+        repetitions: card.querySelector('.ex-repetitions').value,
+        charge: card.querySelector('.ex-charge').value,
+        repos: card.querySelector('.ex-repos').value,
+        rpe: card.querySelector('.ex-rpe').value,
+        tempo: card.querySelector('.ex-tempo').value,
+        video: card.querySelector('.ex-video').value,
+        description: card.querySelector('.ex-description').value,
+        editingId: btn.dataset.editingId || '',
+        editingOrdre: btn.dataset.editingOrdre || ''
+      };
+    }
+    function saveDraftLocal(card, jour) {
+      try { localStorage.setItem(draftKey(jour), JSON.stringify(collectFormValues(card))); } catch (e) {}
+    }
+    function loadDraftLocal(jour) {
+      try {
+        const raw = localStorage.getItem(draftKey(jour));
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) { return null; }
+    }
+    function clearDraftLocal(jour) {
+      try { localStorage.removeItem(draftKey(jour)); } catch (e) {}
+    }
+    function updateAutosaveStatus(card, state) {
+      const el = card.querySelector('.autosave-status');
+      if (!el) return;
+      if (state === 'unsaved') el.textContent = 'Modifications non enregistrées...';
+      else if (state === 'saved') el.textContent = 'Enregistré automatiquement ✓';
+      else if (state === 'error') el.textContent = 'Erreur de sauvegarde ⚠️';
+      else el.textContent = '';
+    }
+
+    async function persistExerciseFromCard(card, opts = {}) {
+      const jour = card.dataset.jour;
+      if (!selectedClientEmail || !currentMonday) return null;
+
+      const exercice = card.querySelector('.ex-exercice').value.trim();
+      if (!exercice) return null;
+
+      const btn = card.querySelector('.save-exercise-btn');
+      const chargeValue = card.querySelector('.ex-charge').value.trim();
+      const editingId = btn.dataset.editingId;
+
+      let ordre;
+      if (editingId && btn.dataset.editingOrdre !== '') {
+        ordre = Number(btn.dataset.editingOrdre);
+      } else if (editingId) {
+        ordre = 0;
+      } else {
+        ordre = card.querySelector('.existing-list').children.length;
+      }
+
+      const payload = {
+        client_email: selectedClientEmail, jour: jour, semaine_debut: formatDateKey(currentMonday),
+        exercice: exercice, series: Number(card.querySelector('.ex-series').value) || 0,
+        repetitions: card.querySelector('.ex-repetitions').value.trim(),
+        charge: chargeValue === '' ? null : parseFloat(chargeValue),
+        temps_repos: card.querySelector('.ex-repos').value.trim(),
+        rpe: card.querySelector('.ex-rpe').value.trim(),
+        tempo: card.querySelector('.ex-tempo').value.trim(),
+        lien_video: card.querySelector('.ex-video').value.trim(),
+        description: card.querySelector('.ex-description').value.trim(),
+        ordre: ordre
+      };
+
+      let result;
+      if (editingId) {
+        result = await supabaseClient.from('programmes').update(payload).eq('id', editingId).select().single();
+      } else {
+        result = await supabaseClient.from('programmes').insert(payload).select().single();
+      }
+
+      if (result.error) {
+        if (!opts.silent) alert("Erreur : " + result.error.message);
+        updateAutosaveStatus(card, 'error');
+        return null;
+      }
+
+      if (!editingId && result.data) {
+        btn.dataset.editingId = result.data.id;
+        btn.dataset.editingOrdre = result.data.ordre;
+      }
+
+      clearDraftLocal(jour);
+      pendingUnsyncedByJour[jour] = false;
+      updateAutosaveStatus(card, 'saved');
+      return result.data;
+    }
+
+    function restoreDraft(card, jour, draft) {
+      card.querySelector('.ex-exercice').value = draft.exercice || '';
+      card.querySelector('.ex-series').value = draft.series || '';
+      card.querySelector('.ex-repetitions').value = draft.repetitions || '';
+      card.querySelector('.ex-charge').value = draft.charge || '';
+      card.querySelector('.ex-repos').value = draft.repos || '';
+      card.querySelector('.ex-rpe').value = draft.rpe || '';
+      card.querySelector('.ex-tempo').value = draft.tempo || '';
+      card.querySelector('.ex-video').value = draft.video || '';
+      card.querySelector('.ex-description').value = draft.description || '';
+      const btn = card.querySelector('.save-exercise-btn');
+      if (draft.editingId) {
+        btn.dataset.editingId = draft.editingId;
+        btn.dataset.editingOrdre = draft.editingOrdre || '';
+        btn.textContent = 'Mettre à jour cet exercice';
+        card.querySelector('.cancel-edit-btn').classList.remove('hidden');
+      }
+      card.querySelector('.draft-banner').classList.add('hidden');
+      persistExerciseFromCard(card, { silent: true }).then(() => loadExistingForWeek());
+    }
+
+    window.addEventListener('beforeunload', (e) => {
+      const hasPending = Object.values(pendingUnsyncedByJour).some(Boolean);
+      if (hasPending) { e.preventDefault(); e.returnValue = ''; }
+    });
+
     const mouvements = {
       "Haltérophilie / Weightlifting": [
         { fr: "Arraché", en: "Snatch" }, { fr: "Arraché suspendu", en: "Hang Snatch" },
@@ -155,6 +292,22 @@
     const addClientForm = document.getElementById('add-client-form');
     const clientWorkspace = document.getElementById('client-workspace');
     const daysContainer = document.getElementById('days-container');
+
+    daysContainer.addEventListener('input', (e) => {
+      const card = e.target.closest('[data-jour]');
+      if (!card) return;
+      if (!e.target.matches('.ex-exercice, .ex-series, .ex-repetitions, .ex-charge, .ex-repos, .ex-rpe, .ex-tempo, .ex-video, .ex-description')) return;
+
+      const jour = card.dataset.jour;
+      saveDraftLocal(card, jour);
+      pendingUnsyncedByJour[jour] = true;
+      updateAutosaveStatus(card, 'unsaved');
+
+      clearTimeout(autosaveTimers[jour]);
+      autosaveTimers[jour] = setTimeout(() => {
+        persistExerciseFromCard(card, { silent: true });
+      }, 1200);
+    });
     const weekPicker = document.getElementById('week-picker');
     const weekInfo = document.getElementById('week-info');
     const selectedClientLabel = document.getElementById('selected-client-label');
@@ -232,7 +385,7 @@
       clientTabs.innerHTML = clientsActifs.map(c => `
         <button data-email="${c.email}" class="client-tab px-4 py-2 rounded-full text-sm border transition-colors ${
           selectedClientEmail === c.email ? 'bg-brand-blue text-white border-brand-blue' : 'border-[color:var(--border-strong)] hover:border-brand-blue'
-        }">${c.nom || c.email}</button>
+        }">${escapeHtml(c.nom || c.email)}</button>
       `).join('') + `
         <button id="show-add-client" class="px-4 py-2 rounded-full text-sm border border-dashed border-[color:var(--border-strong)] hover:border-brand-blue transition-colors">+ Ajouter</button>
       `;
@@ -339,6 +492,14 @@
               <h3 class="font-heading uppercase font-bold text-sm">${jour} <span class="text-[color:var(--fg-40)] font-normal normal-case">— ${dateLabel}</span></h3>
             </div>
 
+            <div class="draft-banner hidden mb-3 flex items-center justify-between gap-2 rounded-lg border border-brand-blue-dark bg-brand-blue/10 px-3 py-2 text-xs">
+              <span>📝 Brouillon non enregistré trouvé pour ce jour.</span>
+              <div class="flex gap-2 shrink-0">
+                <button type="button" class="draft-restore-btn text-brand-blue font-semibold">Restaurer</button>
+                <button type="button" class="draft-dismiss-btn text-[color:var(--fg-50)]">Ignorer</button>
+              </div>
+            </div>
+
             <div class="mb-4">
               <label class="block text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-1.5">Commentaire sur la composition de cette séance</label>
               <textarea class="jour-commentaire w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" rows="2" placeholder="Ex : cette semaine on insiste sur le haut du corps, garde de la marge sur le squat..."></textarea>
@@ -348,6 +509,7 @@
               </div>
             </div>
 
+            <p class="text-[10px] text-[color:var(--fg-40)] mb-1.5">💡 Glisse la poignée ⠿ pour réordonner les exercices de ce jour.</p>
             <div class="existing-list flex flex-col gap-2 mb-3"></div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
               <input type="text" placeholder="Exercice" class="ex-exercice px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
@@ -361,14 +523,15 @@
               <textarea placeholder="Explication de l'exercice (consignes, points d'attention...)" rows="2" class="ex-description px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-4"></textarea>
             </div>
             <p class="text-[10px] text-[color:var(--fg-40)] mb-2">💡 La charge sert au calcul du tonnage (Statistiques). Laisse vide si non applicable (cardio, gym au poids du corps...).</p>
-            <div class="flex items-center gap-3">
-              <button class="save-exercise-btn text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium" data-editing-id="">
+            <div class="flex items-center gap-3 flex-wrap">
+              <button class="save-exercise-btn text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium" data-editing-id="" data-editing-ordre="">
                 + Ajouter cet exercice
               </button>
               <button class="cancel-edit-btn hidden text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
                 Annuler la modification
               </button>
               <span class="save-confirm hidden text-xs text-[color:var(--accent)] font-medium">Enregistré ✓</span>
+              <span class="autosave-status text-[10px] text-[color:var(--fg-40)]"></span>
             </div>
           </div>
         `;
@@ -377,6 +540,21 @@
       document.querySelectorAll('.save-exercise-btn').forEach(btn => btn.addEventListener('click', () => saveExercise(btn)));
       document.querySelectorAll('.cancel-edit-btn').forEach(btn => btn.addEventListener('click', () => resetForm(btn.closest('[data-jour]'))));
       document.querySelectorAll('.save-comment-btn').forEach(btn => btn.addEventListener('click', () => saveComment(btn)));
+
+      // Bannière de restauration de brouillon local (si la page a été quittée par erreur)
+      document.querySelectorAll('[data-jour]').forEach(card => {
+        const jour = card.dataset.jour;
+        const draft = loadDraftLocal(jour);
+        if (draft && draft.exercice && draft.exercice.trim()) {
+          const banner = card.querySelector('.draft-banner');
+          banner.classList.remove('hidden');
+          banner.querySelector('.draft-restore-btn').addEventListener('click', () => restoreDraft(card, jour, draft));
+          banner.querySelector('.draft-dismiss-btn').addEventListener('click', () => {
+            clearDraftLocal(jour);
+            banner.classList.add('hidden');
+          });
+        }
+      });
     }
 
     async function saveComment(btn) {
@@ -408,51 +586,33 @@
       card.querySelectorAll('.ex-exercice, .ex-series, .ex-repetitions, .ex-charge, .ex-repos, .ex-rpe, .ex-tempo, .ex-video, .ex-description').forEach(input => input.value = '');
       const btn = card.querySelector('.save-exercise-btn');
       btn.dataset.editingId = '';
+      btn.dataset.editingOrdre = '';
       btn.textContent = '+ Ajouter cet exercice';
       card.querySelector('.cancel-edit-btn').classList.add('hidden');
+      clearDraftLocal(card.dataset.jour);
+      pendingUnsyncedByJour[card.dataset.jour] = false;
+      updateAutosaveStatus(card, 'idle');
     }
 
     async function saveExercise(btn) {
       const card = btn.closest('[data-jour]');
-      const jour = card.dataset.jour;
 
       if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
+      if (!card.querySelector('.ex-exercice').value.trim()) { alert("Le nom de l'exercice est obligatoire."); return; }
 
-      const exercice = card.querySelector('.ex-exercice').value.trim();
-      if (!exercice) { alert("Le nom de l'exercice est obligatoire."); return; }
+      clearTimeout(autosaveTimers[card.dataset.jour]);
 
-      const chargeValue = card.querySelector('.ex-charge').value.trim();
-
-      const payload = {
-        client_email: selectedClientEmail, jour: jour, semaine_debut: formatDateKey(currentMonday),
-        exercice: exercice, series: Number(card.querySelector('.ex-series').value) || 0,
-        repetitions: card.querySelector('.ex-repetitions').value.trim(),
-        charge: chargeValue === '' ? null : parseFloat(chargeValue),
-        temps_repos: card.querySelector('.ex-repos').value.trim(),
-        rpe: card.querySelector('.ex-rpe').value.trim(),
-        tempo: card.querySelector('.ex-tempo').value.trim(),
-        lien_video: card.querySelector('.ex-video').value.trim(),
-        description: card.querySelector('.ex-description').value.trim(),
-        ordre: jours.indexOf(jour)
-      };
-
-      const editingId = btn.dataset.editingId;
+      const wasEditing = !!btn.dataset.editingId;
       const confirmSpan = card.querySelector('.save-confirm');
       btn.disabled = true;
-      btn.textContent = editingId ? 'Mise à jour...' : 'Ajout...';
+      btn.textContent = wasEditing ? 'Mise à jour...' : 'Ajout...';
 
-      let error;
-      if (editingId) {
-        ({ error } = await supabaseClient.from('programmes').update(payload).eq('id', editingId));
-      } else {
-        ({ error } = await supabaseClient.from('programmes').insert(payload));
-      }
+      const saved = await persistExerciseFromCard(card, { silent: false });
 
       btn.disabled = false;
 
-      if (error) {
-        alert("Erreur : " + error.message);
-        btn.textContent = editingId ? 'Mettre à jour cet exercice' : '+ Ajouter cet exercice';
+      if (!saved) {
+        btn.textContent = wasEditing ? 'Mettre à jour cet exercice' : '+ Ajouter cet exercice';
         return;
       }
 
@@ -476,6 +636,7 @@
 
       const btn = card.querySelector('.save-exercise-btn');
       btn.dataset.editingId = exo.id;
+      btn.dataset.editingOrdre = (exo.ordre !== null && exo.ordre !== undefined) ? exo.ordre : '';
       btn.textContent = 'Mettre à jour cet exercice';
       card.querySelector('.cancel-edit-btn').classList.remove('hidden');
 
@@ -487,7 +648,8 @@
 
       const { data: exos } = await supabaseClient
         .from('programmes').select('*')
-        .eq('client_email', selectedClientEmail).eq('semaine_debut', formatDateKey(currentMonday));
+        .eq('client_email', selectedClientEmail).eq('semaine_debut', formatDateKey(currentMonday))
+        .order('ordre', { ascending: true });
 
       const { data: notes } = await supabaseClient
         .from('notes_jour').select('*')
@@ -507,20 +669,23 @@
         if (!card) return;
         const list = card.querySelector('.existing-list');
 
-        const row = document.createElement('button');
-        row.type = 'button';
-        row.className = "edit-row-btn text-left w-full text-sm bg-[color:var(--card)] hover:bg-[color:var(--card-hover)] transition-colors rounded-lg px-3 py-2";
+        const row = document.createElement('div');
+        row.className = "exo-row flex items-stretch gap-1.5 bg-[color:var(--card)] hover:bg-[color:var(--card-hover)] transition-colors rounded-lg";
+        row.dataset.id = exo.id;
         row.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="font-medium">${exo.exercice}</span>
-            <span class="delete-btn text-red-400 hover:text-red-300 text-xs ml-3 shrink-0" data-id="${exo.id}">Supprimer</span>
-          </div>
-          <div class="text-xs text-[color:var(--fg-50)] mt-0.5">
-            ${exo.series}x${exo.repetitions}${(exo.charge !== null && exo.charge !== undefined) ? ` · ${exo.charge}kg` : ''}${exo.temps_repos ? ` · repos ${exo.temps_repos}` : ''}${exo.rpe ? ` · RPE ${exo.rpe}` : ''}${exo.tempo ? ` · tempo ${exo.tempo}` : ''}
-          </div>
-          ${exo.description ? `<div class="text-xs text-[color:var(--fg-40)] mt-1 italic">${exo.description}</div>` : ''}
+          <span class="drag-handle shrink-0 flex items-center px-1.5 cursor-grab select-none text-[color:var(--fg-30)] text-base" style="touch-action:none;" title="Glisser pour réordonner">⠿</span>
+          <button type="button" class="edit-row-btn text-left w-full text-sm py-2 pr-3">
+            <div class="flex items-center justify-between">
+              <span class="font-medium">${escapeHtml(exo.exercice)}</span>
+              <span class="delete-btn text-red-400 hover:text-red-300 text-xs ml-3 shrink-0" data-id="${exo.id}">Supprimer</span>
+            </div>
+            <div class="text-xs text-[color:var(--fg-50)] mt-0.5">
+              ${escapeHtml(exo.series)}x${escapeHtml(exo.repetitions)}${(exo.charge !== null && exo.charge !== undefined) ? ` · ${escapeHtml(exo.charge)}kg` : ''}${exo.temps_repos ? ` · repos ${escapeHtml(exo.temps_repos)}` : ''}${exo.rpe ? ` · RPE ${escapeHtml(exo.rpe)}` : ''}${exo.tempo ? ` · tempo ${escapeHtml(exo.tempo)}` : ''}
+            </div>
+            ${exo.description ? `<div class="text-xs text-[color:var(--fg-40)] mt-1 italic">${escapeHtml(exo.description)}</div>` : ''}
+          </button>
         `;
-        row.addEventListener('click', () => editExercise(exo, card));
+        row.querySelector('.edit-row-btn').addEventListener('click', () => editExercise(exo, card));
         row.querySelector('.delete-btn').addEventListener('click', async (e) => {
           e.stopPropagation();
           await supabaseClient.from('programmes').delete().eq('id', exo.id);
@@ -528,6 +693,53 @@
         });
 
         list.appendChild(row);
+      });
+
+      document.querySelectorAll('.existing-list').forEach(list => enableDragReorder(list));
+    }
+
+    // ---------- Glisser-déposer pour réordonner les exercices d'un même jour ----------
+    function enableDragReorder(list) {
+      list.querySelectorAll('.exo-row').forEach(row => {
+        const handle = row.querySelector('.drag-handle');
+
+        handle.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          const dragEl = row;
+          dragEl.setPointerCapture(e.pointerId);
+          dragEl.classList.add('opacity-50');
+
+          const onMove = (ev) => {
+            const others = [...list.querySelectorAll('.exo-row')].filter(r => r !== dragEl);
+            const y = ev.clientY;
+            let inserted = false;
+            for (const r of others) {
+              const rect = r.getBoundingClientRect();
+              const mid = rect.top + rect.height / 2;
+              if (y < mid) {
+                list.insertBefore(dragEl, r);
+                inserted = true;
+                break;
+              }
+            }
+            if (!inserted) list.appendChild(dragEl);
+          };
+
+          const onUp = async () => {
+            dragEl.classList.remove('opacity-50');
+            dragEl.removeEventListener('pointermove', onMove);
+            dragEl.removeEventListener('pointerup', onUp);
+
+            const rows = [...list.querySelectorAll('.exo-row')];
+            const updates = rows.map((r, index) =>
+              supabaseClient.from('programmes').update({ ordre: index }).eq('id', r.dataset.id)
+            );
+            await Promise.all(updates);
+          };
+
+          dragEl.addEventListener('pointermove', onMove);
+          dragEl.addEventListener('pointerup', onUp);
+        });
       });
     }
 
