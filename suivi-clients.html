@@ -472,9 +472,7 @@
           const avg = values.length ? (values.reduce((a, b) => a + b, 0) / values.length) : null;
           return `<div class="flex items-center justify-between"><span class="text-[color:var(--fg-60)]">${c.label}</span><span class="font-semibold">${avg !== null ? avg.toFixed(1) : '—'}/5</span></div>`;
         }).join('');
-        const scores = list.map(w => w.score_global).filter(v => v !== null && v !== undefined);
-        const scoreAvg = scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length) : null;
-        container.innerHTML = rows + `<div class="flex items-center justify-between pt-2 mt-1 border-t border-[color:var(--border)]"><span class="text-[color:var(--accent)] font-semibold">Score global</span><span class="font-bold text-[color:var(--accent)]">${scoreAvg !== null ? scoreAvg.toFixed(1) : '—'}/5</span></div>`;
+        container.innerHTML = rows;
       }
 
       renderWellnessAvg(wellnessSemaine, 'week-wellness');
