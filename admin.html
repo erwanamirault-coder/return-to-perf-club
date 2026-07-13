@@ -670,20 +670,32 @@
         const list = card.querySelector('.existing-list');
 
         const row = document.createElement('div');
-        row.className = "exo-row flex items-stretch gap-1.5 bg-[color:var(--card)] hover:bg-[color:var(--card-hover)] transition-colors rounded-lg";
+        row.className = "exo-row flex flex-col bg-[color:var(--card)] hover:bg-[color:var(--card-hover)] transition-colors rounded-lg";
         row.dataset.id = exo.id;
         row.innerHTML = `
-          <span class="drag-handle shrink-0 flex items-center px-1.5 cursor-grab select-none text-[color:var(--fg-30)] text-base" style="touch-action:none;" title="Glisser pour réordonner">⠿</span>
-          <button type="button" class="edit-row-btn text-left w-full text-sm py-2 pr-3">
-            <div class="flex items-center justify-between">
-              <span class="font-medium">${escapeHtml(exo.exercice)}</span>
-              <span class="delete-btn text-red-400 hover:text-red-300 text-xs ml-3 shrink-0" data-id="${exo.id}">Supprimer</span>
-            </div>
-            <div class="text-xs text-[color:var(--fg-50)] mt-0.5">
-              ${escapeHtml(exo.series)}x${escapeHtml(exo.repetitions)}${(exo.charge !== null && exo.charge !== undefined) ? ` · ${escapeHtml(exo.charge)}kg` : ''}${exo.temps_repos ? ` · repos ${escapeHtml(exo.temps_repos)}` : ''}${exo.rpe ? ` · RPE ${escapeHtml(exo.rpe)}` : ''}${exo.tempo ? ` · tempo ${escapeHtml(exo.tempo)}` : ''}
-            </div>
-            ${exo.description ? `<div class="text-xs text-[color:var(--fg-40)] mt-1 italic">${escapeHtml(exo.description)}</div>` : ''}
-          </button>
+          <div class="flex items-stretch gap-1.5">
+            <span class="drag-handle shrink-0 flex items-center px-1.5 cursor-grab select-none text-[color:var(--fg-30)] text-base" style="touch-action:none;" title="Glisser pour réordonner">⠿</span>
+            <button type="button" class="edit-row-btn text-left w-full text-sm py-2 pr-3">
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-medium">${escapeHtml(exo.exercice)}</span>
+                <div class="flex items-center gap-2.5 shrink-0">
+                  <span class="duplicate-btn text-[color:var(--accent)] hover:text-brand-blue text-xs whitespace-nowrap" data-id="${exo.id}">⧉ Dupliquer</span>
+                  <span class="delete-btn text-red-400 hover:text-red-300 text-xs" data-id="${exo.id}">Supprimer</span>
+                </div>
+              </div>
+              <div class="text-xs text-[color:var(--fg-50)] mt-0.5">
+                ${escapeHtml(exo.series)}x${escapeHtml(exo.repetitions)}${(exo.charge !== null && exo.charge !== undefined) ? ` · ${escapeHtml(exo.charge)}kg` : ''}${exo.temps_repos ? ` · repos ${escapeHtml(exo.temps_repos)}` : ''}${exo.rpe ? ` · RPE ${escapeHtml(exo.rpe)}` : ''}${exo.tempo ? ` · tempo ${escapeHtml(exo.tempo)}` : ''}
+              </div>
+              ${exo.description ? `<div class="text-xs text-[color:var(--fg-40)] mt-1 italic">${escapeHtml(exo.description)}</div>` : ''}
+            </button>
+          </div>
+          <div class="duplicate-panel hidden items-center gap-2 px-3 pb-2.5 pl-8">
+            <select class="copy-target-select text-xs px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] outline-none focus:border-brand-blue">
+              ${jours.filter(j => j !== exo.jour).map(j => `<option value="${j}">${j}</option>`).join('')}
+            </select>
+            <button type="button" class="copy-confirm-btn text-xs px-3 py-1.5 rounded-md bg-brand-blue hover:bg-brand-blue-dark text-white font-medium">Copier</button>
+            <span class="copy-confirm hidden text-xs text-[color:var(--accent)] font-medium">Copié ✓</span>
+          </div>
         `;
         row.querySelector('.edit-row-btn').addEventListener('click', () => editExercise(exo, card));
         row.querySelector('.delete-btn').addEventListener('click', async (e) => {
@@ -691,11 +703,51 @@
           await supabaseClient.from('programmes').delete().eq('id', exo.id);
           loadExistingForWeek();
         });
+        row.querySelector('.duplicate-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          const panel = row.querySelector('.duplicate-panel');
+          panel.classList.toggle('hidden');
+          panel.classList.toggle('flex');
+        });
+        row.querySelector('.copy-confirm-btn').addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const targetJour = row.querySelector('.copy-target-select').value;
+          const btn = e.target;
+          const confirmSpan = row.querySelector('.copy-confirm');
+          btn.disabled = true;
+          await copyExerciseToDay(exo, targetJour);
+          btn.disabled = false;
+          confirmSpan.classList.remove('hidden');
+          setTimeout(() => {
+            confirmSpan.classList.add('hidden');
+            row.querySelector('.duplicate-panel').classList.add('hidden');
+            row.querySelector('.duplicate-panel').classList.remove('flex');
+          }, 1200);
+        });
 
         list.appendChild(row);
       });
 
       document.querySelectorAll('.existing-list').forEach(list => enableDragReorder(list));
+    }
+
+    async function copyExerciseToDay(exo, targetJour) {
+      const targetCard = document.querySelector(`[data-jour="${targetJour}"]`);
+      if (!targetCard) return;
+      const targetList = targetCard.querySelector('.existing-list');
+      const newOrdre = targetList.children.length;
+
+      const payload = {
+        client_email: selectedClientEmail, jour: targetJour, semaine_debut: formatDateKey(currentMonday),
+        exercice: exo.exercice, series: exo.series, repetitions: exo.repetitions,
+        charge: (exo.charge !== null && exo.charge !== undefined) ? exo.charge : null,
+        temps_repos: exo.temps_repos, rpe: exo.rpe, tempo: exo.tempo,
+        lien_video: exo.lien_video, description: exo.description, ordre: newOrdre
+      };
+
+      const { error } = await supabaseClient.from('programmes').insert(payload);
+      if (error) { alert("Erreur : " + error.message); return; }
+      await loadExistingForWeek();
     }
 
     // ---------- Glisser-déposer pour réordonner les exercices d'un même jour ----------
