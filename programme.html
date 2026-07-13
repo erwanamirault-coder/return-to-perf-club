@@ -91,6 +91,8 @@
     let seancesParDate = {};
     let notesParDate = {};
     let retoursMap = {};
+    let rpeClientMap = {};
+    let wellnessMap = {};
     let currentUserEmail = null;
     let currentWeekStart = getMonday(new Date());
     let selectedDate = null;
@@ -205,8 +207,52 @@
         return;
       }
 
+      const wellness = wellnessMap[selectedDate] || {};
+      const wellnessOptions = (val) => [1,2,3,4,5].map(n => `<option value="${n}" ${Number(val) === n ? 'selected' : ''}>${n}</option>`).join('');
+
       dayDetail.innerHTML = `
         <h3 class="font-heading uppercase text-base font-bold mb-4 text-[color:var(--accent)]">${dateLabel}</h3>
+
+        <div class="rounded-xl border border-[color:var(--border)] p-4 mb-4">
+          <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-3">🧘 Mon état de forme aujourd'hui</p>
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3">
+            <div>
+              <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">😴 Sommeil</label>
+              <select class="wellness-input w-full px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" data-field="sommeil">
+                <option value="">—</option>${wellnessOptions(wellness.sommeil)}
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">🔋 Fatigue</label>
+              <select class="wellness-input w-full px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" data-field="fatigue">
+                <option value="">—</option>${wellnessOptions(wellness.fatigue)}
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">💪 Courbatures</label>
+              <select class="wellness-input w-full px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" data-field="courbatures">
+                <option value="">—</option>${wellnessOptions(wellness.courbatures)}
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">😰 Stress</label>
+              <select class="wellness-input w-full px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" data-field="stress">
+                <option value="">—</option>${wellnessOptions(wellness.stress)}
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">🔥 Motivation</label>
+              <select class="wellness-input w-full px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" data-field="motivation">
+                <option value="">—</option>${wellnessOptions(wellness.motivation)}
+              </select>
+            </div>
+          </div>
+          <p class="text-[10px] text-[color:var(--fg-40)] mb-2">Note chaque critère de 1 (faible) à 5 (excellent), puis valide.</p>
+          <button id="save-wellness-btn" class="text-xs px-3 py-1.5 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">
+            Enregistrer mon wellness
+          </button>
+          <span id="wellness-confirm" class="hidden text-xs text-[color:var(--accent)] ml-2">Enregistré ✓ Score : <span id="wellness-score-display"></span>/5</span>
+        </div>
 
         ${noteJour ? `
           <div class="rounded-xl border border-brand-blue-dark bg-brand-blue/5 p-4 mb-4">
@@ -227,12 +273,18 @@
                 <span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${e.series} séries</span>
                 <span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${e.repetitions} reps</span>
                 ${e.temps_repos ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">Repos ${e.temps_repos}</span>` : ''}
-                ${e.rpe ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">RPE ${e.rpe}</span>` : ''}
+                ${e.rpe ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">RPE cible ${e.rpe}</span>` : ''}
                 ${e.tempo ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">Tempo ${e.tempo}</span>` : ''}
               </div>
               ${e.description ? `<p class="text-sm text-[color:var(--fg-70)] leading-relaxed mb-4">${escapeHtml(e.description)}</p>` : ''}
 
               <div class="border-t border-[color:var(--border)] pt-3">
+                <label class="block text-xs uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-2">Ma difficulté ressentie (RPE)</label>
+                <select data-programme-id="${e.id}" class="rpe-client-input w-20 px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-3">
+                  <option value="">—</option>
+                  ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${String(rpeClientMap[e.id]) === String(n) ? 'selected' : ''}>${n}</option>`).join('')}
+                </select>
+
                 <label class="block text-xs uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-2">Mon retour sur cet exercice</label>
                 <textarea data-programme-id="${e.id}" class="retour-input w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" rows="2" placeholder="Ressenti, douleur, facilité...">${escapeHtml(retoursMap[e.id] || '')}</textarea>
                 <button data-programme-id="${e.id}" class="save-retour-btn mt-2 text-xs px-3 py-1.5 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">
@@ -245,15 +297,64 @@
         </div>
       `;
 
+      document.getElementById('save-wellness-btn')?.addEventListener('click', saveWellness);
+
       document.querySelectorAll('.save-retour-btn').forEach(btn => {
         btn.addEventListener('click', () => saveRetour(btn));
       });
     }
 
+    async function saveWellness() {
+      const btn = document.getElementById('save-wellness-btn');
+      const confirmSpan = document.getElementById('wellness-confirm');
+      const inputs = document.querySelectorAll('.wellness-input');
+
+      const values = {};
+      let allFilled = true;
+      inputs.forEach(sel => {
+        const v = sel.value;
+        if (!v) allFilled = false;
+        values[sel.dataset.field] = v ? Number(v) : null;
+      });
+
+      if (!allFilled) { alert("Renseigne les 5 critères avant d'enregistrer."); return; }
+
+      const score = (values.sommeil + values.fatigue + values.courbatures + values.stress + values.motivation) / 5;
+
+      btn.disabled = true;
+      btn.textContent = 'Enregistrement...';
+
+      const { error } = await supabaseClient
+        .from('wellness')
+        .upsert({
+          client_email: currentUserEmail,
+          date: selectedDate,
+          sommeil: values.sommeil,
+          fatigue: values.fatigue,
+          courbatures: values.courbatures,
+          stress: values.stress,
+          motivation: values.motivation,
+          score_global: score,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'client_email,date' });
+
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer mon wellness';
+
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      wellnessMap[selectedDate] = values;
+      document.getElementById('wellness-score-display').textContent = score.toFixed(1);
+      confirmSpan.classList.remove('hidden');
+      setTimeout(() => confirmSpan.classList.add('hidden'), 3000);
+    }
+
     async function saveRetour(btn) {
       const programmeId = btn.dataset.programmeId;
       const textarea = document.querySelector(`.retour-input[data-programme-id="${programmeId}"]`);
+      const rpeSelect = document.querySelector(`.rpe-client-input[data-programme-id="${programmeId}"]`);
       const commentaire = textarea.value.trim();
+      const rpeClient = rpeSelect && rpeSelect.value !== '' ? Number(rpeSelect.value) : null;
       const confirmSpan = btn.nextElementSibling;
 
       btn.disabled = true;
@@ -265,6 +366,7 @@
           programme_id: programmeId,
           client_email: currentUserEmail,
           commentaire: commentaire,
+          rpe_client: rpeClient,
           updated_at: new Date().toISOString()
         }, { onConflict: 'programme_id,client_email' });
 
@@ -274,6 +376,7 @@
       if (error) { alert("Erreur : " + error.message); return; }
 
       retoursMap[programmeId] = commentaire;
+      rpeClientMap[programmeId] = rpeClient;
       confirmSpan.classList.remove('hidden');
       setTimeout(() => confirmSpan.classList.add('hidden'), 2000);
     }
@@ -355,7 +458,24 @@
         .eq('client_email', currentUserEmail);
 
       retoursMap = {};
-      (retours || []).forEach(r => { retoursMap[r.programme_id] = r.commentaire; });
+      rpeClientMap = {};
+      (retours || []).forEach(r => {
+        retoursMap[r.programme_id] = r.commentaire;
+        rpeClientMap[r.programme_id] = r.rpe_client;
+      });
+
+      const { data: wellnessRows } = await supabaseClient
+        .from('wellness')
+        .select('*')
+        .eq('client_email', currentUserEmail);
+
+      wellnessMap = {};
+      (wellnessRows || []).forEach(w => {
+        wellnessMap[w.date] = {
+          sommeil: w.sommeil, fatigue: w.fatigue, courbatures: w.courbatures,
+          stress: w.stress, motivation: w.motivation, score_global: w.score_global
+        };
+      });
 
       const today = formatDateKey(new Date());
       selectedDate = seancesParDate[today] ? today : null;
