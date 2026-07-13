@@ -73,6 +73,7 @@
       <div class="flex gap-2 mb-8 border-b border-[color:var(--border)]">
         <button id="tab-programmation" class="section-tab px-4 py-2.5 text-sm font-medium border-b-2 border-brand-blue text-[color:var(--accent)]">Programmation</button>
         <button id="tab-records" class="section-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">Records (PR)</button>
+        <button id="tab-suivi" class="section-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">Suivi</button>
       </div>
 
       <!-- SECTION PROGRAMMATION -->
@@ -104,6 +105,84 @@
         <div id="movement-list" class="flex flex-col gap-0 rounded-xl border border-[color:var(--border)] overflow-hidden divide-y divide-[color:var(--border)]"></div>
       </div>
 
+      <!-- SECTION SUIVI (statistiques + wellness + détail par séance + retours) -->
+      <div id="section-suivi" class="hidden">
+
+        <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">📊 Statistiques</h2>
+        <div class="grid sm:grid-cols-2 gap-4 mb-8">
+          <div class="rounded-xl border border-[color:var(--border)] p-5">
+            <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-4">Cette semaine</p>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-sm text-[color:var(--fg-60)]">RPE moyen</span>
+              <span id="suivi-week-rpe" class="font-heading font-bold text-xl text-[color:var(--accent)]">—</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-[color:var(--fg-60)]">Tonnage total</span>
+              <span id="suivi-week-tonnage" class="font-heading font-bold text-xl text-[color:var(--accent)]">—</span>
+            </div>
+          </div>
+          <div class="rounded-xl border border-[color:var(--border)] p-5">
+            <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-4">Ce mois-ci</p>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-sm text-[color:var(--fg-60)]">RPE moyen</span>
+              <span id="suivi-month-rpe" class="font-heading font-bold text-xl text-[color:var(--accent)]">—</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-[color:var(--fg-60)]">Tonnage total</span>
+              <span id="suivi-month-tonnage" class="font-heading font-bold text-xl text-[color:var(--accent)]">—</span>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="font-heading uppercase text-xs font-bold mb-2 text-[color:var(--fg-50)] tracking-wide">Évolution du tonnage (8 dernières semaines)</h3>
+        <div class="rounded-xl border border-[color:var(--border)] p-4 mb-2">
+          <svg id="suivi-chart-tonnage" viewBox="0 0 300 150" class="w-full h-auto"></svg>
+          <p id="suivi-chart-tonnage-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] py-8">Pas encore assez de données.</p>
+        </div>
+        <div id="suivi-tonnage-labels" class="flex justify-between text-[10px] text-[color:var(--fg-40)] mb-8 px-1"></div>
+
+        <h3 class="font-heading uppercase text-xs font-bold mb-2 text-[color:var(--fg-50)] tracking-wide">Évolution du RPE moyen (8 dernières semaines)</h3>
+        <div class="rounded-xl border border-[color:var(--border)] p-4 mb-2">
+          <svg id="suivi-chart-rpe" viewBox="0 0 300 150" class="w-full h-auto"></svg>
+          <p id="suivi-chart-rpe-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] py-8">Pas encore assez de données.</p>
+        </div>
+        <div id="suivi-rpe-labels" class="flex justify-between text-[10px] text-[color:var(--fg-40)] mb-10 px-1"></div>
+
+        <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">🧘 Wellness (moyennes séparées)</h2>
+        <div class="grid sm:grid-cols-2 gap-4 mb-3">
+          <div class="rounded-xl border border-[color:var(--border)] p-5">
+            <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-4">Cette semaine</p>
+            <div id="suivi-week-wellness" class="flex flex-col gap-2 text-sm"></div>
+          </div>
+          <div class="rounded-xl border border-[color:var(--border)] p-5">
+            <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-4">Ce mois-ci</p>
+            <div id="suivi-month-wellness" class="flex flex-col gap-2 text-sm"></div>
+          </div>
+        </div>
+        <p id="suivi-wellness-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] mb-10">Pas encore de wellness renseigné par ce client.</p>
+
+        <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">🗓️ Détail par séance</h2>
+        <div class="flex items-center justify-between mb-3">
+          <button id="prev-week-detail" class="w-8 h-8 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors text-sm">‹</button>
+          <h3 id="week-detail-label" class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold"></h3>
+          <button id="next-week-detail" class="w-8 h-8 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors text-sm">›</button>
+        </div>
+        <div id="day-tabs-detail" class="grid grid-cols-7 gap-1.5 mb-5"></div>
+
+        <div id="wellness-detail" class="hidden mb-4 rounded-xl border border-brand-blue-dark bg-brand-blue/5 p-4">
+          <p class="text-xs uppercase tracking-widest text-[color:var(--accent)] font-semibold mb-2">🧘 Wellness du jour</p>
+          <div id="wellness-detail-content" class="flex flex-wrap gap-3 text-sm"></div>
+        </div>
+
+        <div id="seance-detail-table" class="rounded-xl border border-[color:var(--border)] overflow-hidden mb-12"></div>
+        <p id="seance-detail-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] mb-12">Pas de séance ce jour-là.</p>
+
+        <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">💬 Retours de séances</h2>
+        <div id="retours-list" class="flex flex-col gap-3"></div>
+        <p id="retours-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] py-8">Aucun retour laissé par ce client pour l'instant.</p>
+
+      </div>
+
     </div>
   </main>
 
@@ -124,6 +203,74 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
     }
+
+    // ---------- Helpers pour l'onglet Suivi ----------
+    const offsetJour = { "Lundi": 0, "Mardi": 1, "Mercredi": 2, "Jeudi": 3, "Vendredi": 4, "Samedi": 5, "Dimanche": 6 };
+    const joursLettres = ["L", "M", "M", "J", "V", "S", "D"];
+
+    function getMondayOfDate(d) {
+      const day = d.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      const monday = new Date(d);
+      monday.setDate(d.getDate() + diff);
+      return monday;
+    }
+    function calculerDate(semaine_debut, jour) {
+      if (!semaine_debut || !jour || offsetJour[jour] === undefined) return null;
+      const [y, m, d] = semaine_debut.split('-').map(Number);
+      const lundi = new Date(y, m - 1, d);
+      lundi.setDate(lundi.getDate() + offsetJour[jour]);
+      return formatDateKey(lundi);
+    }
+    function parseFirstNumber(str) {
+      if (str === null || str === undefined || str === '') return null;
+      const match = String(str).match(/[\d.]+/);
+      return match ? parseFloat(match[0]) : null;
+    }
+    function tonnageOf(exo) {
+      const charge = (exo.charge !== null && exo.charge !== undefined) ? parseFloat(exo.charge) : null;
+      const reps = parseFirstNumber(exo.repetitions);
+      const series = parseFloat(exo.series) || 0;
+      if (charge === null || reps === null || isNaN(charge) || isNaN(reps)) return null;
+      return charge * reps * series;
+    }
+    function drawLineChart(svgEl, emptyEl, values) {
+      const validIndexes = values.map((v, i) => (v !== null && v !== undefined && !isNaN(v)) ? i : null).filter(i => i !== null);
+      if (validIndexes.length < 2) {
+        svgEl.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+      emptyEl.classList.add('hidden');
+      const w = 300, h = 150, pad = 15;
+      const validValues = validIndexes.map(i => values[i]);
+      const min = Math.min(...validValues), max = Math.max(...validValues);
+      const range = (max - min) || 1;
+      const n = values.length;
+
+      const coords = values.map((v, i) => {
+        if (v === null || v === undefined || isNaN(v)) return null;
+        const x = pad + (i / (n - 1)) * (w - pad * 2);
+        const y = h - pad - ((v - min) / range) * (h - pad * 2);
+        return { x, y };
+      });
+
+      let path = '', started = false;
+      coords.forEach(c => {
+        if (!c) { started = false; return; }
+        path += (started ? 'L' : 'M') + c.x + ',' + c.y + ' ';
+        started = true;
+      });
+      const dots = coords.filter(c => c).map(c => `<circle cx="${c.x}" cy="${c.y}" r="3" fill="#2D7AED" />`).join('');
+      svgEl.innerHTML = `<path d="${path.trim()}" fill="none" stroke="#2D7AED" stroke-width="2" />${dots}`;
+    }
+
+    let allProgrammesCache = [];
+    let rpeClientByProgId = {};
+    let wellnessByDate = {};
+    let detailWeekStart = getMondayOfDate(new Date());
+    let selectedDetailDate = null;
+    let suiviLoadedFor = null;
 
     // ---------- Auto-save : brouillon local + sauvegarde différée ----------
     let autosaveTimers = {};
@@ -334,20 +481,23 @@
     // ---------- Onglets Programmation / Records ----------
     document.getElementById('tab-programmation').addEventListener('click', () => switchTab('programmation'));
     document.getElementById('tab-records').addEventListener('click', () => switchTab('records'));
+    document.getElementById('tab-suivi').addEventListener('click', () => switchTab('suivi'));
 
     function switchTab(tab) {
-      const isProg = tab === 'programmation';
-      document.getElementById('section-programmation').classList.toggle('hidden', !isProg);
-      document.getElementById('section-records').classList.toggle('hidden', isProg);
-      document.getElementById('tab-programmation').classList.toggle('border-brand-blue', isProg);
-      document.getElementById('tab-programmation').classList.toggle('text-[color:var(--accent)]', isProg);
-      document.getElementById('tab-programmation').classList.toggle('border-transparent', !isProg);
-      document.getElementById('tab-programmation').classList.toggle('text-[color:var(--fg-50)]', !isProg);
-      document.getElementById('tab-records').classList.toggle('border-brand-blue', !isProg);
-      document.getElementById('tab-records').classList.toggle('text-[color:var(--accent)]', !isProg);
-      document.getElementById('tab-records').classList.toggle('border-transparent', isProg);
-      document.getElementById('tab-records').classList.toggle('text-[color:var(--fg-50)]', isProg);
-      if (!isProg) loadRecords();
+      const sections = { programmation: 'section-programmation', records: 'section-records', suivi: 'section-suivi' };
+      const tabs = { programmation: 'tab-programmation', records: 'tab-records', suivi: 'tab-suivi' };
+
+      Object.keys(sections).forEach(key => {
+        document.getElementById(sections[key]).classList.toggle('hidden', key !== tab);
+        const btn = document.getElementById(tabs[key]);
+        btn.classList.toggle('border-brand-blue', key === tab);
+        btn.classList.toggle('text-[color:var(--accent)]', key === tab);
+        btn.classList.toggle('border-transparent', key !== tab);
+        btn.classList.toggle('text-[color:var(--fg-50)]', key !== tab);
+      });
+
+      if (tab === 'records') loadRecords();
+      if (tab === 'suivi') loadSuiviData();
     }
 
     function getMondayFromDateStr(dateStr) {
@@ -984,6 +1134,272 @@
       allRecords = data || [];
       renderCatTabs();
       renderMovementList();
+    }
+
+    // ---------- Onglet Suivi (stats + wellness + détail par séance + retours) ----------
+    async function loadSuiviData() {
+      if (!selectedClientEmail) return;
+      if (suiviLoadedFor === selectedClientEmail) { renderSuiviAll(); return; }
+
+      const { data: programmes } = await supabaseClient
+        .from('programmes').select('*').eq('client_email', selectedClientEmail);
+      allProgrammesCache = programmes || [];
+      allProgrammesCache.forEach(e => { e._date = calculerDate(e.semaine_debut, e.jour); });
+
+      const { data: retours } = await supabaseClient
+        .from('retours').select('*').eq('client_email', selectedClientEmail);
+      rpeClientByProgId = {};
+      (retours || []).forEach(r => { rpeClientByProgId[r.programme_id] = r; });
+
+      const { data: wellnessRows } = await supabaseClient
+        .from('wellness').select('*').eq('client_email', selectedClientEmail);
+      wellnessByDate = {};
+      (wellnessRows || []).forEach(w => { wellnessByDate[w.date] = w; });
+
+      suiviLoadedFor = selectedClientEmail;
+      detailWeekStart = getMondayOfDate(new Date());
+      selectedDetailDate = null;
+
+      renderSuiviAll();
+      loadRetoursSuivi(retours || []);
+    }
+
+    function renderSuiviAll() {
+      loadStatsSuivi();
+      renderWeekDetailNav();
+      renderSeanceDetail();
+    }
+
+    function loadStatsSuivi() {
+      const exos = allProgrammesCache;
+
+      const today = new Date();
+      const monday = getMondayOfDate(today);
+      const mondayKey = formatDateKey(monday);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      const sundayKey = formatDateKey(sunday);
+      const currentMonthPrefix = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+      const exosSemaine = exos.filter(e => e._date && e._date >= mondayKey && e._date <= sundayKey);
+      const exosMois = exos.filter(e => e._date && e._date.startsWith(currentMonthPrefix));
+
+      function computeStats(list) {
+        const rpes = list.map(e => parseFirstNumber(e.rpe)).filter(v => v !== null);
+        const tonnages = list.map(tonnageOf).filter(v => v !== null);
+        const rpeAvg = rpes.length ? (rpes.reduce((a, b) => a + b, 0) / rpes.length) : null;
+        const tonnageSum = tonnages.length ? tonnages.reduce((a, b) => a + b, 0) : null;
+        return { rpeAvg, tonnageSum };
+      }
+      const statsSemaine = computeStats(exosSemaine);
+      const statsMois = computeStats(exosMois);
+
+      document.getElementById('suivi-week-rpe').textContent = statsSemaine.rpeAvg !== null ? statsSemaine.rpeAvg.toFixed(1) : '—';
+      document.getElementById('suivi-week-tonnage').textContent = statsSemaine.tonnageSum !== null ? Math.round(statsSemaine.tonnageSum).toLocaleString('fr-FR') + ' kg' : '—';
+      document.getElementById('suivi-month-rpe').textContent = statsMois.rpeAvg !== null ? statsMois.rpeAvg.toFixed(1) : '—';
+      document.getElementById('suivi-month-tonnage').textContent = statsMois.tonnageSum !== null ? Math.round(statsMois.tonnageSum).toLocaleString('fr-FR') + ' kg' : '—';
+
+      const semaines = [...new Set(exos.map(e => e.semaine_debut))].filter(Boolean).sort().slice(-8);
+      const tonnageValues = semaines.map(sem => {
+        const list = exos.filter(e => e.semaine_debut === sem);
+        const t = list.map(tonnageOf).filter(v => v !== null);
+        return t.length ? t.reduce((a, b) => a + b, 0) : null;
+      });
+      const rpeValues = semaines.map(sem => {
+        const list = exos.filter(e => e.semaine_debut === sem);
+        const r = list.map(e => parseFirstNumber(e.rpe)).filter(v => v !== null);
+        return r.length ? (r.reduce((a, b) => a + b, 0) / r.length) : null;
+      });
+
+      drawLineChart(document.getElementById('suivi-chart-tonnage'), document.getElementById('suivi-chart-tonnage-empty'), tonnageValues);
+      drawLineChart(document.getElementById('suivi-chart-rpe'), document.getElementById('suivi-chart-rpe-empty'), rpeValues);
+
+      const labelsHtml = semaines.map(sem => {
+        const [y, m, d] = sem.split('-');
+        return `<span>${d}/${m}</span>`;
+      }).join('');
+      document.getElementById('suivi-tonnage-labels').innerHTML = labelsHtml;
+      document.getElementById('suivi-rpe-labels').innerHTML = labelsHtml;
+
+      // Wellness — moyennes séparées (jamais mélangées)
+      const wellness = Object.values(wellnessByDate);
+      const wellnessSemaine = wellness.filter(w => w.date >= mondayKey && w.date <= sundayKey);
+      const wellnessMoisData = wellness.filter(w => w.date.startsWith(currentMonthPrefix));
+
+      const criteres = [
+        { key: 'sommeil', label: '😴 Sommeil' },
+        { key: 'fatigue', label: '🔋 Fatigue' },
+        { key: 'courbatures', label: '💪 Courbatures' },
+        { key: 'stress', label: '😰 Stress' },
+        { key: 'motivation', label: '🔥 Motivation' }
+      ];
+
+      function renderWellnessAvg(list, containerId) {
+        const container = document.getElementById(containerId);
+        if (list.length === 0) {
+          container.innerHTML = `<p class="text-xs text-[color:var(--fg-40)]">—</p>`;
+          return;
+        }
+        container.innerHTML = criteres.map(c => {
+          const values = list.map(w => w[c.key]).filter(v => v !== null && v !== undefined);
+          const avg = values.length ? (values.reduce((a, b) => a + b, 0) / values.length) : null;
+          return `<div class="flex items-center justify-between"><span class="text-[color:var(--fg-60)]">${c.label}</span><span class="font-semibold">${avg !== null ? avg.toFixed(1) : '—'}/5</span></div>`;
+        }).join('');
+      }
+      renderWellnessAvg(wellnessSemaine, 'suivi-week-wellness');
+      renderWellnessAvg(wellnessMoisData, 'suivi-month-wellness');
+      document.getElementById('suivi-wellness-empty').classList.toggle('hidden', wellness.length > 0);
+    }
+
+    function renderWeekDetailNav() {
+      const days = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(detailWeekStart);
+        d.setDate(detailWeekStart.getDate() + i);
+        days.push(d);
+      }
+      const first = days[0], last = days[6];
+      const moisNoms = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+      document.getElementById('week-detail-label').textContent =
+        `${first.getDate()} ${moisNoms[first.getMonth()]} – ${last.getDate()} ${moisNoms[last.getMonth()]} ${last.getFullYear()}`;
+
+      const today = formatDateKey(new Date());
+      const tabsEl = document.getElementById('day-tabs-detail');
+      tabsEl.innerHTML = '';
+
+      days.forEach((d, i) => {
+        const key = formatDateKey(d);
+        const hasSeance = allProgrammesCache.some(e => e._date === key);
+        const isToday = key === today;
+        const isSelected = key === selectedDetailDate;
+
+        const btn = document.createElement('button');
+        btn.className = `flex flex-col items-center gap-1 py-2.5 rounded-lg border transition-colors ${
+          isToday ? 'bg-brand-blue text-white border-brand-blue' :
+          isSelected ? 'border-brand-blue bg-brand-blue/10' : 'border-[color:var(--border)]'
+        } hover:border-brand-blue`;
+        btn.innerHTML = `
+          <span class="text-[10px] uppercase ${isToday ? 'text-white/70' : 'text-[color:var(--fg-40)]'}">${joursLettres[i]}</span>
+          <span class="text-sm font-semibold">${d.getDate()}</span>
+          ${hasSeance ? `<span class="w-1 h-1 rounded-full ${isToday ? 'bg-white' : 'bg-brand-blue'}"></span>` : '<span class="w-1 h-1"></span>'}
+        `;
+        btn.addEventListener('click', () => {
+          selectedDetailDate = key;
+          renderWeekDetailNav();
+          renderSeanceDetail();
+        });
+        tabsEl.appendChild(btn);
+      });
+    }
+
+    document.getElementById('prev-week-detail')?.addEventListener('click', () => {
+      detailWeekStart.setDate(detailWeekStart.getDate() - 7);
+      renderWeekDetailNav();
+    });
+    document.getElementById('next-week-detail')?.addEventListener('click', () => {
+      detailWeekStart.setDate(detailWeekStart.getDate() + 7);
+      renderWeekDetailNav();
+    });
+
+    function renderSeanceDetail() {
+      const table = document.getElementById('seance-detail-table');
+      const emptyMsg = document.getElementById('seance-detail-empty');
+      const wellnessBox = document.getElementById('wellness-detail');
+      const wellnessContent = document.getElementById('wellness-detail-content');
+
+      if (!selectedDetailDate) {
+        table.innerHTML = '';
+        emptyMsg.classList.add('hidden');
+        wellnessBox.classList.add('hidden');
+        return;
+      }
+
+      const w = wellnessByDate[selectedDetailDate];
+      if (w) {
+        wellnessBox.classList.remove('hidden');
+        wellnessContent.innerHTML = `
+          <span>😴 Sommeil : <strong>${escapeHtml(w.sommeil)}</strong>/5</span>
+          <span>🔋 Fatigue : <strong>${escapeHtml(w.fatigue)}</strong>/5</span>
+          <span>💪 Courbatures : <strong>${escapeHtml(w.courbatures)}</strong>/5</span>
+          <span>😰 Stress : <strong>${escapeHtml(w.stress)}</strong>/5</span>
+          <span>🔥 Motivation : <strong>${escapeHtml(w.motivation)}</strong>/5</span>
+        `;
+      } else {
+        wellnessBox.classList.add('hidden');
+      }
+
+      const exos = allProgrammesCache
+        .filter(e => e._date === selectedDetailDate)
+        .sort((a, b) => (a.ordre ?? 0) - (b.ordre ?? 0));
+
+      if (exos.length === 0) {
+        table.innerHTML = '';
+        emptyMsg.classList.remove('hidden');
+        return;
+      }
+      emptyMsg.classList.add('hidden');
+
+      table.innerHTML = `
+        <div class="grid grid-cols-5 gap-2 px-3 py-2 text-[10px] uppercase text-[color:var(--fg-40)] border-b border-[color:var(--border)]">
+          <span class="col-span-2">Exercice</span>
+          <span class="text-right">Charge</span>
+          <span class="text-right">Tonnage</span>
+          <span class="text-right">RPE</span>
+        </div>
+        ${exos.map(e => {
+          const tonnage = tonnageOf(e);
+          const retour = rpeClientByProgId[e.id];
+          const rpeClient = retour ? retour.rpe_client : null;
+          return `
+            <div class="grid grid-cols-5 gap-2 px-3 py-2.5 text-sm border-b border-[color:var(--border)] last:border-0">
+              <span class="col-span-2 font-medium">${escapeHtml(e.exercice)}</span>
+              <span class="text-right text-[color:var(--fg-60)]">${(e.charge !== null && e.charge !== undefined) ? escapeHtml(e.charge) + 'kg' : '—'}</span>
+              <span class="text-right text-[color:var(--fg-60)]">${tonnage !== null ? Math.round(tonnage).toLocaleString('fr-FR') + 'kg' : '—'}</span>
+              <span class="text-right font-semibold ${rpeClient !== null && rpeClient !== undefined ? 'text-[color:var(--accent)]' : 'text-[color:var(--fg-30)]'}">${rpeClient !== null && rpeClient !== undefined ? rpeClient : '—'}</span>
+            </div>
+          `;
+        }).join('')}
+      `;
+    }
+
+    function loadRetoursSuivi(retours) {
+      const progMap = {};
+      allProgrammesCache.forEach(p => { progMap[p.id] = p; });
+
+      const list = document.getElementById('retours-list');
+      const emptyMsg = document.getElementById('retours-empty');
+
+      const withText = (retours || []).filter(r => r.commentaire && r.commentaire.trim())
+        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+
+      if (withText.length === 0) {
+        list.innerHTML = '';
+        emptyMsg.classList.remove('hidden');
+        return;
+      }
+      emptyMsg.classList.add('hidden');
+
+      list.innerHTML = withText.map(r => {
+        const prog = progMap[r.programme_id];
+        const exerciceLabel = prog ? escapeHtml(prog.exercice) : 'Exercice supprimé';
+        const dateStr = prog ? calculerDate(prog.semaine_debut, prog.jour) : null;
+        const dateLabel = dateStr
+          ? new Date(dateStr + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+          : '';
+
+        return `
+          <div class="rounded-xl border border-[color:var(--border)] p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-heading uppercase font-bold text-sm text-[color:var(--accent)]">${exerciceLabel}</span>
+              <div class="flex items-center gap-2">
+                ${(r.rpe_client !== null && r.rpe_client !== undefined) ? `<span class="text-xs px-2 py-0.5 rounded-full bg-[color:var(--card)] font-semibold">RPE ${r.rpe_client}</span>` : ''}
+                <span class="text-xs text-[color:var(--fg-40)] capitalize">${dateLabel}</span>
+              </div>
+            </div>
+            <p class="text-sm text-[color:var(--fg-70)] leading-relaxed">${escapeHtml(r.commentaire)}</p>
+          </div>
+        `;
+      }).join('');
     }
 
     async function checkAccess() {
