@@ -99,6 +99,20 @@
       </div>
       <div id="rpe-labels" class="flex justify-between text-[10px] text-[color:var(--fg-40)] mb-10 px-1"></div>
 
+      <!-- Wellness (moyennes) -->
+      <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">🧘 Wellness (moyennes)</h2>
+      <div class="grid sm:grid-cols-2 gap-4 mb-3">
+        <div class="rounded-xl border border-[color:var(--border)] p-5">
+          <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-4">Cette semaine</p>
+          <div id="week-wellness" class="flex flex-col gap-2 text-sm"></div>
+        </div>
+        <div class="rounded-xl border border-[color:var(--border)] p-5">
+          <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-4">Ce mois-ci</p>
+          <div id="month-wellness" class="flex flex-col gap-2 text-sm"></div>
+        </div>
+      </div>
+      <p id="wellness-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] mb-10">Pas encore de wellness renseigné par ce client.</p>
+
       <!-- Détail par séance -->
       <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">🗓️ Détail par séance</h2>
       <div class="flex items-center justify-between mb-3">
@@ -433,6 +447,39 @@
       }).join('');
       document.getElementById('tonnage-labels').innerHTML = labelsHtml;
       document.getElementById('rpe-labels').innerHTML = labelsHtml;
+
+      // ---------- Wellness ----------
+      const wellness = Object.values(wellnessByDate);
+      const wellnessSemaine = wellness.filter(w => w.date >= mondayKey && w.date <= sundayKey);
+      const wellnessMoisData = wellness.filter(w => w.date.startsWith(currentMonthPrefix));
+
+      const criteres = [
+        { key: 'sommeil', label: '😴 Sommeil' },
+        { key: 'fatigue', label: '🔋 Fatigue' },
+        { key: 'courbatures', label: '💪 Courbatures' },
+        { key: 'stress', label: '😰 Stress' },
+        { key: 'motivation', label: '🔥 Motivation' }
+      ];
+
+      function renderWellnessAvg(list, containerId) {
+        const container = document.getElementById(containerId);
+        if (list.length === 0) {
+          container.innerHTML = `<p class="text-xs text-[color:var(--fg-40)]">—</p>`;
+          return;
+        }
+        const rows = criteres.map(c => {
+          const values = list.map(w => w[c.key]).filter(v => v !== null && v !== undefined);
+          const avg = values.length ? (values.reduce((a, b) => a + b, 0) / values.length) : null;
+          return `<div class="flex items-center justify-between"><span class="text-[color:var(--fg-60)]">${c.label}</span><span class="font-semibold">${avg !== null ? avg.toFixed(1) : '—'}/5</span></div>`;
+        }).join('');
+        const scores = list.map(w => w.score_global).filter(v => v !== null && v !== undefined);
+        const scoreAvg = scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+        container.innerHTML = rows + `<div class="flex items-center justify-between pt-2 mt-1 border-t border-[color:var(--border)]"><span class="text-[color:var(--accent)] font-semibold">Score global</span><span class="font-bold text-[color:var(--accent)]">${scoreAvg !== null ? scoreAvg.toFixed(1) : '—'}/5</span></div>`;
+      }
+
+      renderWellnessAvg(wellnessSemaine, 'week-wellness');
+      renderWellnessAvg(wellnessMoisData, 'month-wellness');
+      document.getElementById('wellness-empty').classList.toggle('hidden', wellness.length > 0);
     }
 
     function loadRetours(retours) {
