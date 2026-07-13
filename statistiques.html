@@ -114,13 +114,6 @@
     </div>
     <p id="wellness-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] mb-6">Pas encore de wellness renseigné.</p>
 
-    <h3 class="font-heading uppercase text-xs font-bold mb-2 text-[color:var(--fg-50)] tracking-wide">Évolution du score global (8 dernières semaines)</h3>
-    <div class="rounded-xl border border-[color:var(--border)] p-4 mb-3">
-      <svg id="chart-wellness" viewBox="0 0 300 150" class="w-full h-auto"></svg>
-      <p id="chart-wellness-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] py-8">Pas encore assez de données.</p>
-    </div>
-    <div id="wellness-labels" class="flex justify-between text-[10px] text-[color:var(--fg-40)] mb-6 px-1"></div>
-
     <p id="data-note" class="text-xs text-[color:var(--fg-40)] italic text-center"></p>
 
   </main>
@@ -367,27 +360,12 @@
           const avg = values.length ? (values.reduce((a, b) => a + b, 0) / values.length) : null;
           return `<div class="flex items-center justify-between"><span class="text-[color:var(--fg-60)]">${c.label}</span><span class="font-semibold">${avg !== null ? avg.toFixed(1) : '—'}/5</span></div>`;
         }).join('');
-        const scores = list.map(w => w.score_global).filter(v => v !== null && v !== undefined);
-        const scoreAvg = scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length) : null;
-        container.innerHTML = rows + `<div class="flex items-center justify-between pt-2 mt-1 border-t border-[color:var(--border)]"><span class="text-[color:var(--accent)] font-semibold">Score global</span><span class="font-bold text-[color:var(--accent)]">${scoreAvg !== null ? scoreAvg.toFixed(1) : '—'}/5</span></div>`;
+        container.innerHTML = rows;
       }
 
       renderWellnessAvg(wellnessSemaine, 'week-wellness');
       renderWellnessAvg(wellnessMoisData, 'month-wellness');
       document.getElementById('wellness-empty').classList.toggle('hidden', wellness.length > 0);
-
-      const wellnessValues = semaines.map(sem => {
-        const semMonday = new Date(sem);
-        const semSunday = new Date(semMonday);
-        semSunday.setDate(semMonday.getDate() + 6);
-        const semMondayKey = formatDateKey(semMonday);
-        const semSundayKey = formatDateKey(semSunday);
-        const list = wellness.filter(w => w.date >= semMondayKey && w.date <= semSundayKey);
-        const scores = list.map(w => w.score_global).filter(v => v !== null && v !== undefined);
-        return scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length) : null;
-      });
-      drawLineChart(document.getElementById('chart-wellness'), document.getElementById('chart-wellness-empty'), wellnessValues);
-      document.getElementById('wellness-labels').innerHTML = semaines.length ? labelsHtml : '';
     }
 
     load();
