@@ -57,11 +57,37 @@
 
     <div id="add-client-form" class="hidden rounded-xl border border-[color:var(--border)] p-4 mb-8">
       <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-3">Ajouter un client en suivi</p>
-      <div class="grid sm:grid-cols-3 gap-2">
-        <input type="email" id="new-client-email" placeholder="Email du client" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-1">
-        <input type="text" id="new-client-nom" placeholder="Prénom (optionnel)" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-1">
-        <button id="confirm-add-client" class="px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-sm font-medium">Ajouter</button>
+      <div class="grid sm:grid-cols-3 gap-2 mb-2">
+        <input type="email" id="new-client-email" placeholder="Email du client *" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="text" id="new-client-nom" placeholder="Prénom" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="text" id="new-client-nom-famille" placeholder="Nom" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
       </div>
+      <div class="grid sm:grid-cols-3 gap-2 mb-2">
+        <input type="tel" id="new-client-tel" placeholder="Téléphone" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="text" id="new-client-adresse" placeholder="Adresse" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-2">
+      </div>
+      <div class="grid sm:grid-cols-4 gap-2 mb-3">
+        <div>
+          <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Date de naissance</label>
+          <input type="date" id="new-client-naissance" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        </div>
+        <div>
+          <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Taille (cm)</label>
+          <input type="number" id="new-client-taille" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        </div>
+        <div>
+          <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Sexe</label>
+          <select id="new-client-sexe" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            <option value="femme">Femme</option>
+            <option value="homme">Homme</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Poids actuel (kg)</label>
+          <input type="number" step="0.1" id="new-client-poids" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        </div>
+      </div>
+      <button id="confirm-add-client" class="px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-sm font-medium">Ajouter</button>
     </div>
 
     <div id="client-workspace" class="hidden">
@@ -207,27 +233,62 @@
       <!-- SECTION NUTRITION -->
       <div id="section-nutrition" class="hidden">
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+        <!-- Fiche client -->
+        <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">📇 Fiche client</h2>
+        <div class="grid sm:grid-cols-2 gap-2 mb-2">
+          <input type="text" id="fiche-nom" placeholder="Prénom" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <input type="text" id="fiche-nom-famille" placeholder="Nom" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        </div>
+        <div class="grid sm:grid-cols-2 gap-2 mb-2">
+          <input type="tel" id="fiche-tel" placeholder="Téléphone" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <input type="text" id="fiche-adresse" placeholder="Adresse" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        </div>
+        <div class="grid grid-cols-3 gap-2 mb-2">
           <div>
-            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Sexe</label>
-            <select id="nut-sexe" class="w-full px-2 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Naissance</label>
+            <input type="date" id="fiche-naissance" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Taille (cm)</label>
+            <input type="number" id="fiche-taille" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Sexe</label>
+            <select id="fiche-sexe" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
               <option value="femme">Femme</option>
               <option value="homme">Homme</option>
             </select>
           </div>
-          <div>
-            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Âge</label>
-            <input type="number" id="nut-age" class="w-full px-2 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-          </div>
-          <div>
-            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Taille (cm)</label>
-            <input type="number" id="nut-taille" class="w-full px-2 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-          </div>
-          <div>
-            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Poids (kg)</label>
-            <input type="number" step="0.1" id="nut-poids" class="w-full px-2 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-          </div>
         </div>
+        <button id="fiche-save-btn" class="w-full mb-2 px-4 py-2 rounded-lg bg-[color:var(--card)] border border-brand-blue-dark hover:bg-brand-blue/5 transition-colors text-[color:var(--accent)] text-xs font-semibold uppercase tracking-wide">
+          Mettre à jour la fiche
+        </button>
+        <p id="fiche-save-confirm" class="hidden text-center text-xs text-[color:var(--accent)] font-medium mb-2">Fiche mise à jour ✓</p>
+        <p id="fiche-age-display" class="text-xs text-[color:var(--fg-50)] text-center mb-8"></p>
+
+        <!-- Historique de poids -->
+        <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">⚖️ Historique de poids</h2>
+        <div class="flex items-end gap-2 mb-4">
+          <div class="flex-1">
+            <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Poids (kg)</label>
+            <input type="number" step="0.1" id="poids-input" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div class="flex-1">
+            <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Date</label>
+            <input type="date" id="poids-date" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <button id="poids-add-btn" class="shrink-0 px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-xs font-semibold uppercase tracking-wide">Ajouter</button>
+        </div>
+
+        <div class="rounded-xl border border-[color:var(--border)] p-4 mb-2">
+          <svg id="poids-chart" viewBox="0 0 300 150" class="w-full h-auto"></svg>
+          <p id="poids-chart-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] py-8">Pas encore assez de données pour un graphique.</p>
+        </div>
+        <div id="poids-list" class="flex flex-col gap-1.5 mb-8"></div>
+
+        <!-- Calcul nutrition -->
+        <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">🍽️ Calcul nutrition</h2>
+        <p id="nut-missing-data" class="hidden text-xs text-red-400 mb-3">⚠️ Complète la fiche client (naissance, taille, sexe) et ajoute au moins un poids pour calculer.</p>
 
         <div class="mb-3">
           <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Facteur d'activité</label>
@@ -675,13 +736,31 @@
     document.getElementById('confirm-add-client').addEventListener('click', async () => {
       const email = document.getElementById('new-client-email').value.trim().toLowerCase();
       const nom = document.getElementById('new-client-nom').value.trim();
+      const nomFamille = document.getElementById('new-client-nom-famille').value.trim();
+      const telephone = document.getElementById('new-client-tel').value.trim();
+      const adresse = document.getElementById('new-client-adresse').value.trim();
+      const dateNaissance = document.getElementById('new-client-naissance').value || null;
+      const taille = Number(document.getElementById('new-client-taille').value) || null;
+      const sexe = document.getElementById('new-client-sexe').value;
+      const poids = Number(document.getElementById('new-client-poids').value) || null;
+
       if (!email) { alert("L'email est obligatoire."); return; }
 
-      const { error } = await supabaseClient.from('clients_actifs').insert({ email, nom });
+      const { error } = await supabaseClient.from('clients_actifs').insert({
+        email, nom, nom_famille: nomFamille, telephone, adresse,
+        date_naissance: dateNaissance, taille, sexe
+      });
       if (error) { alert("Erreur : " + error.message); return; }
 
-      document.getElementById('new-client-email').value = '';
-      document.getElementById('new-client-nom').value = '';
+      if (poids) {
+        await supabaseClient.from('poids_historique').insert({
+          client_email: email, poids: poids, date: formatDateKey(new Date())
+        });
+      }
+
+      ['new-client-email','new-client-nom','new-client-nom-famille','new-client-tel','new-client-adresse','new-client-naissance','new-client-taille','new-client-poids'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
       await loadClients();
       selectClient(email);
     });
@@ -1631,6 +1710,18 @@
     });
 
     // ---------- Onglet Nutrition ----------
+    let currentClientPoidsHistory = [];
+
+    function calcAge(dateNaissance) {
+      if (!dateNaissance) return null;
+      const today = new Date();
+      const dob = new Date(dateNaissance);
+      let age = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+      return age;
+    }
+
     function calcMB(sexe, poids, taille, age) {
       const base = (10 * poids) + (6.25 * taille) - (5 * age);
       return sexe === 'homme' ? base + 5 : base - 161;
@@ -1658,7 +1749,7 @@
       };
     }
 
-    function renderNutritionResults(n, r) {
+    function renderNutritionResults(r) {
       document.getElementById('nut-results').classList.remove('hidden');
       document.getElementById('nut-mb').textContent = Math.round(r.mb) + ' kcal';
       document.getElementById('nut-mb-actif').textContent = Math.round(r.mbActif) + ' kcal';
@@ -1677,52 +1768,138 @@
       `;
     }
 
-    function readNutritionForm() {
-      return {
-        sexe: document.getElementById('nut-sexe').value,
-        age: Number(document.getElementById('nut-age').value) || 0,
-        taille: Number(document.getElementById('nut-taille').value) || 0,
-        poids: Number(document.getElementById('nut-poids').value) || 0,
+    function getLatestPoids() {
+      if (!currentClientPoidsHistory.length) return null;
+      return [...currentClientPoidsHistory].sort((a, b) => b.date.localeCompare(a.date))[0].poids;
+    }
+
+    async function tryComputeNutrition() {
+      const client = clientsActifs.find(c => c.email === selectedClientEmail);
+      const latestPoids = getLatestPoids();
+      const age = client ? calcAge(client.date_naissance) : null;
+      const missing = document.getElementById('nut-missing-data');
+
+      if (!client || !client.date_naissance || !client.taille || !client.sexe || !latestPoids) {
+        missing.classList.remove('hidden');
+        document.getElementById('nut-results').classList.add('hidden');
+        return;
+      }
+      missing.classList.add('hidden');
+
+      const n = {
+        sexe: client.sexe, age, taille: Number(client.taille), poids: Number(latestPoids),
         activite: Number(document.getElementById('nut-activite').value),
         ratio_proteines: Number(document.getElementById('nut-ratio-prot').value) || 1.9,
         ratio_lipides: Number(document.getElementById('nut-ratio-lip').value) || 0.8,
         surplus_calorique: Number(document.getElementById('nut-surplus').value) || 0,
         deficit_calorique: Number(document.getElementById('nut-deficit').value) || 0
       };
+      renderNutritionResults(calcNutrition(n));
     }
 
-    function fillNutritionForm(n) {
-      document.getElementById('nut-sexe').value = n.sexe || 'femme';
-      document.getElementById('nut-age').value = n.age || '';
-      document.getElementById('nut-taille').value = n.taille || '';
-      document.getElementById('nut-poids').value = n.poids || '';
-      document.getElementById('nut-activite').value = n.activite || 1.4;
-      document.getElementById('nut-ratio-prot').value = n.ratio_proteines ?? 1.9;
-      document.getElementById('nut-ratio-lip').value = n.ratio_lipides ?? 0.8;
-      document.getElementById('nut-surplus').value = n.surplus_calorique ?? 0;
-      document.getElementById('nut-deficit').value = n.deficit_calorique ?? 0;
+    function fillFicheForm(client) {
+      document.getElementById('fiche-nom').value = client?.nom || '';
+      document.getElementById('fiche-nom-famille').value = client?.nom_famille || '';
+      document.getElementById('fiche-tel').value = client?.telephone || '';
+      document.getElementById('fiche-adresse').value = client?.adresse || '';
+      document.getElementById('fiche-naissance').value = client?.date_naissance || '';
+      document.getElementById('fiche-taille').value = client?.taille || '';
+      document.getElementById('fiche-sexe').value = client?.sexe || 'femme';
+
+      const age = calcAge(client?.date_naissance);
+      document.getElementById('fiche-age-display').textContent = age !== null ? `Âge calculé automatiquement : ${age} ans` : '';
     }
 
-    async function loadNutrition() {
-      if (!selectedClientEmail) return;
-      document.getElementById('nut-results').classList.add('hidden');
-      document.getElementById('nut-save-confirm').classList.add('hidden');
+    function renderPoidsHistory() {
+      const sorted = [...currentClientPoidsHistory].sort((a, b) => a.date.localeCompare(b.date));
+      const values = sorted.map(p => Number(p.poids));
 
+      drawLineChart(document.getElementById('poids-chart'), document.getElementById('poids-chart-empty'), values);
+
+      const list = document.getElementById('poids-list');
+      list.innerHTML = [...sorted].reverse().map(p => `
+        <div class="flex items-center justify-between rounded-lg border border-[color:var(--border)] px-3 py-2 text-sm">
+          <span class="text-[color:var(--fg-60)]">${new Date(p.date + 'T00:00:00').toLocaleDateString('fr-FR')}</span>
+          <div class="flex items-center gap-2">
+            <span class="font-semibold">${p.poids} kg</span>
+            <span class="poids-delete-btn text-red-400 hover:text-red-300 text-xs cursor-pointer" data-id="${p.id}">✕</span>
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.poids-delete-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          await supabaseClient.from('poids_historique').delete().eq('id', btn.dataset.id);
+          await loadPoidsHistory();
+        });
+      });
+    }
+
+    async function loadPoidsHistory() {
       const { data } = await supabaseClient
-        .from('nutrition').select('*').eq('client_email', selectedClientEmail).maybeSingle();
-
-      if (data) {
-        fillNutritionForm(data);
-        renderNutritionResults(data, calcNutrition(data));
-      } else {
-        fillNutritionForm({});
-      }
+        .from('poids_historique').select('*').eq('client_email', selectedClientEmail);
+      currentClientPoidsHistory = data || [];
+      renderPoidsHistory();
+      tryComputeNutrition();
     }
+
+    document.getElementById('poids-add-btn').addEventListener('click', async () => {
+      if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
+      const poids = Number(document.getElementById('poids-input').value);
+      const date = document.getElementById('poids-date').value || formatDateKey(new Date());
+      if (!poids) { alert("Renseigne un poids."); return; }
+
+      const { error } = await supabaseClient.from('poids_historique').upsert({
+        client_email: selectedClientEmail, poids, date
+      }, { onConflict: 'client_email,date' });
+
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      document.getElementById('poids-input').value = '';
+      await loadPoidsHistory();
+    });
+
+    document.getElementById('fiche-save-btn').addEventListener('click', async () => {
+      if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
+      const payload = {
+        nom: document.getElementById('fiche-nom').value.trim(),
+        nom_famille: document.getElementById('fiche-nom-famille').value.trim(),
+        telephone: document.getElementById('fiche-tel').value.trim(),
+        adresse: document.getElementById('fiche-adresse').value.trim(),
+        date_naissance: document.getElementById('fiche-naissance').value || null,
+        taille: Number(document.getElementById('fiche-taille').value) || null,
+        sexe: document.getElementById('fiche-sexe').value
+      };
+
+      const btn = document.getElementById('fiche-save-btn');
+      btn.disabled = true;
+
+      const { error } = await supabaseClient.from('clients_actifs').update(payload).eq('email', selectedClientEmail);
+
+      btn.disabled = false;
+
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      await loadClients();
+      const client = clientsActifs.find(c => c.email === selectedClientEmail);
+      fillFicheForm(client);
+      tryComputeNutrition();
+
+      const confirmEl = document.getElementById('fiche-save-confirm');
+      confirmEl.classList.remove('hidden');
+      setTimeout(() => confirmEl.classList.add('hidden'), 2500);
+    });
 
     document.getElementById('nut-save-btn').addEventListener('click', async () => {
       if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
-      const n = readNutritionForm();
-      if (!n.age || !n.taille || !n.poids) { alert("Renseigne au minimum l'âge, la taille et le poids."); return; }
+
+      const n = {
+        activite: Number(document.getElementById('nut-activite').value),
+        ratio_proteines: Number(document.getElementById('nut-ratio-prot').value) || 1.9,
+        ratio_lipides: Number(document.getElementById('nut-ratio-lip').value) || 0.8,
+        surplus_calorique: Number(document.getElementById('nut-surplus').value) || 0,
+        deficit_calorique: Number(document.getElementById('nut-deficit').value) || 0
+      };
 
       const btn = document.getElementById('nut-save-btn');
       btn.disabled = true;
@@ -1739,11 +1916,33 @@
 
       if (error) { alert("Erreur : " + error.message); return; }
 
-      renderNutritionResults(n, calcNutrition(n));
+      tryComputeNutrition();
       const confirmEl = document.getElementById('nut-save-confirm');
       confirmEl.classList.remove('hidden');
       setTimeout(() => confirmEl.classList.add('hidden'), 3000);
     });
+
+    async function loadNutrition() {
+      if (!selectedClientEmail) return;
+      document.getElementById('nut-results').classList.add('hidden');
+      document.getElementById('nut-save-confirm').classList.add('hidden');
+      document.getElementById('fiche-save-confirm').classList.add('hidden');
+      document.getElementById('poids-date').value = formatDateKey(new Date());
+
+      const client = clientsActifs.find(c => c.email === selectedClientEmail);
+      fillFicheForm(client);
+
+      const { data: nutData } = await supabaseClient
+        .from('nutrition').select('*').eq('client_email', selectedClientEmail).maybeSingle();
+
+      document.getElementById('nut-activite').value = nutData?.activite || 1.4;
+      document.getElementById('nut-ratio-prot').value = nutData?.ratio_proteines ?? 1.9;
+      document.getElementById('nut-ratio-lip').value = nutData?.ratio_lipides ?? 0.8;
+      document.getElementById('nut-surplus').value = nutData?.surplus_calorique ?? 0;
+      document.getElementById('nut-deficit').value = nutData?.deficit_calorique ?? 0;
+
+      await loadPoidsHistory();
+    }
 
     async function checkAccess() {
       const { data: { user } } = await supabaseClient.auth.getUser();
