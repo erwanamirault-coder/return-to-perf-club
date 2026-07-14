@@ -1891,9 +1891,14 @@
       if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
 
       const client = clientsActifs.find(c => c.email === selectedClientEmail);
+      const latestPoidsForSave = getLatestPoids();
+      const ageForSave = client ? calcAge(client.date_naissance) : null;
 
       const n = {
         sexe: client?.sexe || null,
+        age: ageForSave,
+        taille: client?.taille ? Number(client.taille) : null,
+        poids: latestPoidsForSave ? Number(latestPoidsForSave) : null,
         activite: Number(document.getElementById('nut-activite').value),
         ratio_proteines: Number(document.getElementById('nut-ratio-prot').value) || 1.9,
         ratio_lipides: Number(document.getElementById('nut-ratio-lip').value) || 0.8,
