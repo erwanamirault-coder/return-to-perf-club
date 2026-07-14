@@ -53,11 +53,31 @@
 
   <main id="page-content" class="px-6 py-10 max-w-lg mx-auto hidden">
     <h1 class="font-heading uppercase text-xl font-bold mb-1 text-center">🍽️ Ma nutrition</h1>
-    <p class="text-xs text-[color:var(--fg-40)] text-center mb-8">Tes besoins caloriques calculés par ton coach.</p>
+    <p class="text-xs text-[color:var(--fg-40)] text-center mb-8">Suis ton poids et retrouve tes besoins caloriques calculés pour toi.</p>
 
+    <!-- Mon poids -->
+    <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide mt-4">⚖️ Mon poids</h2>
+    <div class="flex items-end gap-2 mb-4">
+      <div class="flex-1">
+        <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Poids (kg)</label>
+        <input type="number" step="0.1" id="poids-input" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      </div>
+      <div class="flex-1">
+        <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Date</label>
+        <input type="date" id="poids-date" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      </div>
+      <button id="poids-add-btn" class="shrink-0 px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-xs font-semibold uppercase tracking-wide">Ajouter</button>
+    </div>
+    <div class="rounded-xl border border-[color:var(--border)] p-4 mb-2">
+      <svg id="poids-chart" viewBox="0 0 300 150" class="w-full h-auto"></svg>
+      <p id="poids-chart-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] py-8">Ajoute au moins 2 pesées pour voir ton évolution.</p>
+    </div>
+    <div id="poids-list" class="flex flex-col gap-1.5 mb-10"></div>
+
+    <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">🍽️ Mes besoins caloriques</h2>
     <div id="nutrition-content"></div>
     <p id="no-nutrition" class="hidden text-center text-sm text-[color:var(--fg-40)] py-12">
-      Ton coach n'a pas encore renseigné ton profil nutrition.<br>Ça arrive bientôt !
+      Renseigne ton poids ci-dessus, et demande à ton coach de compléter ta fiche (date de naissance, taille, sexe) pour débloquer le calcul.
     </p>
   </main>
 
@@ -103,6 +123,16 @@
         </div>
       `;
       waitForCalendlyAndInit();
+    }
+
+    function calcAge(dateNaissance) {
+      if (!dateNaissance) return null;
+      const today = new Date();
+      const dob = new Date(dateNaissance);
+      let age = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+      return age;
     }
 
     function calcMB(sexe, poids, taille, age) {
@@ -165,9 +195,117 @@
         </div>
 
         <p class="text-[10px] text-[color:var(--fg-40)] text-center mt-4">
-          Calculé pour ${n.poids} kg, mise à jour à chaque nouvelle pesée par ton coach.
+          Calculé pour ${n.poids} kg (dernière pesée) et ${n.age} ans.
         </p>
       `;
+      document.getElementById('no-nutrition').classList.add('hidden');
+    }
+
+    function drawLineChart(svgEl, emptyEl, values) {
+      const validIndexes = values.map((v, i) => (v !== null && v !== undefined && !isNaN(v)) ? i : null).filter(i => i !== null);
+      if (validIndexes.length < 2) {
+        svgEl.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+      emptyEl.classList.add('hidden');
+      const w = 300, h = 150, pad = 15;
+      const validValues = validIndexes.map(i => values[i]);
+      const min = Math.min(...validValues), max = Math.max(...validValues);
+      const range = (max - min) || 1;
+      const n = values.length;
+
+      const coords = values.map((v, i) => {
+        if (v === null || v === undefined || isNaN(v)) return null;
+        const x = pad + (i / (n - 1)) * (w - pad * 2);
+        const y = h - pad - ((v - min) / range) * (h - pad * 2);
+        return { x, y };
+      });
+
+      let path = '', started = false;
+      coords.forEach(c => {
+        if (!c) { started = false; return; }
+        path += (started ? 'L' : 'M') + c.x + ',' + c.y + ' ';
+        started = true;
+      });
+      const dots = coords.filter(c => c).map(c => `<circle cx="${c.x}" cy="${c.y}" r="3" fill="#2D7AED" />`).join('');
+      svgEl.innerHTML = `<path d="${path.trim()}" fill="none" stroke="#2D7AED" stroke-width="2" />${dots}`;
+    }
+
+    function formatDateKey(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    let currentPoidsHistory = [];
+
+    function renderPoidsHistory() {
+      const sorted = [...currentPoidsHistory].sort((a, b) => a.date.localeCompare(b.date));
+      const values = sorted.map(p => Number(p.poids));
+
+      drawLineChart(document.getElementById('poids-chart'), document.getElementById('poids-chart-empty'), values);
+
+      const list = document.getElementById('poids-list');
+      list.innerHTML = [...sorted].reverse().slice(0, 10).map(p => `
+        <div class="flex items-center justify-between rounded-lg border border-[color:var(--border)] px-3 py-2 text-sm">
+          <span class="text-[color:var(--fg-60)]">${new Date(p.date + 'T00:00:00').toLocaleDateString('fr-FR')}</span>
+          <span class="font-semibold">${p.poids} kg</span>
+        </div>
+      `).join('');
+    }
+
+    async function tryRenderNutrition(client) {
+      const latestPoids = currentPoidsHistory.length
+        ? [...currentPoidsHistory].sort((a, b) => b.date.localeCompare(a.date))[0].poids
+        : null;
+      const age = calcAge(client?.date_naissance);
+
+      if (!client || !client.date_naissance || !client.taille || !client.sexe || !latestPoids) {
+        document.getElementById('no-nutrition').classList.remove('hidden');
+        document.getElementById('nutrition-content').innerHTML = '';
+        return;
+      }
+
+      const { data: nutData } = await supabaseClient
+        .from('nutrition').select('*').eq('client_email', currentUserEmail).maybeSingle();
+
+      renderNutrition({
+        sexe: client.sexe, age, taille: Number(client.taille), poids: Number(latestPoids),
+        activite: nutData?.activite || 1.4,
+        ratio_proteines: nutData?.ratio_proteines ?? 1.9,
+        ratio_lipides: nutData?.ratio_lipides ?? 0.8,
+        surplus_calorique: nutData?.surplus_calorique ?? 0,
+        deficit_calorique: nutData?.deficit_calorique ?? 0
+      });
+    }
+
+    document.getElementById('poids-add-btn').addEventListener('click', async () => {
+      const poids = Number(document.getElementById('poids-input').value);
+      const date = document.getElementById('poids-date').value || formatDateKey(new Date());
+      if (!poids) { alert("Renseigne ton poids."); return; }
+
+      const { error } = await supabaseClient.from('poids_historique').upsert({
+        client_email: currentUserEmail, poids, date
+      }, { onConflict: 'client_email,date' });
+
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      document.getElementById('poids-input').value = '';
+      await loadAndRender();
+    });
+
+    async function loadAndRender() {
+      const { data: client } = await supabaseClient
+        .from('clients_actifs').select('*').ilike('email', currentUserEmail).maybeSingle();
+
+      const { data: poidsData } = await supabaseClient
+        .from('poids_historique').select('*').eq('client_email', currentUserEmail);
+      currentPoidsHistory = poidsData || [];
+      renderPoidsHistory();
+
+      await tryRenderNutrition(client);
     }
 
     async function load() {
@@ -184,16 +322,9 @@
       if (!clientActif) { renderCalendlyBlock(); return; }
 
       document.getElementById('page-content').classList.remove('hidden');
+      document.getElementById('poids-date').value = formatDateKey(new Date());
 
-      const { data: nutrition } = await supabaseClient
-        .from('nutrition').select('*').eq('client_email', currentUserEmail).maybeSingle();
-
-      if (!nutrition) {
-        document.getElementById('no-nutrition').classList.remove('hidden');
-        return;
-      }
-
-      renderNutrition(nutrition);
+      await loadAndRender();
     }
 
     load();
