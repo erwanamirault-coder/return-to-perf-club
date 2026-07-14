@@ -74,6 +74,8 @@
         <button id="tab-programmation" class="section-tab px-4 py-2.5 text-sm font-medium border-b-2 border-brand-blue text-[color:var(--accent)]">Programmation</button>
         <button id="tab-records" class="section-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">Records (PR)</button>
         <button id="tab-suivi" class="section-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">Suivi</button>
+        <button id="tab-messages" class="section-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">Messages</button>
+        <button id="tab-nutrition" class="section-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">Nutrition</button>
       </div>
 
       <!-- SECTION PROGRAMMATION -->
@@ -180,6 +182,111 @@
         <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">💬 Retours de séances</h2>
         <div id="retours-list" class="flex flex-col gap-3"></div>
         <p id="retours-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] py-8">Aucun retour laissé par ce client pour l'instant.</p>
+
+      </div>
+
+      <!-- SECTION MESSAGES -->
+      <div id="section-messages" class="hidden">
+        <div id="admin-messages-list" class="flex flex-col gap-3 mb-6 min-h-[200px] max-h-[60vh] overflow-y-auto"></div>
+        <p id="admin-messages-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] py-8">Aucun message avec ce client pour l'instant.</p>
+
+        <div class="border-t border-[color:var(--border)] pt-4">
+          <label class="block text-[10px] uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-1.5">Lier à un exercice (optionnel)</label>
+          <select id="admin-link-select" class="w-full mb-3 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            <option value="">Message général</option>
+          </select>
+          <div class="flex items-end gap-2">
+            <textarea id="admin-message-input" rows="2" placeholder="Réponds à ton client..." class="flex-1 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue resize-none"></textarea>
+            <button id="admin-send-btn" class="shrink-0 px-5 py-2.5 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-heading uppercase text-xs font-semibold tracking-wide">
+              Envoyer
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION NUTRITION -->
+      <div id="section-nutrition" class="hidden">
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+          <div>
+            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Sexe</label>
+            <select id="nut-sexe" class="w-full px-2 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <option value="femme">Femme</option>
+              <option value="homme">Homme</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Âge</label>
+            <input type="number" id="nut-age" class="w-full px-2 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Taille (cm)</label>
+            <input type="number" id="nut-taille" class="w-full px-2 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Poids (kg)</label>
+            <input type="number" step="0.1" id="nut-poids" class="w-full px-2 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Facteur d'activité</label>
+          <select id="nut-activite" class="w-full px-2 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            <option value="1.2">1.2 — Sédentaire (moins de 30 min/j)</option>
+            <option value="1.4">1.4 — Actif (1h/j)</option>
+            <option value="1.6">1.6 — Très actif (2h/j)</option>
+            <option value="1.7">1.7 — Intermédiaire</option>
+            <option value="1.8">1.8 — Extrêmement actif / compétition</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 mb-3">
+          <div>
+            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Ratio protéines (g/kg)</label>
+            <input type="number" step="0.1" id="nut-ratio-prot" value="1.9" class="w-full px-2 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Ratio lipides (g/kg)</label>
+            <input type="number" step="0.1" id="nut-ratio-lip" value="0.8" class="w-full px-2 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 mb-5">
+          <div>
+            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Surplus calorique (prise de poids)</label>
+            <input type="number" id="nut-surplus" value="0" class="w-full px-2 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase text-[color:var(--fg-40)] mb-1">Déficit calorique (perte de poids)</label>
+            <input type="number" id="nut-deficit" value="0" class="w-full px-2 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+        </div>
+
+        <button id="nut-save-btn" class="w-full mb-6 px-4 py-2.5 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-heading uppercase text-xs font-semibold tracking-wide">
+          Enregistrer et calculer
+        </button>
+        <p id="nut-save-confirm" class="hidden text-center text-xs text-[color:var(--accent)] font-medium mb-6">Enregistré ✓ — visible dans l'espace du client</p>
+
+        <div id="nut-results" class="hidden flex flex-col gap-4">
+          <div class="rounded-xl border border-[color:var(--border)] p-4 text-center">
+            <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-40)] mb-1">Métabolisme de base</p>
+            <p id="nut-mb" class="font-heading font-bold text-lg">—</p>
+            <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-40)] mt-2 mb-1">MB + activité (maintenance)</p>
+            <p id="nut-mb-actif" class="font-heading font-bold text-lg text-[color:var(--accent)]">—</p>
+          </div>
+
+          <div class="rounded-xl border border-brand-blue-dark bg-brand-blue/5 p-4">
+            <p class="text-xs uppercase tracking-widest font-semibold text-[color:var(--accent)] mb-2">📈 Prise de poids</p>
+            <p class="text-sm mb-3">Total : <strong id="nut-total-prise">—</strong> kcal/jour</p>
+            <div id="nut-macros-prise" class="text-xs flex flex-col gap-1"></div>
+          </div>
+
+          <div class="rounded-xl border border-[color:var(--border)] p-4">
+            <p class="text-xs uppercase tracking-widest font-semibold text-[color:var(--fg-60)] mb-2">📉 Perte de poids</p>
+            <p class="text-sm mb-3">Total : <strong id="nut-total-perte">—</strong> kcal/jour</p>
+            <div id="nut-macros-perte" class="text-xs flex flex-col gap-1"></div>
+          </div>
+        </div>
 
       </div>
 
@@ -482,10 +589,12 @@
     document.getElementById('tab-programmation').addEventListener('click', () => switchTab('programmation'));
     document.getElementById('tab-records').addEventListener('click', () => switchTab('records'));
     document.getElementById('tab-suivi').addEventListener('click', () => switchTab('suivi'));
+    document.getElementById('tab-messages').addEventListener('click', () => switchTab('messages'));
+    document.getElementById('tab-nutrition').addEventListener('click', () => switchTab('nutrition'));
 
     function switchTab(tab) {
-      const sections = { programmation: 'section-programmation', records: 'section-records', suivi: 'section-suivi' };
-      const tabs = { programmation: 'tab-programmation', records: 'tab-records', suivi: 'tab-suivi' };
+      const sections = { programmation: 'section-programmation', records: 'section-records', suivi: 'section-suivi', messages: 'section-messages', nutrition: 'section-nutrition' };
+      const tabs = { programmation: 'tab-programmation', records: 'tab-records', suivi: 'tab-suivi', messages: 'tab-messages', nutrition: 'tab-nutrition' };
 
       Object.keys(sections).forEach(key => {
         document.getElementById(sections[key]).classList.toggle('hidden', key !== tab);
@@ -498,6 +607,8 @@
 
       if (tab === 'records') loadRecords();
       if (tab === 'suivi') loadSuiviData();
+      if (tab === 'messages') loadAdminMessages();
+      if (tab === 'nutrition') loadNutrition();
     }
 
     function getMondayFromDateStr(dateStr) {
@@ -551,6 +662,7 @@
 
     function selectClient(email) {
       selectedClientEmail = email;
+      clearInterval(adminPollTimer);
       const client = clientsActifs.find(c => c.email === email);
       selectedClientLabel.textContent = `Client sélectionné : ${client?.nom ? client.nom + ' — ' : ''}${email}`;
       addClientForm.classList.add('hidden');
@@ -1401,6 +1513,237 @@
         `;
       }).join('');
     }
+
+    // ---------- Onglet Messages ----------
+    let adminMessagesLoadedFor = null;
+    let adminPollTimer = null;
+    let adminLastMessageCount = 0;
+
+    function renderAdminMessages(messages) {
+      const list = document.getElementById('admin-messages-list');
+      const emptyMsg = document.getElementById('admin-messages-empty');
+
+      if (!messages || messages.length === 0) {
+        list.innerHTML = '';
+        emptyMsg.classList.remove('hidden');
+        return;
+      }
+      emptyMsg.classList.add('hidden');
+
+      list.innerHTML = messages.map(m => {
+        const isMine = m.sender === 'coach';
+        const prog = m.programme_id ? allProgrammesCache.find(p => p.id === m.programme_id) : null;
+        const time = new Date(m.created_at).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+        return `
+          <div class="flex ${isMine ? 'justify-end' : 'justify-start'}">
+            <div class="max-w-[80%] rounded-2xl px-4 py-2.5 ${isMine ? 'bg-brand-blue text-white' : 'bg-[color:var(--card)] text-[color:var(--fg)]'}">
+              ${prog ? `<p class="text-[10px] uppercase tracking-widest opacity-70 mb-1">📎 ${escapeHtml(prog.exercice)}</p>` : ''}
+              <p class="text-sm leading-relaxed whitespace-pre-wrap">${escapeHtml(m.contenu)}</p>
+              <p class="text-[10px] mt-1 ${isMine ? 'text-white/60' : 'text-[color:var(--fg-40)]'}">${time}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      list.scrollTop = list.scrollHeight;
+    }
+
+    function populateAdminLinkSelect() {
+      const select = document.getElementById('admin-link-select');
+      select.innerHTML = '<option value="">Message général</option>';
+      const list = [...allProgrammesCache].sort((a, b) => (b._date || '').localeCompare(a._date || '')).slice(0, 30);
+      list.forEach(p => {
+        if (!p._date) return;
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        const [y, m, d] = p._date.split('-');
+        opt.textContent = `${d}/${m} — ${p.exercice}`;
+        select.appendChild(opt);
+      });
+    }
+
+    async function loadAdminMessages(silent) {
+      if (!selectedClientEmail) return;
+
+      if (!silent) {
+        clearInterval(adminPollTimer);
+        adminMessagesLoadedFor = selectedClientEmail;
+        if (suiviLoadedFor !== selectedClientEmail) {
+          const { data: programmes } = await supabaseClient
+            .from('programmes').select('*').eq('client_email', selectedClientEmail);
+          allProgrammesCache = programmes || [];
+          allProgrammesCache.forEach(e => { e._date = calculerDate(e.semaine_debut, e.jour); });
+        }
+        populateAdminLinkSelect();
+      }
+
+      const { data } = await supabaseClient
+        .from('messages')
+        .select('*')
+        .eq('client_email', selectedClientEmail)
+        .order('created_at', { ascending: true });
+
+      const messages = data || [];
+      if (silent && messages.length === adminLastMessageCount) return;
+      adminLastMessageCount = messages.length;
+      renderAdminMessages(messages);
+
+      if (!silent) {
+        adminPollTimer = setInterval(() => {
+          if (selectedClientEmail === adminMessagesLoadedFor) loadAdminMessages(true);
+        }, 15000);
+      }
+    }
+
+    async function sendAdminMessage() {
+      if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
+      const input = document.getElementById('admin-message-input');
+      const select = document.getElementById('admin-link-select');
+      const contenu = input.value.trim();
+      if (!contenu) return;
+
+      const btn = document.getElementById('admin-send-btn');
+      btn.disabled = true;
+
+      const { error } = await supabaseClient.from('messages').insert({
+        client_email: selectedClientEmail,
+        programme_id: select.value || null,
+        sender: 'coach',
+        contenu: contenu
+      });
+
+      btn.disabled = false;
+
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      input.value = '';
+      select.value = '';
+      await loadAdminMessages(false);
+    }
+
+    document.getElementById('admin-send-btn').addEventListener('click', sendAdminMessage);
+    document.getElementById('admin-message-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendAdminMessage();
+      }
+    });
+
+    // ---------- Onglet Nutrition ----------
+    function calcMB(sexe, poids, taille, age) {
+      const base = (10 * poids) + (6.25 * taille) - (5 * age);
+      return sexe === 'homme' ? base + 5 : base - 161;
+    }
+
+    function calcNutrition(n) {
+      const mb = calcMB(n.sexe, n.poids, n.taille, n.age);
+      const mbActif = mb * n.activite;
+      const totalPrise = mbActif + n.surplus_calorique;
+      const totalPerte = mbActif - n.deficit_calorique;
+
+      const proteinesG = n.poids * n.ratio_proteines;
+      const lipidesG = n.poids * n.ratio_lipides;
+      const proteinesKcal = proteinesG * 4;
+      const lipidesKcal = lipidesG * 9;
+
+      const glucidesKcalPrise = Math.max(0, totalPrise - proteinesKcal - lipidesKcal);
+      const glucidesKcalPerte = Math.max(0, totalPerte - proteinesKcal - lipidesKcal);
+
+      return {
+        mb, mbActif, totalPrise, totalPerte,
+        proteinesG, lipidesG, proteinesKcal, lipidesKcal,
+        glucidesGPrise: glucidesKcalPrise / 4, glucidesKcalPrise,
+        glucidesGPerte: glucidesKcalPerte / 4, glucidesKcalPerte
+      };
+    }
+
+    function renderNutritionResults(n, r) {
+      document.getElementById('nut-results').classList.remove('hidden');
+      document.getElementById('nut-mb').textContent = Math.round(r.mb) + ' kcal';
+      document.getElementById('nut-mb-actif').textContent = Math.round(r.mbActif) + ' kcal';
+      document.getElementById('nut-total-prise').textContent = Math.round(r.totalPrise);
+      document.getElementById('nut-total-perte').textContent = Math.round(r.totalPerte);
+
+      document.getElementById('nut-macros-prise').innerHTML = `
+        <div class="flex justify-between"><span>Protéines</span><span>${r.proteinesG.toFixed(1)} g (${Math.round(r.proteinesKcal)} kcal)</span></div>
+        <div class="flex justify-between"><span>Lipides</span><span>${r.lipidesG.toFixed(1)} g (${Math.round(r.lipidesKcal)} kcal)</span></div>
+        <div class="flex justify-between"><span>Glucides</span><span>${r.glucidesGPrise.toFixed(1)} g (${Math.round(r.glucidesKcalPrise)} kcal)</span></div>
+      `;
+      document.getElementById('nut-macros-perte').innerHTML = `
+        <div class="flex justify-between"><span>Protéines</span><span>${r.proteinesG.toFixed(1)} g (${Math.round(r.proteinesKcal)} kcal)</span></div>
+        <div class="flex justify-between"><span>Lipides</span><span>${r.lipidesG.toFixed(1)} g (${Math.round(r.lipidesKcal)} kcal)</span></div>
+        <div class="flex justify-between"><span>Glucides</span><span>${r.glucidesGPerte.toFixed(1)} g (${Math.round(r.glucidesKcalPerte)} kcal)</span></div>
+      `;
+    }
+
+    function readNutritionForm() {
+      return {
+        sexe: document.getElementById('nut-sexe').value,
+        age: Number(document.getElementById('nut-age').value) || 0,
+        taille: Number(document.getElementById('nut-taille').value) || 0,
+        poids: Number(document.getElementById('nut-poids').value) || 0,
+        activite: Number(document.getElementById('nut-activite').value),
+        ratio_proteines: Number(document.getElementById('nut-ratio-prot').value) || 1.9,
+        ratio_lipides: Number(document.getElementById('nut-ratio-lip').value) || 0.8,
+        surplus_calorique: Number(document.getElementById('nut-surplus').value) || 0,
+        deficit_calorique: Number(document.getElementById('nut-deficit').value) || 0
+      };
+    }
+
+    function fillNutritionForm(n) {
+      document.getElementById('nut-sexe').value = n.sexe || 'femme';
+      document.getElementById('nut-age').value = n.age || '';
+      document.getElementById('nut-taille').value = n.taille || '';
+      document.getElementById('nut-poids').value = n.poids || '';
+      document.getElementById('nut-activite').value = n.activite || 1.4;
+      document.getElementById('nut-ratio-prot').value = n.ratio_proteines ?? 1.9;
+      document.getElementById('nut-ratio-lip').value = n.ratio_lipides ?? 0.8;
+      document.getElementById('nut-surplus').value = n.surplus_calorique ?? 0;
+      document.getElementById('nut-deficit').value = n.deficit_calorique ?? 0;
+    }
+
+    async function loadNutrition() {
+      if (!selectedClientEmail) return;
+      document.getElementById('nut-results').classList.add('hidden');
+      document.getElementById('nut-save-confirm').classList.add('hidden');
+
+      const { data } = await supabaseClient
+        .from('nutrition').select('*').eq('client_email', selectedClientEmail).maybeSingle();
+
+      if (data) {
+        fillNutritionForm(data);
+        renderNutritionResults(data, calcNutrition(data));
+      } else {
+        fillNutritionForm({});
+      }
+    }
+
+    document.getElementById('nut-save-btn').addEventListener('click', async () => {
+      if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
+      const n = readNutritionForm();
+      if (!n.age || !n.taille || !n.poids) { alert("Renseigne au minimum l'âge, la taille et le poids."); return; }
+
+      const btn = document.getElementById('nut-save-btn');
+      btn.disabled = true;
+      btn.textContent = 'Enregistrement...';
+
+      const { error } = await supabaseClient.from('nutrition').upsert({
+        client_email: selectedClientEmail,
+        ...n,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'client_email' });
+
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer et calculer';
+
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      renderNutritionResults(n, calcNutrition(n));
+      const confirmEl = document.getElementById('nut-save-confirm');
+      confirmEl.classList.remove('hidden');
+      setTimeout(() => confirmEl.classList.add('hidden'), 3000);
+    });
 
     async function checkAccess() {
       const { data: { user } } = await supabaseClient.auth.getUser();
