@@ -55,6 +55,31 @@
     <h1 class="font-heading uppercase text-xl font-bold mb-1 text-center">🍽️ Ma nutrition</h1>
     <p class="text-xs text-[color:var(--fg-40)] text-center mb-8">Suis ton poids et retrouve tes besoins caloriques calculés pour toi.</p>
 
+    <!-- Ma fiche -->
+    <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">📇 Ma fiche</h2>
+    <p class="text-xs text-[color:var(--fg-40)] mb-3">Complète ces informations pour débloquer le calcul de tes besoins caloriques.</p>
+    <div class="grid grid-cols-2 gap-2 mb-2">
+      <div>
+        <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Date de naissance</label>
+        <input type="date" id="fiche-naissance" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      </div>
+      <div>
+        <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Taille (cm)</label>
+        <input type="number" id="fiche-taille" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Sexe</label>
+      <select id="fiche-sexe" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <option value="femme">Femme</option>
+        <option value="homme">Homme</option>
+      </select>
+    </div>
+    <button id="fiche-save-btn" class="w-full mb-2 px-4 py-2 rounded-lg bg-[color:var(--card)] border border-brand-blue-dark hover:bg-brand-blue/5 transition-colors text-[color:var(--accent)] text-xs font-semibold uppercase tracking-wide">
+      Enregistrer ma fiche
+    </button>
+    <p id="fiche-save-confirm" class="hidden text-center text-xs text-[color:var(--accent)] font-medium mb-8">Enregistré ✓</p>
+
     <!-- Mon poids -->
     <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide mt-4">⚖️ Mon poids</h2>
     <div class="flex items-end gap-2 mb-4">
@@ -296,9 +321,40 @@
       await loadAndRender();
     });
 
+    function fillFicheForm(client) {
+      document.getElementById('fiche-naissance').value = client?.date_naissance || '';
+      document.getElementById('fiche-taille').value = client?.taille || '';
+      document.getElementById('fiche-sexe').value = client?.sexe || 'femme';
+    }
+
+    document.getElementById('fiche-save-btn').addEventListener('click', async () => {
+      const payload = {
+        date_naissance: document.getElementById('fiche-naissance').value || null,
+        taille: Number(document.getElementById('fiche-taille').value) || null,
+        sexe: document.getElementById('fiche-sexe').value
+      };
+
+      const btn = document.getElementById('fiche-save-btn');
+      btn.disabled = true;
+
+      const { error } = await supabaseClient.from('clients_actifs').update(payload).eq('email', currentUserEmail);
+
+      btn.disabled = false;
+
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      const confirmEl = document.getElementById('fiche-save-confirm');
+      confirmEl.classList.remove('hidden');
+      setTimeout(() => confirmEl.classList.add('hidden'), 2500);
+
+      await loadAndRender();
+    });
+
     async function loadAndRender() {
       const { data: client } = await supabaseClient
         .from('clients_actifs').select('*').ilike('email', currentUserEmail).maybeSingle();
+
+      fillFicheForm(client);
 
       const { data: poidsData } = await supabaseClient
         .from('poids_historique').select('*').eq('client_email', currentUserEmail);
