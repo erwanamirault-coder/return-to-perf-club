@@ -1606,6 +1606,13 @@
     let adminPollTimer = null;
     let adminLastMessageCount = 0;
 
+    const CATEGORIE_LABELS = {
+      exercice: '🏋️ Exercice',
+      seance: '📅 Séance',
+      nutrition: '🍽️ Nutrition',
+      autre: '💬 Autre'
+    };
+
     function renderAdminMessages(messages) {
       const list = document.getElementById('admin-messages-list');
       const emptyMsg = document.getElementById('admin-messages-empty');
@@ -1620,11 +1627,13 @@
       list.innerHTML = messages.map(m => {
         const isMine = m.sender === 'coach';
         const prog = m.programme_id ? allProgrammesCache.find(p => p.id === m.programme_id) : null;
+        const catLabel = m.categorie ? CATEGORIE_LABELS[m.categorie] : null;
         const time = new Date(m.created_at).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
         return `
           <div class="flex ${isMine ? 'justify-end' : 'justify-start'}">
             <div class="max-w-[80%] rounded-2xl px-4 py-2.5 ${isMine ? 'bg-brand-blue text-white' : 'bg-[color:var(--card)] text-[color:var(--fg)]'}">
+              ${catLabel ? `<p class="text-[10px] uppercase tracking-widest opacity-70 mb-1">${catLabel}</p>` : ''}
               ${prog ? `<p class="text-[10px] uppercase tracking-widest opacity-70 mb-1">📎 ${escapeHtml(prog.exercice)}</p>` : ''}
               <p class="text-sm leading-relaxed whitespace-pre-wrap">${escapeHtml(m.contenu)}</p>
               <p class="text-[10px] mt-1 ${isMine ? 'text-white/60' : 'text-[color:var(--fg-40)]'}">${time}</p>
