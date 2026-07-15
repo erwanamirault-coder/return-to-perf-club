@@ -40,7 +40,6 @@
     </a>
     <div class="flex items-center gap-4 text-sm">
       <a href="index.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Accueil</a>
-      <a href="suivi-clients.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Suivi clients</a>
       <a href="dashboard.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Mon espace</a>
       <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
       <a href="a-propos.html" class="shrink-0"></a>
@@ -94,11 +93,47 @@
       </div>
 
       <div class="flex gap-2 mb-8 border-b border-[color:var(--border)]">
+        <button id="tab-fiche" class="section-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">Fiche</button>
         <button id="tab-programmation" class="section-tab px-4 py-2.5 text-sm font-medium border-b-2 border-brand-blue text-[color:var(--accent)]">Programmation</button>
         <button id="tab-records" class="section-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">Records (PR)</button>
         <button id="tab-suivi" class="section-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">Suivi</button>
         <button id="tab-messages" class="section-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">Messages</button>
         <button id="tab-nutrition" class="section-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">Nutrition</button>
+      </div>
+
+      <!-- SECTION FICHE CLIENT -->
+      <div id="section-fiche" class="hidden">
+        <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">📇 Fiche client</h2>
+        <div class="grid sm:grid-cols-2 gap-2 mb-2">
+          <input type="text" id="fiche-nom" placeholder="Prénom" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <input type="text" id="fiche-nom-famille" placeholder="Nom" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        </div>
+        <div class="grid sm:grid-cols-2 gap-2 mb-2">
+          <input type="tel" id="fiche-tel" placeholder="Téléphone" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <input type="text" id="fiche-adresse" placeholder="Adresse" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        </div>
+        <div class="grid grid-cols-3 gap-2 mb-2">
+          <div>
+            <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Naissance</label>
+            <input type="date" id="fiche-naissance" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Taille (cm)</label>
+            <input type="number" id="fiche-taille" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Sexe</label>
+            <select id="fiche-sexe" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <option value="femme">Femme</option>
+              <option value="homme">Homme</option>
+            </select>
+          </div>
+        </div>
+        <button id="fiche-save-btn" class="w-full mb-2 px-4 py-2 rounded-lg bg-[color:var(--card)] border border-brand-blue-dark hover:bg-brand-blue/5 transition-colors text-[color:var(--accent)] text-xs font-semibold uppercase tracking-wide">
+          Mettre à jour la fiche
+        </button>
+        <p id="fiche-save-confirm" class="hidden text-center text-xs text-[color:var(--accent)] font-medium mb-2">Fiche mise à jour ✓</p>
+        <p id="fiche-age-display" class="text-xs text-[color:var(--fg-50)] text-center"></p>
       </div>
 
       <!-- SECTION PROGRAMMATION -->
@@ -229,39 +264,6 @@
 
       <!-- SECTION NUTRITION -->
       <div id="section-nutrition" class="hidden">
-
-        <!-- Fiche client -->
-        <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">📇 Fiche client</h2>
-        <div class="grid sm:grid-cols-2 gap-2 mb-2">
-          <input type="text" id="fiche-nom" placeholder="Prénom" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-          <input type="text" id="fiche-nom-famille" placeholder="Nom" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-        </div>
-        <div class="grid sm:grid-cols-2 gap-2 mb-2">
-          <input type="tel" id="fiche-tel" placeholder="Téléphone" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-          <input type="text" id="fiche-adresse" placeholder="Adresse" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-        </div>
-        <div class="grid grid-cols-3 gap-2 mb-2">
-          <div>
-            <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Naissance</label>
-            <input type="date" id="fiche-naissance" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-          </div>
-          <div>
-            <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Taille (cm)</label>
-            <input type="number" id="fiche-taille" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-          </div>
-          <div>
-            <label class="block text-[10px] text-[color:var(--fg-40)] mb-1">Sexe</label>
-            <select id="fiche-sexe" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <option value="femme">Femme</option>
-              <option value="homme">Homme</option>
-            </select>
-          </div>
-        </div>
-        <button id="fiche-save-btn" class="w-full mb-2 px-4 py-2 rounded-lg bg-[color:var(--card)] border border-brand-blue-dark hover:bg-brand-blue/5 transition-colors text-[color:var(--accent)] text-xs font-semibold uppercase tracking-wide">
-          Mettre à jour la fiche
-        </button>
-        <p id="fiche-save-confirm" class="hidden text-center text-xs text-[color:var(--accent)] font-medium mb-2">Fiche mise à jour ✓</p>
-        <p id="fiche-age-display" class="text-xs text-[color:var(--fg-50)] text-center mb-8"></p>
 
         <!-- Historique de poids -->
         <h2 class="font-heading uppercase text-sm font-bold mb-3 text-[color:var(--fg-50)] tracking-wide">⚖️ Historique de poids</h2>
@@ -572,8 +574,7 @@
         { fr: "Épaulé suspendu", en: "Hang Clean" }, { fr: "Épaulé puissance", en: "Power Clean" },
         { fr: "Épaulé puissance suspendu", en: "Hang Power Clean" }, { fr: "Tirage d'épaulé", en: "Clean Pull" },
         { fr: "Jeté", en: "Jerk" }, { fr: "Jeté fente", en: "Split Jerk" }, { fr: "Jeté puissance", en: "Power Jerk" },
-        { fr: "Poussée-jeté", en: "Push Jerk" }, { fr: "Épaulé-jeté", en: "Clean & Jerk" },
-        { fr: "Squat clavicule", en: "Front Squat" }, { fr: "Squat nuque", en: "Back Squat" }, { fr: "Squat overhead", en: "Overhead Squat" }
+        { fr: "Poussée-jeté", en: "Push Jerk" }, { fr: "Épaulé-jeté", en: "Clean & Jerk" }
       ],
       "Renforcement": [
         { fr: "Squat arrière", en: "Back Squat" }, { fr: "Squat avant", en: "Front Squat" }, { fr: "Squat overhead", en: "Overhead Squat" },
@@ -644,6 +645,7 @@
     });
 
     // ---------- Onglets Programmation / Records ----------
+    document.getElementById('tab-fiche').addEventListener('click', () => switchTab('fiche'));
     document.getElementById('tab-programmation').addEventListener('click', () => switchTab('programmation'));
     document.getElementById('tab-records').addEventListener('click', () => switchTab('records'));
     document.getElementById('tab-suivi').addEventListener('click', () => switchTab('suivi'));
@@ -651,8 +653,8 @@
     document.getElementById('tab-nutrition').addEventListener('click', () => switchTab('nutrition'));
 
     function switchTab(tab) {
-      const sections = { programmation: 'section-programmation', records: 'section-records', suivi: 'section-suivi', messages: 'section-messages', nutrition: 'section-nutrition' };
-      const tabs = { programmation: 'tab-programmation', records: 'tab-records', suivi: 'tab-suivi', messages: 'tab-messages', nutrition: 'tab-nutrition' };
+      const sections = { fiche: 'section-fiche', programmation: 'section-programmation', records: 'section-records', suivi: 'section-suivi', messages: 'section-messages', nutrition: 'section-nutrition' };
+      const tabs = { fiche: 'tab-fiche', programmation: 'tab-programmation', records: 'tab-records', suivi: 'tab-suivi', messages: 'tab-messages', nutrition: 'tab-nutrition' };
 
       Object.keys(sections).forEach(key => {
         document.getElementById(sections[key]).classList.toggle('hidden', key !== tab);
@@ -663,10 +665,18 @@
         btn.classList.toggle('text-[color:var(--fg-50)]', key !== tab);
       });
 
+      if (tab === 'fiche') loadFicheTab();
       if (tab === 'records') loadRecords();
       if (tab === 'suivi') loadSuiviData();
       if (tab === 'messages') loadAdminMessages();
       if (tab === 'nutrition') loadNutrition();
+    }
+
+    function loadFicheTab() {
+      if (!selectedClientEmail) return;
+      document.getElementById('fiche-save-confirm').classList.add('hidden');
+      const client = clientsActifs.find(c => c.email === selectedClientEmail);
+      fillFicheForm(client);
     }
 
     function getMondayFromDateStr(dateStr) {
@@ -1511,6 +1521,7 @@
           <span>💪 Courbatures : <strong>${escapeHtml(w.courbatures)}</strong>/5</span>
           <span>😰 Stress : <strong>${escapeHtml(w.stress)}</strong>/5</span>
           <span>🔥 Motivation : <strong>${escapeHtml(w.motivation)}</strong>/5</span>
+          <span class="font-semibold text-[color:var(--accent)]">Score global : ${Number(w.score_global).toFixed(1)}/5</span>
         `;
       } else {
         wellnessBox.classList.add('hidden');
