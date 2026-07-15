@@ -272,6 +272,7 @@
               <div class="flex flex-wrap gap-2 mb-3 text-xs">
                 <span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${e.series} séries</span>
                 <span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${e.repetitions} reps</span>
+                ${(e.charge !== null && e.charge !== undefined) ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${escapeHtml(e.charge)} kg</span>` : ''}
                 ${e.temps_repos ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">Repos ${e.temps_repos}</span>` : ''}
                 ${e.rpe ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">RPE cible ${e.rpe}</span>` : ''}
                 ${e.tempo ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">Tempo ${e.tempo}</span>` : ''}
