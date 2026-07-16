@@ -116,7 +116,7 @@ async function handleAutomation(commentId, automation) {
 
 // Réponse publique visible sous le commentaire
 async function postPublicReply(commentId, message) {
-  const url = `https://graph.facebook.com/v19.0/${commentId}/replies`;
+  const url = `https://graph.instagram.com/v21.0/${commentId}/replies`;
   await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -128,7 +128,7 @@ async function postPublicReply(commentId, message) {
 // Adresse correcte selon la doc officielle Meta : POST /{IG_USER_ID}/messages
 // avec recipient.comment_id (et non /{comment_id}/private_replies comme dans une version précédente).
 async function sendPrivateReply(commentId, automation) {
-  const url = `https://graph.facebook.com/v19.0/${process.env.IG_USER_ID}/messages?access_token=${process.env.IG_PAGE_ACCESS_TOKEN}`;
+  const url = `https://graph.instagram.com/v21.0/${process.env.IG_USER_ID}/messages?access_token=${process.env.IG_PAGE_ACCESS_TOKEN}`;
 
   let message;
   if (automation.lien && automation.bouton_texte) {
