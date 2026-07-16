@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion des formations | Admin</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="supabase-config.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000',
+            white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: {
+          heading: ['Oswald', 'sans-serif'],
+          body: ['Poppins', 'sans-serif'],
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, h3, .font-heading { font-family: 'Oswald', sans-serif; }
+  input, textarea {
+    font-family: 'Poppins', sans-serif;
+  }
+</style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<!-- ⚠️ NOTE : cette page est temporaire et autonome, le temps que tu m'envoies
+     admin.html. Une fois reçu, je fusionnerai ce contenu dans un onglet
+     "Formations" de ton interface admin habituelle, avec le même bandeau
+     et le même système d'onglets que le reste. -->
+
+<div id="access-check" class="flex-1 flex items-center justify-center px-6">
+  <p class="text-[color:var(--fg-60)]">Vérification de l'accès...</p>
+</div>
+
+<div id="admin-content" class="hidden flex-1 max-w-4xl mx-auto w-full px-6 py-12">
+
+  <div class="flex items-center justify-between mb-10 flex-wrap gap-4">
+    <div>
+      <p class="text-brand-blue text-xs font-semibold uppercase tracking-wider mb-1">Admin</p>
+      <h1 class="font-heading uppercase text-2xl sm:text-3xl font-bold">Gestion des formations</h1>
+    </div>
+    <button id="new-formation-btn" class="bg-brand-blue text-white px-5 py-2.5 rounded-lg font-heading uppercase tracking-wide font-semibold text-sm hover:bg-brand-blue-dark transition-colors">
+      + Nouvelle formation
+    </button>
+  </div>
+
+  <div id="formations-list" class="space-y-4 mb-12">
+    <!-- Rempli en JS -->
+  </div>
+
+  <!-- Formulaire (caché par défaut, affiché pour créer/éditer) -->
+  <div id="form-panel" class="hidden rounded-2xl bg-[color:var(--card)] border border-[color:var(--border)] p-6 sm:p-8">
+    <h2 id="form-title" class="font-heading uppercase text-xl font-bold mb-6">Nouvelle formation</h2>
+
+    <form id="formation-form" class="space-y-5">
+      <input type="hidden" id="f-id">
+
+      <div>
+        <label class="block text-sm font-semibold mb-1.5">Titre</label>
+        <input type="text" id="f-titre" required class="w-full px-4 py-2.5 rounded-lg border border-[color:var(--border)] bg-transparent">
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-1.5">Accroche (affichée sur la carte du catalogue)</label>
+        <input type="text" id="f-accroche" required class="w-full px-4 py-2.5 rounded-lg border border-[color:var(--border)] bg-transparent">
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-semibold mb-1.5">Niveau</label>
+          <input type="text" id="f-niveau" placeholder="Ex: Tous niveaux" class="w-full px-4 py-2.5 rounded-lg border border-[color:var(--border)] bg-transparent">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold mb-1.5">Prix (€)</label>
+          <input type="number" id="f-prix" step="0.01" min="0" required class="w-full px-4 py-2.5 rounded-lg border border-[color:var(--border)] bg-transparent">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-1.5">URL de la photo</label>
+        <input type="url" id="f-image" placeholder="https://... (laisse vide si tu n'en as pas encore)" class="w-full px-4 py-2.5 rounded-lg border border-[color:var(--border)] bg-transparent">
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-1.5">Description (page détail)</label>
+        <textarea id="f-description" rows="5" required class="w-full px-4 py-2.5 rounded-lg border border-[color:var(--border)] bg-transparent"></textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-1.5">Programme — un point par ligne</label>
+        <textarea id="f-programme" rows="4" placeholder="Comprendre les tests de mobilité&#10;Construire sa routine en 3 phases" class="w-full px-4 py-2.5 rounded-lg border border-[color:var(--border)] bg-transparent"></textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-1.5">Stripe Price ID</label>
+        <input type="text" id="f-stripe-price-id" placeholder="price_..." class="w-full px-4 py-2.5 rounded-lg border border-[color:var(--border)] bg-transparent font-mono text-sm">
+        <p class="text-xs text-[color:var(--fg-50)] mt-1.5">Créé dans ton dashboard Stripe (Produits → copier le Price ID). Sans ça, le paiement ne fonctionnera pas pour cette formation.</p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <input type="checkbox" id="f-actif" checked class="w-4 h-4">
+        <label for="f-actif" class="text-sm font-semibold">Visible dans le catalogue public</label>
+      </div>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button type="submit" class="bg-brand-blue text-white px-6 py-2.5 rounded-lg font-heading uppercase tracking-wide font-semibold text-sm hover:bg-brand-blue-dark transition-colors">
+          Enregistrer
+        </button>
+        <button type="button" id="cancel-btn" class="px-6 py-2.5 rounded-lg font-semibold text-sm border border-[color:var(--border)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+          Annuler
+        </button>
+      </div>
+      <p id="form-error" class="text-sm text-red-500 hidden"></p>
+    </form>
+  </div>
+
+</div>
+
+<script>
+  const accessCheck = document.getElementById('access-check');
+  const adminContent = document.getElementById('admin-content');
+  const listEl = document.getElementById('formations-list');
+  const formPanel = document.getElementById('form-panel');
+  const form = document.getElementById('formation-form');
+  const formTitle = document.getElementById('form-title');
+  const formError = document.getElementById('form-error');
+
+  (async function checkAccess() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const email = (session?.user?.email || '').toLowerCase().trim();
+    if (!session || email !== 'erwan20b@gmail.com') {
+      accessCheck.innerHTML = `<p class="text-[color:var(--fg-60)]">Accès réservé à l'administrateur. <a href="login.html" class="text-brand-blue underline">Se connecter</a></p>`;
+      return;
+    }
+    accessCheck.classList.add('hidden');
+    adminContent.classList.remove('hidden');
+    loadFormations();
+  })();
+
+  async function loadFormations() {
+    listEl.innerHTML = `<p class="text-[color:var(--fg-60)]">Chargement...</p>`;
+    const { data, error } = await supabaseClient
+      .from('formations')
+      .select('*')
+      .order('ordre', { ascending: true });
+
+    if (error) {
+      listEl.innerHTML = `<p class="text-red-500">Erreur de chargement.</p>`;
+      console.error(error);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      listEl.innerHTML = `<p class="text-[color:var(--fg-60)]">Aucune formation pour l'instant.</p>`;
+      return;
+    }
+
+    listEl.innerHTML = '';
+    data.forEach(f => {
+      const row = document.createElement('div');
+      row.className = 'flex items-center justify-between gap-4 p-4 rounded-xl bg-[color:var(--card)] border border-[color:var(--border)] flex-wrap';
+      row.innerHTML = `
+        <div>
+          <p class="font-heading font-bold">${f.titre} ${f.actif ? '' : '<span class="text-xs font-normal text-[color:var(--fg-50)]">(masquée)</span>'}</p>
+          <p class="text-sm text-[color:var(--fg-60)]">${Number(f.prix).toFixed(0)} € — ${f.niveau || ''}</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="formation-detail.html?id=${f.id}" target="_blank" class="text-sm text-brand-blue hover:underline">Voir</a>
+          <button data-id="${f.id}" class="edit-btn text-sm px-3 py-1.5 rounded-lg border border-[color:var(--border)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors">Modifier</button>
+          <button data-id="${f.id}" class="delete-btn text-sm px-3 py-1.5 rounded-lg border border-red-300 text-red-500 hover:bg-red-500/10 transition-colors">Supprimer</button>
+        </div>
+      `;
+      listEl.appendChild(row);
+    });
+
+    document.querySelectorAll('.edit-btn').forEach(btn =>
+      btn.addEventListener('click', () => openForm(data.find(f => f.id == btn.dataset.id)))
+    );
+    document.querySelectorAll('.delete-btn').forEach(btn =>
+      btn.addEventListener('click', () => deleteFormation(btn.dataset.id))
+    );
+  }
+
+  function openForm(formation) {
+    formError.classList.add('hidden');
+    form.reset();
+    if (formation) {
+      formTitle.textContent = 'Modifier la formation';
+      document.getElementById('f-id').value = formation.id;
+      document.getElementById('f-titre').value = formation.titre;
+      document.getElementById('f-accroche').value = formation.accroche;
+      document.getElementById('f-niveau').value = formation.niveau || '';
+      document.getElementById('f-prix').value = formation.prix;
+      document.getElementById('f-image').value = formation.image_url || '';
+      document.getElementById('f-description').value = formation.description;
+      document.getElementById('f-programme').value = (formation.programme || []).join('\n');
+      document.getElementById('f-stripe-price-id').value = formation.stripe_price_id || '';
+      document.getElementById('f-actif').checked = formation.actif;
+    } else {
+      formTitle.textContent = 'Nouvelle formation';
+      document.getElementById('f-id').value = '';
+      document.getElementById('f-actif').checked = true;
+    }
+    formPanel.classList.remove('hidden');
+    formPanel.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  document.getElementById('new-formation-btn').addEventListener('click', () => openForm(null));
+  document.getElementById('cancel-btn').addEventListener('click', () => formPanel.classList.add('hidden'));
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    formError.classList.add('hidden');
+
+    const id = document.getElementById('f-id').value;
+    const payload = {
+      titre: document.getElementById('f-titre').value.trim(),
+      accroche: document.getElementById('f-accroche').value.trim(),
+      niveau: document.getElementById('f-niveau').value.trim() || 'Tous niveaux',
+      prix: parseFloat(document.getElementById('f-prix').value),
+      image_url: document.getElementById('f-image').value.trim(),
+      description: document.getElementById('f-description').value.trim(),
+      programme: document.getElementById('f-programme').value
+        .split('\n')
+        .map(l => l.trim())
+        .filter(Boolean),
+      stripe_price_id: document.getElementById('f-stripe-price-id').value.trim(),
+      actif: document.getElementById('f-actif').checked,
+    };
+
+    const query = id
+      ? supabaseClient.from('formations').update(payload).eq('id', id)
+      : supabaseClient.from('formations').insert(payload);
+
+    const { error } = await query;
+    if (error) {
+      formError.textContent = "Erreur lors de l'enregistrement : " + error.message;
+      formError.classList.remove('hidden');
+      return;
+    }
+
+    formPanel.classList.add('hidden');
+    loadFormations();
+  });
+
+  async function deleteFormation(id) {
+    if (!confirm('Supprimer définitivement cette formation ?')) return;
+    const { error } = await supabaseClient.from('formations').delete().eq('id', id);
+    if (error) {
+      alert("Erreur lors de la suppression : " + error.message);
+      return;
+    }
+    loadFormations();
+  }
+</script>
+
+<script src="theme.js"></script>
+</body>
+</html>
