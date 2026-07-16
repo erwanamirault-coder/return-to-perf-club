@@ -22,7 +22,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const url = `https://graph.facebook.com/v19.0/${process.env.IG_USER_ID}/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=24&access_token=${process.env.IG_PAGE_ACCESS_TOKEN}`;
+    const url = `https://graph.instagram.com/v21.0/${process.env.IG_USER_ID}/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=24&access_token=${process.env.IG_PAGE_ACCESS_TOKEN}`;
     const response = await fetch(url);
     const data = await response.json();
 
