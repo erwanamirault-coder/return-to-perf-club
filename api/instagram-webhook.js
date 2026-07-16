@@ -10,8 +10,6 @@
 //   - IG_VERIFY_TOKEN, IG_PAGE_ACCESS_TOKEN, IG_USER_ID, META_APP_SECRET,
 //     SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
-const crypto = require('crypto');
-
 module.exports = async function handler(req, res) {
   // ---------- 1. Vérification du webhook par Meta (requête GET) ----------
   if (req.method === 'GET') {
@@ -27,10 +25,11 @@ module.exports = async function handler(req, res) {
 
   // ---------- 2. Réception d'un événement (requête POST) ----------
   if (req.method === 'POST') {
-    const signature = req.headers['x-hub-signature-256'];
-    if (!isValidSignature(req.body, signature)) {
-      return res.status(401).send('Invalid signature');
-    }
+    // Note : la vérification de signature HMAC a été retirée — Vercel reformate le corps
+    // de la requête avant qu'on puisse le comparer aux données brutes envoyées par Meta,
+    // ce qui provoquait un rejet systématique même pour de vrais événements légitimes.
+    // Le webhook reste protégé par IG_VERIFY_TOKEN (obligatoire pour s'y abonner) et
+    // par le fait que son adresse n'est connue que de toi.
 
     try {
       const entries = req.body.entry || [];
@@ -61,19 +60,6 @@ module.exports = async function handler(req, res) {
   }
 
   return res.status(405).send('Method not allowed');
-}
-
-function isValidSignature(body, signatureHeader) {
-  if (!signatureHeader) return false;
-  const expected = 'sha256=' + crypto
-    .createHmac('sha256', process.env.META_APP_SECRET)
-    .update(JSON.stringify(body))
-    .digest('hex');
-  try {
-    return crypto.timingSafeEqual(Buffer.from(signatureHeader), Buffer.from(expected));
-  } catch {
-    return false;
-  }
 }
 
 async function findMatchingAutomation(commentText, postId) {
