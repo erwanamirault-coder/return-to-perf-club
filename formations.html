@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formations | Erwan Amirault</title>
+<meta name="description" content="Découvre les formations Return To Perf pour aller plus loin dans ta pratique.">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="supabase-config.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000',
+            white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: {
+          heading: ['Oswald', 'sans-serif'],
+          body: ['Poppins', 'sans-serif'],
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, h3, .font-heading { font-family: 'Oswald', sans-serif; }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .formation-card:hover .formation-thumb {
+    transform: scale(1.03);
+  }
+  .formation-thumb {
+    transition: transform 0.4s ease;
+    background: linear-gradient(135deg, #0F4CA9 0%, #2D7AED 55%, #69A0F2 100%);
+  }
+</style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<!-- ============ DÉBUT BANDEAU + MENU (à recopier tel quel sur chaque page) ============ -->
+<nav class="sticky top-0 z-50 bg-brand-blue-dark text-white">
+  <div class="flex items-center justify-between px-6 sm:px-10 py-3">
+    <a href="index.html" class="flex items-center gap-2 font-heading uppercase font-bold text-sm tracking-wide text-white">
+      Erwan Amirault
+    </a>
+
+    <div class="flex items-center gap-3">
+      <div class="hidden md:flex items-center gap-6 text-sm">
+        <span id="desktop-public" class="flex items-center gap-6">
+          <a href="index.html" class="hover:text-brand-blue-light transition-colors">Accueil</a>
+          <a href="cadeau.html" class="hover:text-brand-blue-light transition-colors">Bilan gratuit</a>
+          <a href="a-propos.html" class="hover:text-brand-blue-light transition-colors">À propos</a>
+          <a href="mes-services.html" class="hover:text-brand-blue-light transition-colors">Mes services</a>
+          <a href="formations.html" class="hover:text-brand-blue-light transition-colors">Formations</a>
+          <a href="login.html" class="bg-white text-brand-blue-dark px-4 py-1.5 rounded-lg font-semibold hover:bg-brand-blue-light hover:text-white transition-colors">Se connecter</a>
+        </span>
+        <span id="desktop-private" class="hidden items-center gap-6">
+          <a href="dashboard.html" class="hover:text-brand-blue-light transition-colors">Mon espace</a>
+          <a href="choix-bilan.html" class="hover:text-brand-blue-light transition-colors">Bilan</a>
+          <a href="mes-services.html" class="hover:text-brand-blue-light transition-colors">Mes services</a>
+          <a href="formations.html" class="hover:text-brand-blue-light transition-colors">Formations</a>
+          <a href="admin.html" id="admin-link-desktop" class="hidden hover:text-brand-blue-light transition-colors">Admin</a>
+          <a href="#" id="logout-desktop" class="bg-white text-brand-blue-dark px-4 py-1.5 rounded-lg font-semibold hover:bg-brand-blue-light hover:text-white transition-colors">Déconnexion</a>
+        </span>
+      </div>
+
+      <button id="theme-toggle" class="w-9 h-9 rounded-full border border-white/30 flex items-center justify-center hover:border-white transition-colors shrink-0"></button>
+
+      <a href="a-propos.html" class="shrink-0"></a>
+
+      <button id="nav-burger" class="w-9 h-9 flex items-center justify-center text-2xl leading-none md:hidden">☰</button>
+    </div>
+  </div>
+
+  <div id="mobile-panel" class="md:hidden hidden flex-col gap-4 px-6 pb-5 text-sm">
+    <div id="mobile-public" class="flex flex-col gap-4">
+      <a href="index.html" class="hover:text-brand-blue-light transition-colors">Accueil</a>
+      <a href="cadeau.html" class="hover:text-brand-blue-light transition-colors">Bilan gratuit</a>
+      <a href="a-propos.html" class="hover:text-brand-blue-light transition-colors">À propos</a>
+      <a href="mes-services.html" class="hover:text-brand-blue-light transition-colors">Mes services</a>
+      <a href="formations.html" class="hover:text-brand-blue-light transition-colors">Formations</a>
+      <a href="login.html" class="bg-white text-brand-blue-dark px-4 py-2 rounded-lg font-semibold text-center">Se connecter</a>
+    </div>
+    <div id="mobile-private" class="hidden flex-col gap-4">
+      <a href="dashboard.html" class="hover:text-brand-blue-light transition-colors">Mon espace</a>
+      <a href="choix-bilan.html" class="hover:text-brand-blue-light transition-colors">Bilan</a>
+      <a href="mes-services.html" class="hover:text-brand-blue-light transition-colors">Mes services</a>
+      <a href="formations.html" class="hover:text-brand-blue-light transition-colors">Formations</a>
+      <a href="admin.html" id="admin-link-mobile" class="hidden hover:text-brand-blue-light transition-colors">Admin</a>
+      <a href="#" id="logout-mobile" class="bg-white text-brand-blue-dark px-4 py-2 rounded-lg font-semibold text-center">Déconnexion</a>
+    </div>
+  </div>
+</nav>
+
+<script>
+  (async function initNav() {
+    const els = {
+      dp: document.getElementById('desktop-public'),
+      dv: document.getElementById('desktop-private'),
+      mp: document.getElementById('mobile-public'),
+      mv: document.getElementById('mobile-private'),
+      adminD: document.getElementById('admin-link-desktop'),
+      adminM: document.getElementById('admin-link-mobile'),
+    };
+    try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session && session.user) {
+        els.dp.classList.add('hidden'); els.dp.classList.remove('flex');
+        els.dv.classList.remove('hidden'); els.dv.classList.add('flex');
+        els.mp.classList.add('hidden'); els.mp.classList.remove('flex');
+        els.mv.classList.remove('hidden'); els.mv.classList.add('flex');
+        const email = (session.user.email || '').toLowerCase().trim();
+        if (email === 'erwan20b@gmail.com') {
+          els.adminD.classList.remove('hidden');
+          els.adminM.classList.remove('hidden');
+        }
+      }
+    } catch (e) { /* pas connecté : on garde les liens publics */ }
+  })();
+
+  document.getElementById('nav-burger').addEventListener('click', function () {
+    const panel = document.getElementById('mobile-panel');
+    panel.classList.toggle('hidden');
+    panel.classList.toggle('flex');
+  });
+
+  async function handleLogout(e) {
+    e.preventDefault();
+    await supabaseClient.auth.signOut();
+    window.location.href = 'index.html';
+  }
+  document.getElementById('logout-desktop').addEventListener('click', handleLogout);
+  document.getElementById('logout-mobile').addEventListener('click', handleLogout);
+</script>
+<!-- ============ FIN BANDEAU + MENU ============ -->
+
+  <main class="flex-1 px-6 py-14 max-w-5xl mx-auto w-full">
+
+    <div class="max-w-2xl mb-14 reveal visible">
+      <span class="inline-block mb-4 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold border border-brand-blue-dark text-[color:var(--accent)]">
+        Se former
+      </span>
+      <h1 class="font-heading uppercase text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-4">
+        Nos <span class="text-brand-blue">formations</span>
+      </h1>
+      <p class="text-[color:var(--fg-70)] text-base sm:text-lg leading-relaxed">
+        Deux parcours pour aller plus loin dans ta pratique, à ton rythme. Clique sur une formation pour découvrir le programme complet.
+      </p>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-6" id="formations-grid">
+      <!-- Généré dynamiquement depuis formations-data.js -->
+    </div>
+
+  </main>
+
+  <footer class="text-center px-6 py-8">
+    <p class="text-xs text-[color:var(--fg-40)] italic max-w-sm mx-auto">
+      La blessure n'est qu'une étape, pas toute l'histoire. Alors changeons-la ensemble.
+    </p>
+    <div class="mt-8 pt-8 border-t border-[color:var(--border)] flex flex-col items-center gap-4">
+      <a href="https://www.instagram.com/erwanamirault?igsh=ZWZjMXUwc3liamlp" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="text-[color:var(--fg-50)] hover:text-brand-blue transition-colors">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="2" y="2" width="20" height="20" rx="5"/>
+          <circle cx="12" cy="12" r="4"/>
+          <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+        </svg>
+      </a>
+      <a href="mailto:erwan.amirault@gmail.com" class="text-sm text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">
+        erwan.amirault@gmail.com
+      </a>
+      <div class="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-[color:var(--fg-40)]">
+        <a href="mentions-legales.html" class="hover:text-[color:var(--fg)] transition-colors">Mentions légales</a>
+        <a href="cgv.html" class="hover:text-[color:var(--fg)] transition-colors">CGV</a>
+        <a href="politique-confidentialite.html" class="hover:text-[color:var(--fg)] transition-colors">Politique de confidentialité</a>
+      </div>
+      <p class="text-[10px] text-[color:var(--fg-30)]">© 2026 Return To Perf — Erwan Amirault. Tous droits réservés.</p>
+    </div>
+  </footer>
+
+  <script src="theme.js"></script>
+  <script src="formations-data.js"></script>
+  <script>
+    const grid = document.getElementById('formations-grid');
+
+    FORMATIONS.forEach(f => {
+      const card = document.createElement('a');
+      card.href = `formation-detail.html?id=${f.id}`;
+      card.className = 'formation-card group block rounded-2xl overflow-hidden bg-[color:var(--card)] border border-[color:var(--border)] hover:border-brand-blue transition-colors';
+
+      card.innerHTML = `
+        <div class="h-44 overflow-hidden">
+          <div class="formation-thumb w-full h-full flex items-center justify-center">
+            ${f.image
+              ? `<img src="${f.image}" alt="${f.titre}" class="w-full h-full object-cover">`
+              : `<span class="font-heading text-white/90 text-xs uppercase tracking-widest">Photo à venir</span>`
+            }
+          </div>
+        </div>
+        <div class="p-6 text-left">
+          <p class="text-brand-blue text-xs font-semibold uppercase tracking-wider mb-2">${f.niveau || 'Formation'}</p>
+          <h3 class="font-heading uppercase text-xl font-bold mb-2">${f.titre}</h3>
+          <p class="text-sm text-[color:var(--fg-60)] mb-4">${f.accroche}</p>
+          <div class="flex items-center justify-between">
+            <span class="font-heading text-xl font-bold text-brand-blue">${f.prix} €</span>
+            <span class="text-sm font-semibold text-brand-blue group-hover:text-brand-blue-dark transition-colors">Voir le programme →</span>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  </script>
+</body>
+</html>
