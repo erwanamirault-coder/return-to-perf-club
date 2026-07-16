@@ -73,14 +73,78 @@
       <div id="instagram-automations-list" class="flex flex-col gap-3 mb-5"></div>
       <p id="instagram-automations-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] py-4">Aucun mot-clé configuré pour l'instant.</p>
 
-      <div class="rounded-lg bg-[color:var(--card)] p-4">
-        <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-3">Ajouter un mot-clé</p>
-        <div class="grid sm:grid-cols-2 gap-2 mb-2">
-          <input type="text" id="ig-mot-cle" placeholder="Mot-clé (ex: BILAN)" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-          <input type="url" id="ig-lien" placeholder="Lien à envoyer (optionnel)" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      <!-- RÉGLAGES PAR DÉFAUT (réutilisés dans chaque nouvelle automatisation) -->
+      <div class="rounded-lg border border-brand-blue-dark bg-brand-blue/5 p-4 mb-4">
+        <button type="button" id="ig-defaults-toggle" class="w-full flex items-center justify-between text-left">
+          <span class="text-xs uppercase tracking-widest text-[color:var(--accent)] font-semibold">⚙️ Réponses publiques par défaut</span>
+          <span id="ig-defaults-chevron" class="text-[color:var(--accent)] text-xs">▼</span>
+        </button>
+        <p class="text-[10px] text-[color:var(--fg-50)] mt-1 mb-3">Réglées une fois, elles pré-remplissent automatiquement chaque nouvelle automatisation ci-dessous — modifie-les ici pour changer le défaut partout.</p>
+        <div id="ig-defaults-body" class="hidden">
+          <input type="text" id="ig-default-1" placeholder="Ex: Super ! Check tes DM 🔥" class="w-full mb-1.5 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <input type="text" id="ig-default-2" placeholder="Ex: C'est envoyé ! 😉" class="w-full mb-1.5 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <input type="text" id="ig-default-3" placeholder="Ex: Regarde tes messages 🎉" class="w-full mb-2 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <button id="ig-defaults-save-btn" class="w-full px-3 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-xs font-semibold">Enregistrer comme défaut</button>
+          <p id="ig-defaults-confirm" class="hidden text-center text-xs text-[color:var(--accent)] font-medium mt-2">Enregistré ✓</p>
         </div>
-        <textarea id="ig-message" rows="2" placeholder="Message envoyé en DM..." class="w-full mb-2 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue resize-none"></textarea>
-        <button id="ig-add-btn" class="px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-sm font-medium">Ajouter ce mot-clé</button>
+      </div>
+
+      <div class="rounded-lg bg-[color:var(--card)] p-4">
+        <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-3">Ajouter une automatisation</p>
+
+        <p class="text-[10px] uppercase text-[color:var(--fg-40)] mb-1.5">Quand quelqu'un commente</p>
+        <div class="grid grid-cols-2 gap-1.5 mb-2">
+          <button type="button" id="ig-post-any-btn" class="ig-post-toggle px-3 py-2 rounded-lg border-2 border-brand-blue bg-brand-blue/10 text-xs font-semibold text-[color:var(--accent)]">N'importe quel post</button>
+          <button type="button" id="ig-post-specific-btn" class="ig-post-toggle px-3 py-2 rounded-lg border-2 border-[color:var(--border)] text-xs font-semibold text-[color:var(--fg-50)]">Un post précis</button>
+        </div>
+        <div id="ig-post-picker" class="hidden mb-3">
+          <div id="ig-posts-grid" class="grid grid-cols-4 gap-2 mb-2 max-h-48 overflow-y-auto"></div>
+          <p id="ig-posts-loading" class="text-xs text-[color:var(--fg-40)]">Chargement de tes publications...</p>
+          <p id="ig-posts-error" class="hidden text-xs text-red-400"></p>
+          <p id="ig-selected-post" class="hidden text-xs text-[color:var(--accent)] font-medium mt-1"></p>
+        </div>
+
+        <p class="text-[10px] uppercase text-[color:var(--fg-40)] mb-1.5">Et le commentaire contient</p>
+        <input type="text" id="ig-mot-cle" placeholder="Mot-clé (ex: BILAN)" class="w-full mb-3 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+
+        <p class="text-[10px] uppercase text-[color:var(--fg-40)] mb-1.5">Réponse publique sous le commentaire (au hasard parmi celles remplies — pré-rempli avec tes défauts ⚙️ ci-dessus)</p>
+        <input type="text" id="ig-reponse-1" placeholder="Ex: Super ! Check tes DM 🔥" class="w-full mb-1.5 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="text" id="ig-reponse-2" placeholder="Ex: C'est envoyé ! 😉" class="w-full mb-1.5 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="text" id="ig-reponse-3" placeholder="Ex: Regarde tes messages 🎉" class="w-full mb-3 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+
+        <div class="mb-2">
+          <p class="text-[10px] uppercase text-[color:var(--fg-40)] mb-1.5">Délai avant le DM (secondes, max 8)</p>
+          <input type="number" id="ig-delai" min="0" max="8" value="0" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        </div>
+
+        <p class="text-[10px] uppercase text-[color:var(--fg-40)] mb-1.5">Message privé (texte au-dessus du bouton)</p>
+        <textarea id="ig-message" rows="3" placeholder="Salut ! Merci pour ton commentaire..." class="w-full mb-2 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue resize-none"></textarea>
+
+        <div class="grid sm:grid-cols-2 gap-2 mb-3">
+          <div>
+            <p class="text-[10px] uppercase text-[color:var(--fg-40)] mb-1.5">Texte du bouton</p>
+            <input type="text" id="ig-bouton-texte" placeholder="Ex: 🎁 Je réserve !" maxlength="20" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <p class="text-[10px] uppercase text-[color:var(--fg-40)] mb-1.5">Lien du bouton</p>
+            <input type="url" id="ig-lien" placeholder="https://..." class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+        </div>
+
+        <!-- Aperçu façon ManyChat -->
+        <div class="rounded-xl bg-[color:var(--bg)] border border-[color:var(--border)] p-3 mb-3">
+          <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-40)] mb-2">Aperçu du DM</p>
+          <div class="bg-white rounded-2xl rounded-bl-sm p-3 mb-1.5 shadow-sm">
+            <p id="ig-preview-message" class="text-sm text-gray-800 whitespace-pre-wrap">Salut ! Merci pour ton commentaire...</p>
+          </div>
+          <div id="ig-preview-button-wrap" class="hidden">
+            <div class="bg-white rounded-full px-4 py-2.5 text-center shadow-sm border-t border-gray-100">
+              <span id="ig-preview-button" class="text-sm text-blue-600 font-medium">🎁 Je réserve !</span>
+            </div>
+          </div>
+        </div>
+
+        <button id="ig-add-btn" class="w-full px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-sm font-medium">Ajouter cette automatisation</button>
       </div>
 
       <p class="text-[10px] text-[color:var(--fg-40)] mt-4">
@@ -1980,6 +2044,15 @@
     }
 
     // ---------- Automatisations Instagram (indépendant des clients) ----------
+    // ⚠️ Mets ici le même mot de passe que la variable ADMIN_API_SECRET sur Vercel
+    const ADMIN_API_SECRET = 'CHANGE_MOI_meme_valeur_que_sur_vercel';
+
+    let selectedPostMode = 'any'; // 'any' | 'specific'
+    let selectedPostId = null;
+    let selectedPostThumbnail = null;
+    let selectedPostCaption = null;
+    let instagramPostsCache = [];
+
     document.getElementById('toggle-instagram-panel').addEventListener('click', () => {
       const panel = document.getElementById('instagram-panel');
       const wasHidden = panel.classList.contains('hidden');
@@ -1988,8 +2061,70 @@
     });
 
     async function loadInstagramPanel() {
-      await Promise.all([loadInstagramConnectionStatus(), loadInstagramAutomations()]);
+      await Promise.all([loadInstagramConnectionStatus(), loadInstagramAutomations(), loadInstagramDefaults()]);
     }
+
+    // ---- Réponses publiques par défaut ----
+    document.getElementById('ig-defaults-toggle').addEventListener('click', () => {
+      const body = document.getElementById('ig-defaults-body');
+      const chevron = document.getElementById('ig-defaults-chevron');
+      body.classList.toggle('hidden');
+      chevron.textContent = body.classList.contains('hidden') ? '▼' : '▲';
+    });
+
+    async function loadInstagramDefaults() {
+      const { data } = await supabaseClient.from('instagram_settings').select('*').limit(1).maybeSingle();
+      document.getElementById('ig-default-1').value = data?.reponse_defaut_1 || '';
+      document.getElementById('ig-default-2').value = data?.reponse_defaut_2 || '';
+      document.getElementById('ig-default-3').value = data?.reponse_defaut_3 || '';
+      applyDefaultsToForm();
+    }
+
+    function applyDefaultsToForm() {
+      document.getElementById('ig-reponse-1').value = document.getElementById('ig-default-1').value;
+      document.getElementById('ig-reponse-2').value = document.getElementById('ig-default-2').value;
+      document.getElementById('ig-reponse-3').value = document.getElementById('ig-default-3').value;
+    }
+
+    document.getElementById('ig-defaults-save-btn').addEventListener('click', async () => {
+      const payload = {
+        reponse_defaut_1: document.getElementById('ig-default-1').value.trim() || null,
+        reponse_defaut_2: document.getElementById('ig-default-2').value.trim() || null,
+        reponse_defaut_3: document.getElementById('ig-default-3').value.trim() || null
+      };
+
+      const { data: existing } = await supabaseClient.from('instagram_settings').select('id').limit(1).maybeSingle();
+      if (existing) {
+        await supabaseClient.from('instagram_settings').update(payload).eq('id', existing.id);
+      } else {
+        await supabaseClient.from('instagram_settings').insert(payload);
+      }
+
+      applyDefaultsToForm();
+      const confirmEl = document.getElementById('ig-defaults-confirm');
+      confirmEl.classList.remove('hidden');
+      setTimeout(() => confirmEl.classList.add('hidden'), 2000);
+    });
+
+    // ---- Aperçu du DM en direct ----
+    function updateDmPreview() {
+      const msg = document.getElementById('ig-message').value.trim();
+      const boutonTexte = document.getElementById('ig-bouton-texte').value.trim();
+      const lien = document.getElementById('ig-lien').value.trim();
+
+      document.getElementById('ig-preview-message').textContent = msg || 'Salut ! Merci pour ton commentaire...';
+
+      const buttonWrap = document.getElementById('ig-preview-button-wrap');
+      if (boutonTexte && lien) {
+        buttonWrap.classList.remove('hidden');
+        document.getElementById('ig-preview-button').textContent = boutonTexte;
+      } else {
+        buttonWrap.classList.add('hidden');
+      }
+    }
+    ['ig-message', 'ig-bouton-texte', 'ig-lien'].forEach(id => {
+      document.getElementById(id).addEventListener('input', updateDmPreview);
+    });
 
     async function loadInstagramConnectionStatus() {
       const el = document.getElementById('instagram-connection-status');
@@ -2014,6 +2149,88 @@
       }
     }
 
+    // ---- Sélecteur "N'importe quel post" / "Un post précis" ----
+    document.getElementById('ig-post-any-btn').addEventListener('click', () => setPostMode('any'));
+    document.getElementById('ig-post-specific-btn').addEventListener('click', () => setPostMode('specific'));
+
+    function setPostMode(mode) {
+      selectedPostMode = mode;
+      const anyBtn = document.getElementById('ig-post-any-btn');
+      const specificBtn = document.getElementById('ig-post-specific-btn');
+      const picker = document.getElementById('ig-post-picker');
+
+      anyBtn.classList.toggle('border-brand-blue', mode === 'any');
+      anyBtn.classList.toggle('bg-brand-blue/10', mode === 'any');
+      anyBtn.classList.toggle('text-[color:var(--accent)]', mode === 'any');
+      anyBtn.classList.toggle('border-[color:var(--border)]', mode !== 'any');
+      anyBtn.classList.toggle('text-[color:var(--fg-50)]', mode !== 'any');
+
+      specificBtn.classList.toggle('border-brand-blue', mode === 'specific');
+      specificBtn.classList.toggle('bg-brand-blue/10', mode === 'specific');
+      specificBtn.classList.toggle('text-[color:var(--accent)]', mode === 'specific');
+      specificBtn.classList.toggle('border-[color:var(--border)]', mode !== 'specific');
+      specificBtn.classList.toggle('text-[color:var(--fg-50)]', mode !== 'specific');
+
+      picker.classList.toggle('hidden', mode !== 'specific');
+
+      if (mode === 'any') {
+        selectedPostId = null;
+        selectedPostThumbnail = null;
+        selectedPostCaption = null;
+      } else if (instagramPostsCache.length === 0) {
+        loadInstagramPosts();
+      }
+    }
+
+    async function loadInstagramPosts() {
+      const loading = document.getElementById('ig-posts-loading');
+      const errorEl = document.getElementById('ig-posts-error');
+      const grid = document.getElementById('ig-posts-grid');
+      loading.classList.remove('hidden');
+      errorEl.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/instagram-posts', {
+          headers: { 'x-admin-secret': ADMIN_API_SECRET }
+        });
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+          throw new Error(data.error || 'Erreur inconnue');
+        }
+
+        instagramPostsCache = data.posts || [];
+        renderPostsGrid();
+      } catch (err) {
+        errorEl.textContent = "Impossible de charger tes publications (connexion Instagram non validée, ou " + err.message + ")";
+        errorEl.classList.remove('hidden');
+      } finally {
+        loading.classList.add('hidden');
+      }
+    }
+
+    function renderPostsGrid() {
+      const grid = document.getElementById('ig-posts-grid');
+      grid.innerHTML = instagramPostsCache.map(p => `
+        <button type="button" class="ig-post-thumb rounded-lg overflow-hidden border-2 ${selectedPostId === p.id ? 'border-brand-blue' : 'border-transparent'} aspect-square" data-id="${p.id}">
+          <img src="${p.thumbnail}" class="w-full h-full object-cover" alt="">
+        </button>
+      `).join('');
+
+      document.querySelectorAll('.ig-post-thumb').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const post = instagramPostsCache.find(p => p.id === btn.dataset.id);
+          selectedPostId = post.id;
+          selectedPostThumbnail = post.thumbnail;
+          selectedPostCaption = post.caption;
+          renderPostsGrid();
+          const selectedEl = document.getElementById('ig-selected-post');
+          selectedEl.textContent = '✓ Post sélectionné : ' + (post.caption ? post.caption.slice(0, 60) : post.id);
+          selectedEl.classList.remove('hidden');
+        });
+      });
+    }
+
     async function loadInstagramAutomations() {
       const { data } = await supabaseClient.from('instagram_automations').select('*').order('created_at', { ascending: false });
       const list = document.getElementById('instagram-automations-list');
@@ -2027,7 +2244,9 @@
       }
       empty.classList.add('hidden');
 
-      list.innerHTML = automations.map(a => `
+      list.innerHTML = automations.map(a => {
+        const publicReplies = [a.reponse_publique_1, a.reponse_publique_2, a.reponse_publique_3].filter(Boolean);
+        return `
         <div class="rounded-lg border border-[color:var(--border)] p-3">
           <div class="flex items-center justify-between mb-1.5">
             <span class="font-heading uppercase font-bold text-sm text-[color:var(--accent)]">${escapeHtml(a.mot_cle)}</span>
@@ -2038,10 +2257,16 @@
               <span class="ig-delete-btn text-red-400 hover:text-red-300 text-xs cursor-pointer" data-id="${a.id}">Supprimer</span>
             </div>
           </div>
+          <div class="flex items-center gap-2 mb-1.5">
+            ${a.post_thumbnail ? `<img src="${a.post_thumbnail}" class="w-8 h-8 rounded object-cover shrink-0">` : ''}
+            <span class="text-[10px] uppercase tracking-widest text-[color:var(--fg-40)]">${a.post_id ? 'Post ciblé' : "N'importe quel post"}${a.delai_secondes ? ' · Délai ' + a.delai_secondes + 's' : ''}</span>
+          </div>
+          ${publicReplies.length ? `<p class="text-xs text-[color:var(--fg-50)] mb-1">💬 ${publicReplies.map(escapeHtml).join(' / ')}</p>` : ''}
           <p class="text-sm text-[color:var(--fg-70)] mb-1">${escapeHtml(a.message)}</p>
-          ${a.lien ? `<p class="text-xs text-[color:var(--accent)] break-all">${escapeHtml(a.lien)}</p>` : ''}
+          ${a.bouton_texte && a.lien ? `<span class="inline-block text-xs px-3 py-1 rounded-full bg-[color:var(--bg)] border border-[color:var(--border)] text-[color:var(--accent)]">${escapeHtml(a.bouton_texte)}</span>` : (a.lien ? `<p class="text-xs text-[color:var(--accent)] break-all">${escapeHtml(a.lien)}</p>` : '')}
         </div>
-      `).join('');
+      `;
+      }).join('');
 
       document.querySelectorAll('.ig-toggle-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
@@ -2052,7 +2277,7 @@
       });
       document.querySelectorAll('.ig-delete-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
-          if (!confirm("Supprimer ce mot-clé ?")) return;
+          if (!confirm("Supprimer cette automatisation ?")) return;
           await supabaseClient.from('instagram_automations').delete().eq('id', btn.dataset.id);
           loadInstagramAutomations();
         });
@@ -2063,18 +2288,40 @@
       const motCle = document.getElementById('ig-mot-cle').value.trim().toUpperCase();
       const message = document.getElementById('ig-message').value.trim();
       const lien = document.getElementById('ig-lien').value.trim();
+      const boutonTexte = document.getElementById('ig-bouton-texte').value.trim();
+      const delai = Math.min(Number(document.getElementById('ig-delai').value) || 0, 8);
+      const reponse1 = document.getElementById('ig-reponse-1').value.trim();
+      const reponse2 = document.getElementById('ig-reponse-2').value.trim();
+      const reponse3 = document.getElementById('ig-reponse-3').value.trim();
 
-      if (!motCle || !message) { alert("Le mot-clé et le message sont obligatoires."); return; }
+      if (!motCle || !message) { alert("Le mot-clé et le message privé sont obligatoires."); return; }
+      if (selectedPostMode === 'specific' && !selectedPostId) { alert("Sélectionne un post, ou choisis \"N'importe quel post\"."); return; }
+      if (lien && !boutonTexte) { alert("Ajoute un texte de bouton pour accompagner ton lien (ex: \"🎁 Je réserve !\")."); return; }
 
       const { error } = await supabaseClient.from('instagram_automations').insert({
-        mot_cle: motCle, message, lien: lien || null, actif: true
+        mot_cle: motCle,
+        message,
+        lien: lien || null,
+        bouton_texte: boutonTexte || null,
+        actif: true,
+        post_id: selectedPostMode === 'specific' ? selectedPostId : null,
+        post_thumbnail: selectedPostMode === 'specific' ? selectedPostThumbnail : null,
+        post_caption: selectedPostMode === 'specific' ? selectedPostCaption : null,
+        delai_secondes: delai,
+        reponse_publique_1: reponse1 || null,
+        reponse_publique_2: reponse2 || null,
+        reponse_publique_3: reponse3 || null
       });
 
       if (error) { alert("Erreur : " + error.message); return; }
 
-      document.getElementById('ig-mot-cle').value = '';
-      document.getElementById('ig-message').value = '';
-      document.getElementById('ig-lien').value = '';
+      ['ig-mot-cle', 'ig-message', 'ig-lien', 'ig-bouton-texte'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('ig-delai').value = '0';
+      setPostMode('any');
+      applyDefaultsToForm();
+      updateDmPreview();
       loadInstagramAutomations();
     });
 
