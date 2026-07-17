@@ -232,6 +232,42 @@
           <p id="formation-form-error" class="text-xs text-red-500 hidden"></p>
         </form>
       </div>
+
+      <!-- Panneau de gestion du contenu (vidéos/PDF) d'une formation -->
+      <div id="content-panel" class="hidden mt-6 rounded-lg bg-[color:var(--card)] border border-brand-blue-dark p-4 sm:p-5">
+        <div class="flex items-center justify-between mb-4">
+          <p class="font-heading uppercase text-sm font-bold">📁 Contenu — <span id="content-panel-titre"></span></p>
+          <button type="button" id="close-content-panel-btn" class="text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">Fermer ✕</button>
+        </div>
+
+        <div id="content-lecons-list" class="flex flex-col gap-2 mb-5"></div>
+
+        <div class="border-t border-[color:var(--border)] pt-4">
+          <p class="text-xs font-semibold mb-3">Ajouter une leçon</p>
+          <div class="grid sm:grid-cols-2 gap-3 mb-3">
+            <div>
+              <label class="block text-xs font-semibold mb-1">Titre de la leçon</label>
+              <input type="text" id="new-lecon-titre" placeholder="Ex: Module 1 — Introduction" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1">Type</label>
+              <select id="new-lecon-type" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+                <option value="video">🎥 Vidéo</option>
+                <option value="pdf">📄 PDF</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="block text-xs font-semibold mb-1">Fichier</label>
+            <input type="file" id="new-lecon-file" accept="video/*,application/pdf" class="w-full text-xs">
+          </div>
+          <button type="button" id="upload-lecon-btn" class="bg-brand-blue text-white px-5 py-2 rounded-lg font-heading uppercase tracking-wide font-semibold text-xs hover:bg-brand-blue-dark transition-colors">
+            Uploader la leçon
+          </button>
+          <span id="upload-progress" class="text-xs text-[color:var(--fg-50)] ml-3"></span>
+          <p id="upload-error" class="text-xs text-red-500 mt-2 hidden"></p>
+        </div>
+      </div>
     </div>
 
     <div id="client-tabs" class="flex flex-wrap gap-2 mb-8"></div>
@@ -2467,12 +2503,17 @@
           </div>
           <div class="flex items-center gap-2">
             <a href="formation-detail.html?id=${f.id}" target="_blank" class="text-xs text-brand-blue hover:underline">Voir</a>
+            <button data-id="${f.id}" data-titre="${f.titre.replace(/"/g, '&quot;')}" class="content-formation-btn text-xs px-2.5 py-1 rounded-md border border-brand-blue-dark text-[color:var(--accent)] hover:bg-brand-blue/5 transition-colors">📁 Contenu</button>
             <button data-id="${f.id}" class="edit-formation-btn text-xs px-2.5 py-1 rounded-md border border-[color:var(--border)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors">Modifier</button>
             <button data-id="${f.id}" class="delete-formation-btn text-xs px-2.5 py-1 rounded-md border border-red-300 text-red-500 hover:bg-red-500/10 transition-colors">Supprimer</button>
           </div>
         `;
         formationsList.appendChild(row);
       });
+
+      document.querySelectorAll('.content-formation-btn').forEach(btn =>
+        btn.addEventListener('click', () => openContentPanel(btn.dataset.id, btn.dataset.titre))
+      );
 
       document.querySelectorAll('.edit-formation-btn').forEach(btn =>
         btn.addEventListener('click', () => openFormationForm(data.find(f => f.id == btn.dataset.id)))
@@ -2552,6 +2593,149 @@
         return;
       }
       loadFormations();
+    }
+
+    // ===================================================================
+    // GESTION DU CONTENU (vidéos / PDF) D'UNE FORMATION
+    // ===================================================================
+    const contentPanel = document.getElementById('content-panel');
+    const contentPanelTitre = document.getElementById('content-panel-titre');
+    const contentLeconsList = document.getElementById('content-lecons-list');
+    let currentContentFormationId = null;
+
+    async function openContentPanel(formationId, titre) {
+      currentContentFormationId = formationId;
+      contentPanelTitre.textContent = titre;
+      contentPanel.classList.remove('hidden');
+      document.getElementById('upload-error').classList.add('hidden');
+      contentPanel.scrollIntoView({ behavior: 'smooth' });
+      await loadContentLecons();
+    }
+
+    document.getElementById('close-content-panel-btn').addEventListener('click', () => {
+      contentPanel.classList.add('hidden');
+      currentContentFormationId = null;
+    });
+
+    async function loadContentLecons() {
+      contentLeconsList.innerHTML = `<p class="text-xs text-[color:var(--fg-50)]">Chargement...</p>`;
+
+      const { data, error } = await supabaseClient
+        .from('formation_contenu')
+        .select('*')
+        .eq('formation_id', currentContentFormationId)
+        .order('ordre', { ascending: true });
+
+      if (error) {
+        contentLeconsList.innerHTML = `<p class="text-xs text-red-500">Erreur : ${error.message}</p>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        contentLeconsList.innerHTML = `<p class="text-xs text-[color:var(--fg-50)]">Aucune leçon pour l'instant.</p>`;
+        return;
+      }
+
+      contentLeconsList.innerHTML = '';
+      data.forEach((lecon, i) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between gap-2 p-2.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)]';
+        row.innerHTML = `
+          <p class="text-xs">
+            <span class="text-[color:var(--fg-40)] mr-1.5">${String(i + 1).padStart(2, '0')}</span>
+            ${lecon.type === 'video' ? '🎥' : '📄'} ${lecon.titre}
+          </p>
+          <button data-id="${lecon.id}" data-path="${lecon.chemin_storage}" class="delete-lecon-btn text-[11px] px-2 py-1 rounded-md border border-red-300 text-red-500 hover:bg-red-500/10 transition-colors">Supprimer</button>
+        `;
+        contentLeconsList.appendChild(row);
+      });
+
+      document.querySelectorAll('.delete-lecon-btn').forEach(btn =>
+        btn.addEventListener('click', () => deleteLecon(btn.dataset.id, btn.dataset.path))
+      );
+    }
+
+    document.getElementById('upload-lecon-btn').addEventListener('click', async () => {
+      const titre = document.getElementById('new-lecon-titre').value.trim();
+      const type = document.getElementById('new-lecon-type').value;
+      const fileInput = document.getElementById('new-lecon-file');
+      const file = fileInput.files[0];
+      const progressEl = document.getElementById('upload-progress');
+      const errorEl = document.getElementById('upload-error');
+      const uploadBtn = document.getElementById('upload-lecon-btn');
+
+      errorEl.classList.add('hidden');
+
+      if (!titre || !file) {
+        errorEl.textContent = 'Renseigne un titre et choisis un fichier.';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      uploadBtn.disabled = true;
+      progressEl.textContent = 'Upload en cours... (peut prendre du temps pour une vidéo)';
+
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `${currentContentFormationId}/${Date.now()}-${safeFileName}`;
+
+      const { error: uploadError } = await supabaseClient
+        .storage
+        .from('formations-content')
+        .upload(path, file);
+
+      if (uploadError) {
+        progressEl.textContent = '';
+        errorEl.textContent = "Erreur d'upload : " + uploadError.message;
+        errorEl.classList.remove('hidden');
+        uploadBtn.disabled = false;
+        return;
+      }
+
+      // Déterminer l'ordre suivant
+      const { data: existing } = await supabaseClient
+        .from('formation_contenu')
+        .select('ordre')
+        .eq('formation_id', currentContentFormationId)
+        .order('ordre', { ascending: false })
+        .limit(1);
+
+      const nextOrdre = existing && existing[0] ? existing[0].ordre + 1 : 1;
+
+      const { error: insertError } = await supabaseClient
+        .from('formation_contenu')
+        .insert({
+          formation_id: currentContentFormationId,
+          titre,
+          type,
+          chemin_storage: path,
+          ordre: nextOrdre,
+        });
+
+      progressEl.textContent = '';
+      uploadBtn.disabled = false;
+
+      if (insertError) {
+        errorEl.textContent = "Erreur d'enregistrement : " + insertError.message;
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('new-lecon-titre').value = '';
+      fileInput.value = '';
+      loadContentLecons();
+    });
+
+    async function deleteLecon(id, path) {
+      if (!confirm('Supprimer définitivement cette leçon (et son fichier) ?')) return;
+
+      await supabaseClient.storage.from('formations-content').remove([path]);
+      const { error } = await supabaseClient.from('formation_contenu').delete().eq('id', id);
+
+      if (error) {
+        alert('Erreur lors de la suppression : ' + error.message);
+        return;
+      }
+      loadContentLecons();
     }
   </script>
 
