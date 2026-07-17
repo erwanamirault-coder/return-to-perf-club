@@ -170,27 +170,37 @@
 </footer>
 
 <script src="theme.js"></script>
-<script src="formations-data.js"></script>
 <script>
   const params = new URLSearchParams(window.location.search);
   const id = parseInt(params.get('id'), 10);
-  const formation = FORMATIONS.find(f => f.id === id);
   const content = document.getElementById('content');
 
-  if (!formation) {
-    content.innerHTML = `
-      <p class="text-center text-[color:var(--fg-60)]">
-        Formation introuvable. <a href="formations.html" class="text-brand-blue underline">Retour aux formations</a>
-      </p>`;
-  } else {
+  (async function loadFormation() {
+    content.innerHTML = `<p class="text-center text-[color:var(--fg-60)]">Chargement...</p>`;
+
+    const { data: formation, error } = await supabaseClient
+      .from('formations')
+      .select('*')
+      .eq('id', id)
+      .eq('actif', true)
+      .single();
+
+    if (error || !formation) {
+      content.innerHTML = `
+        <p class="text-center text-[color:var(--fg-60)]">
+          Formation introuvable. <a href="formations.html" class="text-brand-blue underline">Retour aux formations</a>
+        </p>`;
+      return;
+    }
+
     document.title = formation.titre + " | Erwan Amirault";
 
     content.innerHTML = `
       <a href="formations.html" class="text-sm text-brand-blue hover:text-brand-blue-dark transition-colors mb-6 inline-block">← Toutes les formations</a>
 
       <div class="hero-thumb h-56 sm:h-64 rounded-2xl mb-8 flex items-center justify-center overflow-hidden">
-        ${formation.image
-          ? `<img src="${formation.image}" alt="${formation.titre}" class="w-full h-full object-cover">`
+        ${formation.image_url
+          ? `<img src="${formation.image_url}" alt="${formation.titre}" class="w-full h-full object-cover">`
           : `<span class="font-heading text-white/90 text-sm uppercase tracking-widest">Photo à venir</span>`
         }
       </div>
@@ -216,7 +226,7 @@
       <div class="rounded-2xl p-6 bg-[color:var(--card)] border-2 border-brand-blue flex items-center justify-between flex-wrap gap-4">
         <div>
           <p class="text-sm text-[color:var(--fg-60)]">Prix</p>
-          <p class="font-heading text-3xl font-bold text-brand-blue">${formation.prix} €</p>
+          <p class="font-heading text-3xl font-bold text-brand-blue">${Number(formation.prix).toFixed(0)} €</p>
         </div>
         <button id="buy-btn"
           class="bg-brand-blue text-white px-8 py-3 rounded-lg font-heading uppercase tracking-wide font-semibold hover:bg-brand-blue-dark transition-colors">
@@ -226,7 +236,10 @@
       <p id="buy-error" class="text-sm text-red-500 mt-3 hidden"></p>
     `;
 
-    document.getElementById('buy-btn').addEventListener('click', async () => {
+    document.getElementById('buy-btn').addEventListener('click', () => handleBuy(formation));
+  })();
+
+  async function handleBuy(formation) {
       const btn = document.getElementById('buy-btn');
       const errorEl = document.getElementById('buy-error');
       errorEl.classList.add('hidden');
@@ -261,7 +274,6 @@
         btn.disabled = false;
         btn.textContent = 'Acheter cette formation';
       }
-    });
   }
 </script>
 </body>
