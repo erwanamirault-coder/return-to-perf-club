@@ -62,6 +62,7 @@ module.exports = async (req, res) => {
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
       customer_email: user.email,
+      allow_promotion_codes: true,
       success_url: `${siteUrl}/formation-merci.html?formation=${formationId}`,
       cancel_url: `${siteUrl}/formation-detail.html?id=${formationId}`,
       metadata: {
