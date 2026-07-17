@@ -42,6 +42,7 @@
     <div class="flex items-center gap-4 text-sm">
       <a href="index.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Accueil</a>
       <a href="suivi-clients.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Suivi clients</a>
+      <a href="formations.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Formations</a>
       <a href="dashboard.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Mon espace</a>
       <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
       <a href="a-propos.html" class="shrink-0">
@@ -55,9 +56,12 @@
       <h1 class="font-heading uppercase text-2xl font-bold text-center flex-1">Gérer les séances</h1>
     </div>
 
-    <div class="flex justify-center mb-8">
+    <div class="flex flex-wrap justify-center gap-3 mb-8">
       <button id="toggle-instagram-panel" class="text-sm px-4 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] hover:bg-brand-blue/5 transition-colors font-medium">
         📸 Automatisations Instagram
+      </button>
+      <button id="toggle-formations-panel" class="text-sm px-4 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] hover:bg-brand-blue/5 transition-colors font-medium">
+        🎓 Gestion des formations
       </button>
     </div>
 
@@ -150,6 +154,84 @@
       <p class="text-[10px] text-[color:var(--fg-40)] mt-4">
         ⚠️ Les automatisations ne s'activeront qu'une fois ta connexion Instagram validée par Meta (App Review). En attendant, tu peux déjà préparer tes mots-clés et messages ici.
       </p>
+    </div>
+
+    <!-- SECTION INDÉPENDANTE : Gestion des formations (pas liée à un client) -->
+    <div id="formations-panel" class="hidden rounded-xl border-2 border-brand-blue-dark p-5 mb-10">
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <h2 class="font-heading uppercase text-lg font-bold">🎓 Gestion des formations</h2>
+        <button id="new-formation-btn" class="bg-brand-blue text-white px-4 py-2 rounded-lg font-heading uppercase tracking-wide font-semibold text-xs hover:bg-brand-blue-dark transition-colors">
+          + Nouvelle formation
+        </button>
+      </div>
+
+      <div id="formations-list" class="flex flex-col gap-3 mb-6"></div>
+
+      <!-- Formulaire (caché par défaut, affiché pour créer/éditer) -->
+      <div id="formation-form-panel" class="hidden rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] p-4 sm:p-5">
+        <p id="formation-form-title" class="font-heading uppercase text-sm font-bold mb-4">Nouvelle formation</p>
+
+        <form id="formation-form" class="space-y-3">
+          <input type="hidden" id="f-id">
+
+          <div>
+            <label class="block text-xs font-semibold mb-1">Titre</label>
+            <input type="text" id="f-titre" required class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold mb-1">Accroche (carte du catalogue)</label>
+            <input type="text" id="f-accroche" required class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold mb-1">Niveau</label>
+              <input type="text" id="f-niveau" placeholder="Ex: Tous niveaux" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1">Prix (€)</label>
+              <input type="number" id="f-prix" step="0.01" min="0" required class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold mb-1">URL de la photo</label>
+            <input type="url" id="f-image" placeholder="https://... (laisse vide si tu n'en as pas encore)" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold mb-1">Description (page détail)</label>
+            <textarea id="f-description" rows="4" required class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold mb-1">Programme — un point par ligne</label>
+            <textarea id="f-programme" rows="4" placeholder="Comprendre les tests de mobilité&#10;Construire sa routine en 3 phases" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold mb-1">Stripe Price ID</label>
+            <input type="text" id="f-stripe-price-id" placeholder="price_..." class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue font-mono">
+            <p class="text-[10px] text-[color:var(--fg-50)] mt-1">Créé dans ton dashboard Stripe (Produits → copier le Price ID). Sans ça, le paiement ne fonctionnera pas pour cette formation.</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="f-actif" checked class="w-4 h-4">
+            <label for="f-actif" class="text-xs font-semibold">Visible dans le catalogue public</label>
+          </div>
+
+          <div class="flex items-center gap-2 pt-1">
+            <button type="submit" class="bg-brand-blue text-white px-5 py-2 rounded-lg font-heading uppercase tracking-wide font-semibold text-xs hover:bg-brand-blue-dark transition-colors">
+              Enregistrer
+            </button>
+            <button type="button" id="cancel-formation-btn" class="px-5 py-2 rounded-lg font-semibold text-xs border border-[color:var(--border)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+              Annuler
+            </button>
+          </div>
+          <p id="formation-form-error" class="text-xs text-red-500 hidden"></p>
+        </form>
+      </div>
     </div>
 
     <div id="client-tabs" class="flex flex-wrap gap-2 mb-8"></div>
@@ -2336,6 +2418,141 @@
     }
 
     checkAccess();
+
+    // ===================================================================
+    // GESTION DES FORMATIONS (section indépendante, pas liée à un client)
+    // ===================================================================
+    const formationsPanel = document.getElementById('formations-panel');
+    const formationsList = document.getElementById('formations-list');
+    const formationFormPanel = document.getElementById('formation-form-panel');
+    const formationForm = document.getElementById('formation-form');
+    const formationFormTitle = document.getElementById('formation-form-title');
+    const formationFormError = document.getElementById('formation-form-error');
+    let formationsLoaded = false;
+
+    document.getElementById('toggle-formations-panel').addEventListener('click', () => {
+      formationsPanel.classList.toggle('hidden');
+      if (!formationsPanel.classList.contains('hidden') && !formationsLoaded) {
+        loadFormations();
+        formationsLoaded = true;
+      }
+    });
+
+    async function loadFormations() {
+      formationsList.innerHTML = `<p class="text-sm text-[color:var(--fg-50)]">Chargement...</p>`;
+
+      const { data, error } = await supabaseClient
+        .from('formations')
+        .select('*')
+        .order('ordre', { ascending: true });
+
+      if (error) {
+        formationsList.innerHTML = `<p class="text-sm text-red-500">Erreur de chargement : ${error.message}</p>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        formationsList.innerHTML = `<p class="text-sm text-[color:var(--fg-50)]">Aucune formation pour l'instant.</p>`;
+        return;
+      }
+
+      formationsList.innerHTML = '';
+      data.forEach(f => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between gap-3 p-3 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] flex-wrap';
+        row.innerHTML = `
+          <div>
+            <p class="font-heading font-bold text-sm">${f.titre} ${f.actif ? '' : '<span class="text-[10px] font-normal text-[color:var(--fg-50)]">(masquée)</span>'}</p>
+            <p class="text-xs text-[color:var(--fg-60)]">${Number(f.prix).toFixed(0)} € — ${f.niveau || ''}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <a href="formation-detail.html?id=${f.id}" target="_blank" class="text-xs text-brand-blue hover:underline">Voir</a>
+            <button data-id="${f.id}" class="edit-formation-btn text-xs px-2.5 py-1 rounded-md border border-[color:var(--border)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors">Modifier</button>
+            <button data-id="${f.id}" class="delete-formation-btn text-xs px-2.5 py-1 rounded-md border border-red-300 text-red-500 hover:bg-red-500/10 transition-colors">Supprimer</button>
+          </div>
+        `;
+        formationsList.appendChild(row);
+      });
+
+      document.querySelectorAll('.edit-formation-btn').forEach(btn =>
+        btn.addEventListener('click', () => openFormationForm(data.find(f => f.id == btn.dataset.id)))
+      );
+      document.querySelectorAll('.delete-formation-btn').forEach(btn =>
+        btn.addEventListener('click', () => deleteFormation(btn.dataset.id))
+      );
+    }
+
+    function openFormationForm(formation) {
+      formationFormError.classList.add('hidden');
+      formationForm.reset();
+      if (formation) {
+        formationFormTitle.textContent = 'Modifier la formation';
+        document.getElementById('f-id').value = formation.id;
+        document.getElementById('f-titre').value = formation.titre;
+        document.getElementById('f-accroche').value = formation.accroche;
+        document.getElementById('f-niveau').value = formation.niveau || '';
+        document.getElementById('f-prix').value = formation.prix;
+        document.getElementById('f-image').value = formation.image_url || '';
+        document.getElementById('f-description').value = formation.description;
+        document.getElementById('f-programme').value = (formation.programme || []).join('\n');
+        document.getElementById('f-stripe-price-id').value = formation.stripe_price_id || '';
+        document.getElementById('f-actif').checked = formation.actif;
+      } else {
+        formationFormTitle.textContent = 'Nouvelle formation';
+        document.getElementById('f-id').value = '';
+        document.getElementById('f-actif').checked = true;
+      }
+      formationFormPanel.classList.remove('hidden');
+      formationFormPanel.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    document.getElementById('new-formation-btn').addEventListener('click', () => openFormationForm(null));
+    document.getElementById('cancel-formation-btn').addEventListener('click', () => formationFormPanel.classList.add('hidden'));
+
+    formationForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      formationFormError.classList.add('hidden');
+
+      const id = document.getElementById('f-id').value;
+      const payload = {
+        titre: document.getElementById('f-titre').value.trim(),
+        accroche: document.getElementById('f-accroche').value.trim(),
+        niveau: document.getElementById('f-niveau').value.trim() || 'Tous niveaux',
+        prix: parseFloat(document.getElementById('f-prix').value),
+        image_url: document.getElementById('f-image').value.trim(),
+        description: document.getElementById('f-description').value.trim(),
+        programme: document.getElementById('f-programme').value
+          .split('\n')
+          .map(l => l.trim())
+          .filter(Boolean),
+        stripe_price_id: document.getElementById('f-stripe-price-id').value.trim(),
+        actif: document.getElementById('f-actif').checked,
+      };
+
+      const query = id
+        ? supabaseClient.from('formations').update(payload).eq('id', id)
+        : supabaseClient.from('formations').insert(payload);
+
+      const { error } = await query;
+      if (error) {
+        formationFormError.textContent = "Erreur lors de l'enregistrement : " + error.message;
+        formationFormError.classList.remove('hidden');
+        return;
+      }
+
+      formationFormPanel.classList.add('hidden');
+      loadFormations();
+    });
+
+    async function deleteFormation(id) {
+      if (!confirm('Supprimer définitivement cette formation ?')) return;
+      const { error } = await supabaseClient.from('formations').delete().eq('id', id);
+      if (error) {
+        alert("Erreur lors de la suppression : " + error.message);
+        return;
+      }
+      loadFormations();
+    }
   </script>
 
 </body>
