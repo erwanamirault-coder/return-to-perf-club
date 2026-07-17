@@ -21,13 +21,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Les prix sont définis ici côté serveur (jamais fait confiance au client)
-// ⚠️ Garde ces price IDs synchronisés avec formations-data.js
-const STRIPE_PRICE_IDS = {
-  1: 'price_REMPLACER_MOI_1',
-  2: 'price_REMPLACER_MOI_2',
-};
-
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Méthode non autorisée' });
@@ -47,12 +40,19 @@ module.exports = async (req, res) => {
     }
     const user = userData.user;
 
-    // 2. Vérifier la formation demandée
+    // 2. Vérifier la formation demandée (source de vérité : Supabase)
     const { formationId } = req.body;
-    const priceId = STRIPE_PRICE_IDS[formationId];
-    if (!priceId) {
-      return res.status(400).json({ error: 'Formation inconnue' });
+    const { data: formation, error: formationError } = await supabase
+      .from('formations')
+      .select('id, stripe_price_id, actif')
+      .eq('id', formationId)
+      .eq('actif', true)
+      .single();
+
+    if (formationError || !formation || !formation.stripe_price_id) {
+      return res.status(400).json({ error: 'Formation inconnue ou indisponible' });
     }
+    const priceId = formation.stripe_price_id;
 
     // 3. Créer la session Stripe
     const siteUrl = process.env.SITE_URL || `https://${req.headers.host}`;
