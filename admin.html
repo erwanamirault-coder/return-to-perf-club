@@ -244,10 +244,15 @@
 
         <div class="border-t border-[color:var(--border)] pt-4">
           <p class="text-xs font-semibold mb-3">Ajouter une leçon</p>
+          <div class="mb-3">
+            <label class="block text-xs font-semibold mb-1">Section / Partie</label>
+            <input type="text" id="new-lecon-section" placeholder="Ex: Partie 1 - Comprendre la mobilité" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            <p class="text-[10px] text-[color:var(--fg-50)] mt-1">Les leçons portant le même intitulé de section seront regroupées ensemble pour le client.</p>
+          </div>
           <div class="grid sm:grid-cols-2 gap-3 mb-3">
             <div>
               <label class="block text-xs font-semibold mb-1">Titre de la leçon</label>
-              <input type="text" id="new-lecon-titre" placeholder="Ex: Module 1 — Introduction" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" id="new-lecon-titre" placeholder="Ex: 1. Introduction" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
             </div>
             <div>
               <label class="block text-xs font-semibold mb-1">Type</label>
@@ -2636,19 +2641,30 @@
         return;
       }
 
-      contentLeconsList.innerHTML = '';
-      data.forEach((lecon, i) => {
-        const row = document.createElement('div');
-        row.className = 'flex items-center justify-between gap-2 p-2.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)]';
-        row.innerHTML = `
-          <p class="text-xs">
-            <span class="text-[color:var(--fg-40)] mr-1.5">${String(i + 1).padStart(2, '0')}</span>
-            ${lecon.type === 'video' ? '🎥' : '📄'} ${lecon.titre}
-          </p>
-          <button data-id="${lecon.id}" data-path="${lecon.chemin_storage}" class="delete-lecon-btn text-[11px] px-2 py-1 rounded-md border border-red-300 text-red-500 hover:bg-red-500/10 transition-colors">Supprimer</button>
-        `;
-        contentLeconsList.appendChild(row);
+      // Regrouper par section, en gardant l'ordre d'apparition
+      const sections = [];
+      const bySections = {};
+      data.forEach(lecon => {
+        const sec = lecon.section || 'Contenu';
+        if (!bySections[sec]) { bySections[sec] = []; sections.push(sec); }
+        bySections[sec].push(lecon);
       });
+
+      contentLeconsList.innerHTML = sections.map(sec => `
+        <div class="mb-1">
+          <p class="text-[11px] uppercase tracking-widest font-semibold text-[color:var(--accent)] mb-1.5">${sec}</p>
+          <div class="flex flex-col gap-1.5">
+            ${bySections[sec].map((lecon, i) => `
+              <div class="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)]">
+                <p class="text-xs">
+                  ${lecon.type === 'video' ? '🎥' : '📄'} ${lecon.titre}
+                </p>
+                <button data-id="${lecon.id}" data-path="${lecon.chemin_storage}" class="delete-lecon-btn text-[11px] px-2 py-1 rounded-md border border-red-300 text-red-500 hover:bg-red-500/10 transition-colors">Supprimer</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
 
       document.querySelectorAll('.delete-lecon-btn').forEach(btn =>
         btn.addEventListener('click', () => deleteLecon(btn.dataset.id, btn.dataset.path))
@@ -2656,6 +2672,7 @@
     }
 
     document.getElementById('upload-lecon-btn').addEventListener('click', async () => {
+      const section = document.getElementById('new-lecon-section').value.trim() || 'Contenu';
       const titre = document.getElementById('new-lecon-titre').value.trim();
       const type = document.getElementById('new-lecon-type').value;
       const fileInput = document.getElementById('new-lecon-file');
@@ -2707,6 +2724,7 @@
           formation_id: currentContentFormationId,
           titre,
           type,
+          section,
           chemin_storage: path,
           ordre: nextOrdre,
         });
