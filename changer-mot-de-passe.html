@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nouveau mot de passe — Erwan Amirault</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000', white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center px-6">
+
+  <div class="w-full max-w-sm">
+    <a href="index.html" class="flex items-center justify-center gap-2 mb-10">
+      <span class="font-heading uppercase font-bold text-sm tracking-wide">Erwan Amirault</span>
+    </a>
+
+    <div id="loading-state" class="text-center">
+      <p class="text-sm text-[color:var(--fg-50)]">Vérification du lien...</p>
+    </div>
+
+    <div id="invalid-state" class="hidden text-center">
+      <p class="text-sm text-[color:var(--fg-60)] mb-6">
+        Ce lien de réinitialisation est invalide ou a expiré. Redemande un nouveau lien depuis la page de connexion.
+      </p>
+      <a href="login.html" class="inline-block px-6 py-3 rounded-lg bg-brand-blue text-white font-heading uppercase text-sm font-semibold hover:bg-brand-blue-dark transition-colors">
+        Retour à la connexion
+      </a>
+    </div>
+
+    <form id="reset-form" class="hidden flex flex-col gap-4">
+      <h1 class="font-heading uppercase text-xl font-bold text-center mb-2">Nouveau mot de passe</h1>
+      <p class="text-sm text-[color:var(--fg-50)] text-center mb-4">
+        Choisis un nouveau mot de passe pour ton compte.
+      </p>
+
+      <div>
+        <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Nouveau mot de passe</label>
+        <input type="password" id="new-password" required minlength="6" autocomplete="new-password"
+          class="w-full px-4 py-3 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Confirme le mot de passe</label>
+        <input type="password" id="confirm-password" required minlength="6" autocomplete="new-password"
+          class="w-full px-4 py-3 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      </div>
+
+      <p id="form-error" class="hidden text-xs text-red-500"></p>
+
+      <button type="submit" id="submit-btn" class="w-full px-6 py-3 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-heading uppercase text-sm font-semibold">
+        Enregistrer le nouveau mot de passe
+      </button>
+    </form>
+
+    <div id="success-state" class="hidden text-center">
+      <p class="text-brand-blue text-2xl mb-3">✓</p>
+      <p class="text-sm text-[color:var(--fg-70)] mb-6">
+        Ton mot de passe a bien été mis à jour.
+      </p>
+      <a href="dashboard.html" class="inline-block px-6 py-3 rounded-lg bg-brand-blue text-white font-heading uppercase text-sm font-semibold hover:bg-brand-blue-dark transition-colors">
+        Accéder à mon espace
+      </a>
+    </div>
+  </div>
+
+  <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    const loadingState = document.getElementById('loading-state');
+    const invalidState = document.getElementById('invalid-state');
+    const resetForm = document.getElementById('reset-form');
+    const successState = document.getElementById('success-state');
+    const formError = document.getElementById('form-error');
+
+    async function init() {
+      // Cas 1 : la personne arrive via le lien reçu par e-mail (Supabase établit
+      // automatiquement une session "recovery" à partir du lien).
+      // Cas 2 : la personne est déjà connectée normalement et veut juste
+      // changer son mot de passe volontairement.
+      // Dans les deux cas, une session valide doit exister pour continuer.
+      const { data: { session } } = await supabaseClient.auth.getSession();
+
+      loadingState.classList.add('hidden');
+
+      if (!session) {
+        invalidState.classList.remove('hidden');
+        return;
+      }
+
+      resetForm.classList.remove('hidden');
+    }
+
+    // Supabase déclenche cet événement quand le lien de récupération est traité
+    supabaseClient.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        loadingState.classList.add('hidden');
+        invalidState.classList.add('hidden');
+        resetForm.classList.remove('hidden');
+      }
+    });
+
+    resetForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      formError.classList.add('hidden');
+
+      const newPassword = document.getElementById('new-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      const submitBtn = document.getElementById('submit-btn');
+
+      if (newPassword !== confirmPassword) {
+        formError.textContent = 'Les deux mots de passe ne correspondent pas.';
+        formError.classList.remove('hidden');
+        return;
+      }
+      if (newPassword.length < 6) {
+        formError.textContent = 'Le mot de passe doit contenir au moins 6 caractères.';
+        formError.classList.remove('hidden');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Enregistrement...';
+
+      const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Enregistrer le nouveau mot de passe';
+
+      if (error) {
+        formError.textContent = "Erreur : " + error.message;
+        formError.classList.remove('hidden');
+        return;
+      }
+
+      resetForm.classList.add('hidden');
+      successState.classList.remove('hidden');
+    });
+
+    init();
+  </script>
+
+</body>
+</html>
