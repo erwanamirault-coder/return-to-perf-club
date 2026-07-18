@@ -249,32 +249,48 @@
       updateCompleteButton();
       renderSidebar();
 
-      try {
-        const res = await fetch('/api/get-signed-url', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({ contentId: id }),
-        });
-        const data = await res.json();
-        if (!res.ok || !data.url) throw new Error(data.error || 'Erreur');
+      // Leçon vidéo hébergée sur YouTube : pas besoin de lien signé,
+      // l'iframe se charge directement.
+      if (lecon.type === 'video' && lecon.youtube_id) {
+        playerZone.innerHTML = `
+          <div class="rounded-xl overflow-hidden" style="aspect-ratio:16/9;">
+            <iframe
+              src="https://www.youtube-nocookie.com/embed/${lecon.youtube_id}?modestbranding=1&rel=0"
+              class="w-full h-full"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+            ></iframe>
+          </div>
+        `;
+      } else {
+        try {
+          const res = await fetch('/api/get-signed-url', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ contentId: id }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data.url) throw new Error(data.error || 'Erreur');
 
-        if (lecon.type === 'video') {
-          playerZone.innerHTML = `<video src="${data.url}" controls class="w-full rounded-xl" style="max-height:520px;"></video>`;
-        } else {
-          playerZone.innerHTML = `
-            <div class="rounded-xl border border-[color:var(--border)] p-6 text-center">
-              <p class="text-sm text-[color:var(--fg-60)] mb-4">📄 Document PDF</p>
-              <a href="${data.url}" target="_blank" class="inline-block px-6 py-3 rounded-lg bg-brand-blue text-white font-heading uppercase text-xs font-semibold hover:bg-brand-blue-dark transition-colors">
-                Ouvrir / télécharger le PDF
-              </a>
-            </div>
-          `;
+          if (lecon.type === 'video') {
+            playerZone.innerHTML = `<video src="${data.url}" controls class="w-full rounded-xl" style="max-height:520px;"></video>`;
+          } else {
+            playerZone.innerHTML = `
+              <div class="rounded-xl border border-[color:var(--border)] p-6 text-center">
+                <p class="text-sm text-[color:var(--fg-60)] mb-4">📄 Document PDF</p>
+                <a href="${data.url}" target="_blank" class="inline-block px-6 py-3 rounded-lg bg-brand-blue text-white font-heading uppercase text-xs font-semibold hover:bg-brand-blue-dark transition-colors">
+                  Ouvrir / télécharger le PDF
+                </a>
+              </div>
+            `;
+          }
+        } catch (err) {
+          playerZone.innerHTML = `<p class="text-sm text-red-500">Erreur de chargement, réessaie dans un instant.</p>`;
         }
-      } catch (err) {
-        playerZone.innerHTML = `<p class="text-sm text-red-500">Erreur de chargement, réessaie dans un instant.</p>`;
       }
 
       // Navigation précédent/suivant
