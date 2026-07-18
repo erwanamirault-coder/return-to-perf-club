@@ -263,19 +263,19 @@
             </div>
           </div>
           <div class="mb-3">
-            <label class="block text-xs font-semibold mb-1">Source de la vidéo (si type = vidéo)</label>
+            <label id="source-label" class="block text-xs font-semibold mb-1">Source de la vidéo</label>
             <div class="grid grid-cols-2 gap-1.5">
               <button type="button" id="source-upload-btn" class="video-source-toggle px-3 py-2 rounded-lg border-2 border-brand-blue bg-brand-blue/10 text-xs font-semibold text-[color:var(--accent)]">📤 Uploader un fichier</button>
               <button type="button" id="source-youtube-btn" class="video-source-toggle px-3 py-2 rounded-lg border-2 border-[color:var(--border)] text-xs font-semibold text-[color:var(--fg-50)]">▶️ Lien YouTube</button>
             </div>
-            <p class="text-[10px] text-[color:var(--fg-50)] mt-1">Uploader = protection maximale (lien temporaire régénéré à chaque visionnage, valable 6h). YouTube non répertorié = gratuit, mais lien plus facilement partageable et sans expiration.</p>
+            <p id="source-help" class="text-[10px] text-[color:var(--fg-50)] mt-1">Uploader = protection maximale (lien temporaire régénéré à chaque visionnage, valable 6h). YouTube non répertorié = gratuit, mais lien plus facilement partageable et sans expiration.</p>
           </div>
           <div id="upload-file-zone" class="mb-3">
             <label class="block text-xs font-semibold mb-1">Fichier</label>
             <input type="file" id="new-lecon-file" accept="video/*,application/pdf" class="w-full text-xs">
           </div>
           <div id="youtube-url-zone" class="hidden mb-3">
-            <label class="block text-xs font-semibold mb-1">Lien de la vidéo YouTube (non répertoriée de préférence)</label>
+            <label id="external-url-label" class="block text-xs font-semibold mb-1">Lien de la vidéo YouTube (non répertoriée de préférence)</label>
             <input type="url" id="new-lecon-youtube" placeholder="https://www.youtube.com/watch?v=..." class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
           </div>
           <button type="button" id="upload-lecon-btn" class="bg-brand-blue text-white px-5 py-2 rounded-lg font-heading uppercase tracking-wide font-semibold text-xs hover:bg-brand-blue-dark transition-colors">
@@ -2711,6 +2711,31 @@
     document.getElementById('source-upload-btn').addEventListener('click', () => setVideoSourceMode('upload'));
     document.getElementById('source-youtube-btn').addEventListener('click', () => setVideoSourceMode('youtube'));
 
+    document.getElementById('new-lecon-type').addEventListener('change', updateSourceLabelsForType);
+
+    function updateSourceLabelsForType() {
+      const type = document.getElementById('new-lecon-type').value;
+      const sourceLabel = document.getElementById('source-label');
+      const sourceHelp = document.getElementById('source-help');
+      const youtubeBtn = document.getElementById('source-youtube-btn');
+      const externalLabel = document.getElementById('external-url-label');
+      const youtubeInput = document.getElementById('new-lecon-youtube');
+
+      if (type === 'pdf') {
+        sourceLabel.textContent = 'Source du document';
+        youtubeBtn.textContent = '🔗 Lien externe';
+        sourceHelp.textContent = 'Uploader = protection maximale (lien temporaire, régénéré à chaque téléchargement, valable 6h). Lien externe (Google Drive, Dropbox...) = pratique, mais accessible en permanence à quiconque a le lien.';
+        externalLabel.textContent = 'Lien externe vers le document (Google Drive, Dropbox...)';
+        youtubeInput.placeholder = 'https://drive.google.com/...';
+      } else {
+        sourceLabel.textContent = 'Source de la vidéo';
+        youtubeBtn.textContent = '▶️ Lien YouTube';
+        sourceHelp.textContent = 'Uploader = protection maximale (lien temporaire régénéré à chaque visionnage, valable 6h). YouTube non répertorié = gratuit, mais lien plus facilement partageable et sans expiration.';
+        externalLabel.textContent = 'Lien de la vidéo YouTube (non répertoriée de préférence)';
+        youtubeInput.placeholder = 'https://www.youtube.com/watch?v=...';
+      }
+    }
+
     function extractYoutubeId(url) {
       if (!url) return null;
       const patterns = [
@@ -2743,14 +2768,24 @@
 
       let path = null;
       let youtubeId = null;
+      let lienExterne = null;
 
-      if (type === 'video' && videoSourceMode === 'youtube') {
+      if (videoSourceMode === 'youtube') {
         const url = document.getElementById('new-lecon-youtube').value.trim();
-        youtubeId = extractYoutubeId(url);
-        if (!youtubeId) {
-          errorEl.textContent = "Lien YouTube invalide, vérifie l'URL collée.";
+        if (!url) {
+          errorEl.textContent = 'Colle un lien.';
           errorEl.classList.remove('hidden');
           return;
+        }
+        if (type === 'video') {
+          youtubeId = extractYoutubeId(url);
+          if (!youtubeId) {
+            errorEl.textContent = "Lien YouTube invalide, vérifie l'URL collée.";
+            errorEl.classList.remove('hidden');
+            return;
+          }
+        } else {
+          lienExterne = url;
         }
       } else {
         const fileInput = document.getElementById('new-lecon-file');
@@ -2802,6 +2837,7 @@
           section,
           chemin_storage: path,
           youtube_id: youtubeId,
+          lien_externe: lienExterne,
           ordre: nextOrdre,
         });
 
