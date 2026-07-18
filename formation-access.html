@@ -260,8 +260,8 @@
       updateCompleteButton();
       renderSidebar();
 
-      // Leçon vidéo hébergée sur YouTube : pas besoin de lien signé,
-      // l'iframe se charge directement.
+      // Leçon vidéo hébergée sur YouTube, ou PDF en lien externe :
+      // pas besoin de lien signé, on utilise directement le lien fourni.
       if (lecon.type === 'video' && lecon.youtube_id) {
         playerZone.innerHTML = `
           <div class="rounded-xl overflow-hidden" style="aspect-ratio:16/9;">
@@ -272,6 +272,15 @@
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowfullscreen
             ></iframe>
+          </div>
+        `;
+      } else if (lecon.type === 'pdf' && lecon.lien_externe) {
+        playerZone.innerHTML = `
+          <div class="rounded-xl border border-[color:var(--border)] p-6 text-center">
+            <p class="text-sm text-[color:var(--fg-60)] mb-4">📄 Document</p>
+            <a href="${lecon.lien_externe}" target="_blank" rel="noopener noreferrer" class="inline-block px-6 py-3 rounded-lg bg-brand-blue text-white font-heading uppercase text-xs font-semibold hover:bg-brand-blue-dark transition-colors">
+              Ouvrir le document
+            </a>
           </div>
         `;
       } else {
