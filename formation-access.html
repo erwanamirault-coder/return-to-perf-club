@@ -193,6 +193,9 @@
       document.getElementById('progress-label').textContent = `${done} sur ${total} terminées (${pct}%)`;
     }
 
+    const VIDEO_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M10 8.5v7l6-3.5-6-3.5z" fill="currentColor" stroke="none"/></svg>`;
+    const PDF_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>`;
+
     function renderSidebar() {
       const container = document.getElementById('sections-list');
       container.innerHTML = sections.map((sec) => {
@@ -209,13 +212,15 @@
                 const isDone = completedIds.has(l.id);
                 const isCurrent = l.id === currentLeconId;
                 return `
-                  <button type="button" data-id="${l.id}" class="lecon-item w-full flex items-center gap-3 px-5 py-2.5 text-left transition-colors ${isCurrent ? 'bg-brand-blue/10 border-l-2 border-brand-blue' : 'border-l-2 border-transparent hover:bg-[color:var(--card)]'}">
-                    <span class="shrink-0 w-4 h-4 rounded-full border ${isDone ? 'bg-brand-blue border-brand-blue' : 'border-[color:var(--border-strong)]'} flex items-center justify-center">
+                  <div class="w-full flex items-center gap-3 px-5 py-2.5 transition-colors ${isCurrent ? 'bg-brand-blue/10 border-l-2 border-brand-blue' : 'border-l-2 border-transparent hover:bg-[color:var(--card)]'}">
+                    <button type="button" data-toggle-id="${l.id}" class="lecon-checkbox shrink-0 w-4 h-4 rounded border ${isDone ? 'bg-brand-blue border-brand-blue' : 'border-[color:var(--border-strong)] hover:border-brand-blue'} flex items-center justify-center transition-colors">
                       ${isDone ? '<span class="text-white text-[9px] leading-none">✓</span>' : ''}
-                    </span>
-                    <span class="text-xs shrink-0">${l.type === 'video' ? '🎥' : '📄'}</span>
-                    <span class="text-sm ${isDone ? 'text-[color:var(--fg-40)]' : (isCurrent ? 'font-semibold' : 'text-[color:var(--fg-70)]')} truncate">${escapeHtml(l.titre)}</span>
-                  </button>
+                    </button>
+                    <button type="button" data-id="${l.id}" class="lecon-item flex-1 flex items-center gap-2 text-left min-w-0">
+                      <span class="shrink-0 text-[color:var(--fg-50)]">${l.type === 'video' ? VIDEO_ICON : PDF_ICON}</span>
+                      <span class="text-sm ${isDone ? 'text-[color:var(--fg-40)]' : (isCurrent ? 'font-semibold' : 'text-[color:var(--fg-70)]')} truncate">${escapeHtml(l.titre)}</span>
+                    </button>
+                  </div>
                 `;
               }).join('')}
             </div>
@@ -232,6 +237,12 @@
       });
       container.querySelectorAll('.lecon-item').forEach(btn => {
         btn.addEventListener('click', () => selectLecon(Number(btn.dataset.id)));
+      });
+      container.querySelectorAll('.lecon-checkbox').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleComplete(Number(btn.dataset.toggleId));
+        });
       });
     }
 
@@ -255,7 +266,7 @@
         playerZone.innerHTML = `
           <div class="rounded-xl overflow-hidden" style="aspect-ratio:16/9;">
             <iframe
-              src="https://www.youtube-nocookie.com/embed/${lecon.youtube_id}?modestbranding=1&rel=0"
+              src="https://www.youtube-nocookie.com/embed/${lecon.youtube_id}?modestbranding=1&rel=0&iv_load_policy=3&fs=1&disablekb=0&playsinline=1"
               class="w-full h-full"
               frameborder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -312,26 +323,30 @@
       btn.classList.toggle('text-[color:var(--accent)]', !isDone);
     }
 
-    document.getElementById('toggle-complete-btn').addEventListener('click', async () => {
-      const isDone = completedIds.has(currentLeconId);
+    async function toggleComplete(id) {
+      const isDone = completedIds.has(id);
 
       if (isDone) {
         await supabaseClient
           .from('formation_progression')
           .delete()
           .eq('user_id', userId)
-          .eq('contenu_id', currentLeconId);
-        completedIds.delete(currentLeconId);
+          .eq('contenu_id', id);
+        completedIds.delete(id);
       } else {
         await supabaseClient
           .from('formation_progression')
-          .insert({ user_id: userId, contenu_id: currentLeconId });
-        completedIds.add(currentLeconId);
+          .insert({ user_id: userId, contenu_id: id });
+        completedIds.add(id);
       }
 
-      updateCompleteButton();
+      if (id === currentLeconId) updateCompleteButton();
       updateProgressBar();
       renderSidebar();
+    }
+
+    document.getElementById('toggle-complete-btn').addEventListener('click', () => {
+      if (currentLeconId !== null) toggleComplete(currentLeconId);
     });
 
     load();
