@@ -31,11 +31,13 @@
   body { font-family: 'Poppins', sans-serif; }
   h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
   video { background: black; }
+  .sidebar-scroll::-webkit-scrollbar { width: 6px; }
+  .sidebar-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
 </style>
 </head>
 <body class="min-h-screen">
 
-  <header class="sticky top-0 z-50 bg-[color:var(--bg)] flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)] flex items-center justify-between px-6 sm:px-10 py-4 border-b border-[color:var(--border)]">
     <a href="index.html" class="flex items-center gap-2">
       <span class="font-heading uppercase font-bold text-sm tracking-wide">Erwan Amirault</span>
     </a>
@@ -45,16 +47,65 @@
     </div>
   </header>
 
-  <main class="px-6 py-12 max-w-2xl mx-auto" id="content">
-    <p class="text-center text-sm text-[color:var(--fg-50)]">Chargement...</p>
-  </main>
+  <div id="denied" class="hidden text-center py-24 px-6">
+    <p class="text-[color:var(--fg-60)] mb-6">Tu n'as pas accès à cette formation.</p>
+    <a href="formations.html" class="inline-block px-6 py-3 rounded-lg bg-brand-blue text-white font-heading uppercase text-sm font-semibold hover:bg-brand-blue-dark transition-colors">
+      Voir le catalogue
+    </a>
+  </div>
+
+  <div id="loading" class="text-center py-24">
+    <p class="text-sm text-[color:var(--fg-50)]">Chargement...</p>
+  </div>
+
+  <div id="app" class="hidden flex flex-col lg:flex-row" style="min-height: calc(100vh - 65px);">
+
+    <!-- Sidebar -->
+    <aside class="w-full lg:w-[340px] lg:shrink-0 border-b lg:border-b-0 lg:border-r border-[color:var(--border)] flex flex-col">
+      <div class="p-5 border-b border-[color:var(--border)]">
+        <h1 id="formation-titre" class="font-heading uppercase text-base font-bold leading-snug mb-3"></h1>
+        <div class="w-full h-1.5 rounded-full bg-[color:var(--card)] overflow-hidden mb-1.5">
+          <div id="progress-bar" class="h-full bg-brand-blue transition-all" style="width:0%"></div>
+        </div>
+        <p id="progress-label" class="text-xs text-[color:var(--fg-50)]"></p>
+      </div>
+      <div id="sections-list" class="sidebar-scroll flex-1 overflow-y-auto max-h-[70vh] lg:max-h-none"></div>
+    </aside>
+
+    <!-- Contenu principal -->
+    <main class="flex-1 px-6 py-8 sm:px-10 sm:py-10 max-w-3xl mx-auto w-full">
+      <p id="current-section-label" class="text-xs uppercase tracking-widest text-[color:var(--accent)] font-semibold mb-2"></p>
+      <h2 id="current-titre" class="font-heading uppercase text-xl sm:text-2xl font-bold mb-6"></h2>
+
+      <div id="player-zone" class="mb-6"></div>
+
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-2">
+          <button id="prev-btn" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors text-sm">←</button>
+          <button id="next-btn" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors text-sm">→</button>
+        </div>
+        <button id="toggle-complete-btn" class="px-5 py-2.5 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] font-heading uppercase text-xs font-semibold tracking-wide hover:bg-brand-blue/5 transition-colors">
+          ✓ Marquer comme terminé
+        </button>
+      </div>
+    </main>
+
+  </div>
 
   <script src="supabase-config.js"></script>
   <script src="theme.js"></script>
   <script>
     const params = new URLSearchParams(window.location.search);
     const formationId = params.get('id');
-    const content = document.getElementById('content');
+
+    let lecons = [];       // liste plate, ordonnée
+    let sections = [];     // noms de section dans l'ordre
+    let byId = {};
+    let completedIds = new Set();
+    let currentLeconId = null;
+    let userId = null;
+    let accessToken = null;
+    let sectionsCollapsed = {};
 
     function escapeHtml(str) {
       if (!str) return '';
@@ -64,119 +115,208 @@
     async function load() {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (!session) { window.location.href = 'login.html'; return; }
+      userId = session.user.id;
+      accessToken = session.access_token;
 
-      // Vérifier l'achat
       const { data: achat } = await supabaseClient
         .from('achats_formations')
         .select('id')
-        .eq('user_id', session.user.id)
+        .eq('user_id', userId)
         .eq('formation_id', formationId)
         .eq('statut', 'paye')
         .maybeSingle();
 
       if (!achat) {
-        content.innerHTML = `
-          <div class="text-center py-16">
-            <p class="text-[color:var(--fg-60)] mb-6">Tu n'as pas accès à cette formation.</p>
-            <a href="formations.html" class="inline-block px-6 py-3 rounded-lg bg-brand-blue text-white font-heading uppercase text-sm font-semibold hover:bg-brand-blue-dark transition-colors">
-              Voir le catalogue
-            </a>
-          </div>
-        `;
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('denied').classList.remove('hidden');
         return;
       }
 
-      // Récupérer les infos de la formation + son contenu
       const { data: formation } = await supabaseClient
         .from('formations')
-        .select('titre, description')
+        .select('titre')
         .eq('id', formationId)
         .single();
 
-      const { data: lecons } = await supabaseClient
+      const { data: contenuData } = await supabaseClient
         .from('formation_contenu')
         .select('*')
         .eq('formation_id', formationId)
+        .order('section', { ascending: true })
         .order('ordre', { ascending: true });
 
-      document.title = (formation?.titre || 'Formation') + ' | Erwan Amirault';
+      const { data: progressionData } = await supabaseClient
+        .from('formation_progression')
+        .select('contenu_id')
+        .eq('user_id', userId);
 
-      if (!lecons || lecons.length === 0) {
-        content.innerHTML = `
-          <h1 class="font-heading uppercase text-2xl font-bold mb-6 text-center">${escapeHtml(formation?.titre)}</h1>
-          <p class="text-center text-sm text-[color:var(--fg-50)] py-12">
-            Le contenu de cette formation arrive très bientôt. Reviens un peu plus tard !
-          </p>
-        `;
+      completedIds = new Set((progressionData || []).map(p => p.contenu_id));
+
+      document.title = (formation?.titre || 'Formation') + ' | Erwan Amirault';
+      document.getElementById('formation-titre').textContent = formation?.titre || '';
+
+      lecons = contenuData || [];
+      lecons.forEach(l => { byId[l.id] = l; });
+
+      sections = [];
+      lecons.forEach(l => {
+        if (!sections.includes(l.section)) sections.push(l.section);
+      });
+
+      document.getElementById('loading').classList.add('hidden');
+
+      if (lecons.length === 0) {
+        document.getElementById('app').classList.remove('hidden');
+        document.getElementById('sections-list').innerHTML = `<p class="text-xs text-[color:var(--fg-50)] p-5">Le contenu arrive très bientôt !</p>`;
+        document.getElementById('current-titre').textContent = 'Bientôt disponible';
+        document.getElementById('player-zone').innerHTML = '';
+        document.getElementById('prev-btn').disabled = true;
+        document.getElementById('next-btn').disabled = true;
+        document.getElementById('toggle-complete-btn').classList.add('hidden');
         return;
       }
 
-      content.innerHTML = `
-        <h1 class="font-heading uppercase text-2xl font-bold mb-8 text-center">${escapeHtml(formation?.titre)}</h1>
-        <div id="lecons-list" class="flex flex-col gap-4"></div>
-      `;
+      document.getElementById('app').classList.remove('hidden');
+      renderSidebar();
+      updateProgressBar();
 
-      const lessonsList = document.getElementById('lecons-list');
+      // Sélectionne la première leçon non terminée, sinon la première
+      const firstUncompleted = lecons.find(l => !completedIds.has(l.id));
+      selectLecon(firstUncompleted ? firstUncompleted.id : lecons[0].id);
+    }
 
-      lecons.forEach((lecon, i) => {
-        const card = document.createElement('div');
-        card.className = 'rounded-xl border border-[color:var(--border)] p-5';
-        card.innerHTML = `
-          <div class="flex items-center justify-between mb-3">
-            <p class="font-heading font-bold">
-              <span class="text-[color:var(--fg-40)] mr-2">${String(i + 1).padStart(2, '0')}</span>
-              ${escapeHtml(lecon.titre)}
-            </p>
-            <span class="text-xs uppercase tracking-wide text-[color:var(--fg-50)]">${lecon.type === 'video' ? '🎥 Vidéo' : '📄 PDF'}</span>
-          </div>
-          <div class="lecon-body" data-id="${lecon.id}" data-type="${lecon.type}">
-            <button class="load-lecon-btn text-sm px-4 py-2 rounded-lg bg-brand-blue text-white font-medium hover:bg-brand-blue-dark transition-colors" data-id="${lecon.id}" data-type="${lecon.type}">
-              ${lecon.type === 'video' ? 'Regarder la vidéo' : 'Télécharger le PDF'}
+    function updateProgressBar() {
+      const total = lecons.length;
+      const done = lecons.filter(l => completedIds.has(l.id)).length;
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      document.getElementById('progress-bar').style.width = pct + '%';
+      document.getElementById('progress-label').textContent = `${done} sur ${total} terminées (${pct}%)`;
+    }
+
+    function renderSidebar() {
+      const container = document.getElementById('sections-list');
+      container.innerHTML = sections.map((sec) => {
+        const secLecons = lecons.filter(l => l.section === sec);
+        const collapsed = sectionsCollapsed[sec] === true;
+        return `
+          <div class="border-b border-[color:var(--border)]">
+            <button type="button" class="section-toggle w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-[color:var(--card)] transition-colors" data-section="${escapeHtml(sec)}">
+              <span class="font-heading uppercase text-sm font-bold">${escapeHtml(sec)}</span>
+              <span class="text-[color:var(--fg-40)] text-xs transition-transform" style="transform:rotate(${collapsed ? '-90deg' : '0deg'})">▼</span>
             </button>
+            <div class="section-body ${collapsed ? 'hidden' : ''}" data-section-body="${escapeHtml(sec)}">
+              ${secLecons.map(l => {
+                const isDone = completedIds.has(l.id);
+                const isCurrent = l.id === currentLeconId;
+                return `
+                  <button type="button" data-id="${l.id}" class="lecon-item w-full flex items-center gap-3 px-5 py-2.5 text-left transition-colors ${isCurrent ? 'bg-brand-blue/10 border-l-2 border-brand-blue' : 'border-l-2 border-transparent hover:bg-[color:var(--card)]'}">
+                    <span class="shrink-0 w-4 h-4 rounded-full border ${isDone ? 'bg-brand-blue border-brand-blue' : 'border-[color:var(--border-strong)]'} flex items-center justify-center">
+                      ${isDone ? '<span class="text-white text-[9px] leading-none">✓</span>' : ''}
+                    </span>
+                    <span class="text-xs shrink-0">${l.type === 'video' ? '🎥' : '📄'}</span>
+                    <span class="text-sm ${isDone ? 'text-[color:var(--fg-40)]' : (isCurrent ? 'font-semibold' : 'text-[color:var(--fg-70)]')} truncate">${escapeHtml(l.titre)}</span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
           </div>
         `;
-        lessonsList.appendChild(card);
-      });
+      }).join('');
 
-      document.querySelectorAll('.load-lecon-btn').forEach(btn => {
-        btn.addEventListener('click', () => loadLecon(btn));
+      container.querySelectorAll('.section-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const sec = btn.dataset.section;
+          sectionsCollapsed[sec] = !sectionsCollapsed[sec];
+          renderSidebar();
+        });
+      });
+      container.querySelectorAll('.lecon-item').forEach(btn => {
+        btn.addEventListener('click', () => selectLecon(Number(btn.dataset.id)));
       });
     }
 
-    async function loadLecon(btn) {
-      const contentId = btn.dataset.id;
-      const type = btn.dataset.type;
-      const wrapper = btn.parentElement;
+    async function selectLecon(id) {
+      currentLeconId = id;
+      const lecon = byId[id];
+      if (!lecon) return;
 
-      btn.disabled = true;
-      btn.textContent = 'Chargement...';
+      document.getElementById('current-section-label').textContent = lecon.section;
+      document.getElementById('current-titre').textContent = lecon.titre;
 
-      const { data: { session } } = await supabaseClient.auth.getSession();
+      const playerZone = document.getElementById('player-zone');
+      playerZone.innerHTML = `<p class="text-sm text-[color:var(--fg-50)]">Chargement du contenu...</p>`;
+
+      updateCompleteButton();
+      renderSidebar();
 
       try {
         const res = await fetch('/api/get-signed-url', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
+            'Authorization': `Bearer ${accessToken}`,
           },
-          body: JSON.stringify({ contentId }),
+          body: JSON.stringify({ contentId: id }),
         });
         const data = await res.json();
         if (!res.ok || !data.url) throw new Error(data.error || 'Erreur');
 
-        if (type === 'video') {
-          wrapper.innerHTML = `<video src="${data.url}" controls class="w-full rounded-lg" style="max-height:400px;"></video>`;
+        if (lecon.type === 'video') {
+          playerZone.innerHTML = `<video src="${data.url}" controls class="w-full rounded-xl" style="max-height:520px;"></video>`;
         } else {
-          window.open(data.url, '_blank');
-          btn.disabled = false;
-          btn.textContent = 'Télécharger le PDF';
+          playerZone.innerHTML = `
+            <div class="rounded-xl border border-[color:var(--border)] p-6 text-center">
+              <p class="text-sm text-[color:var(--fg-60)] mb-4">📄 Document PDF</p>
+              <a href="${data.url}" target="_blank" class="inline-block px-6 py-3 rounded-lg bg-brand-blue text-white font-heading uppercase text-xs font-semibold hover:bg-brand-blue-dark transition-colors">
+                Ouvrir / télécharger le PDF
+              </a>
+            </div>
+          `;
         }
       } catch (err) {
-        btn.disabled = false;
-        btn.textContent = 'Erreur, réessaie';
+        playerZone.innerHTML = `<p class="text-sm text-red-500">Erreur de chargement, réessaie dans un instant.</p>`;
       }
+
+      // Navigation précédent/suivant
+      const idx = lecons.findIndex(l => l.id === id);
+      document.getElementById('prev-btn').disabled = idx <= 0;
+      document.getElementById('next-btn').disabled = idx >= lecons.length - 1;
+      document.getElementById('prev-btn').onclick = () => { if (idx > 0) selectLecon(lecons[idx - 1].id); };
+      document.getElementById('next-btn').onclick = () => { if (idx < lecons.length - 1) selectLecon(lecons[idx + 1].id); };
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    function updateCompleteButton() {
+      const btn = document.getElementById('toggle-complete-btn');
+      const isDone = completedIds.has(currentLeconId);
+      btn.textContent = isDone ? '✓ Terminé' : '✓ Marquer comme terminé';
+      btn.classList.toggle('bg-brand-blue', isDone);
+      btn.classList.toggle('text-white', isDone);
+      btn.classList.toggle('text-[color:var(--accent)]', !isDone);
+    }
+
+    document.getElementById('toggle-complete-btn').addEventListener('click', async () => {
+      const isDone = completedIds.has(currentLeconId);
+
+      if (isDone) {
+        await supabaseClient
+          .from('formation_progression')
+          .delete()
+          .eq('user_id', userId)
+          .eq('contenu_id', currentLeconId);
+        completedIds.delete(currentLeconId);
+      } else {
+        await supabaseClient
+          .from('formation_progression')
+          .insert({ user_id: userId, contenu_id: currentLeconId });
+        completedIds.add(currentLeconId);
+      }
+
+      updateCompleteButton();
+      updateProgressBar();
+      renderSidebar();
+    });
 
     load();
   </script>
