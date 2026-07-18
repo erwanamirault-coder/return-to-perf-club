@@ -1595,6 +1595,24 @@
     let instagramPostsCache = [];
     let editingAutomationId = null;
 
+    // Crée le bouton "Annuler la modification" tout seul s'il n'existe pas déjà dans le HTML.
+    // Ça évite un plantage du script si la modif HTML correspondante n'a pas été faite.
+    if (!document.getElementById('ig-cancel-edit-btn')) {
+      const igAddBtnRef = document.getElementById('ig-add-btn');
+      if (igAddBtnRef) {
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.id = 'ig-cancel-edit-btn';
+        cancelBtn.className = 'hidden mt-2 text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] underline underline-offset-4';
+        cancelBtn.textContent = 'Annuler la modification';
+        igAddBtnRef.insertAdjacentElement('afterend', cancelBtn);
+      }
+    }
+
+    // Supprime l'encart "Instagram non connecté" tout seul s'il traîne encore dans le HTML.
+    const igConnectionStatusEl = document.getElementById('instagram-connection-status');
+    if (igConnectionStatusEl) igConnectionStatusEl.remove();
+
     document.getElementById('toggle-instagram-panel').addEventListener('click', () => {
       const panel = document.getElementById('instagram-panel');
       const wasHidden = panel.classList.contains('hidden');
