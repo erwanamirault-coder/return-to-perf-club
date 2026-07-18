@@ -263,11 +263,23 @@
             </div>
           </div>
           <div class="mb-3">
+            <label class="block text-xs font-semibold mb-1">Source de la vidéo (si type = vidéo)</label>
+            <div class="grid grid-cols-2 gap-1.5">
+              <button type="button" id="source-upload-btn" class="video-source-toggle px-3 py-2 rounded-lg border-2 border-brand-blue bg-brand-blue/10 text-xs font-semibold text-[color:var(--accent)]">📤 Uploader un fichier</button>
+              <button type="button" id="source-youtube-btn" class="video-source-toggle px-3 py-2 rounded-lg border-2 border-[color:var(--border)] text-xs font-semibold text-[color:var(--fg-50)]">▶️ Lien YouTube</button>
+            </div>
+            <p class="text-[10px] text-[color:var(--fg-50)] mt-1">Uploader = protection maximale (lien temporaire, expire après 1h). YouTube non répertorié = gratuit, mais lien plus facilement partageable.</p>
+          </div>
+          <div id="upload-file-zone" class="mb-3">
             <label class="block text-xs font-semibold mb-1">Fichier</label>
             <input type="file" id="new-lecon-file" accept="video/*,application/pdf" class="w-full text-xs">
           </div>
+          <div id="youtube-url-zone" class="hidden mb-3">
+            <label class="block text-xs font-semibold mb-1">Lien de la vidéo YouTube (non répertoriée de préférence)</label>
+            <input type="url" id="new-lecon-youtube" placeholder="https://www.youtube.com/watch?v=..." class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
           <button type="button" id="upload-lecon-btn" class="bg-brand-blue text-white px-5 py-2 rounded-lg font-heading uppercase tracking-wide font-semibold text-xs hover:bg-brand-blue-dark transition-colors">
-            Uploader la leçon
+            Ajouter la leçon
           </button>
           <span id="upload-progress" class="text-xs text-[color:var(--fg-50)] ml-3"></span>
           <p id="upload-error" class="text-xs text-red-500 mt-2 hidden"></p>
@@ -2671,42 +2683,105 @@
       );
     }
 
+    let videoSourceMode = 'upload'; // 'upload' | 'youtube'
+
+    function setVideoSourceMode(mode) {
+      videoSourceMode = mode;
+      const uploadBtn = document.getElementById('source-upload-btn');
+      const youtubeBtn = document.getElementById('source-youtube-btn');
+      const uploadZone = document.getElementById('upload-file-zone');
+      const youtubeZone = document.getElementById('youtube-url-zone');
+
+      uploadBtn.classList.toggle('border-brand-blue', mode === 'upload');
+      uploadBtn.classList.toggle('bg-brand-blue/10', mode === 'upload');
+      uploadBtn.classList.toggle('text-[color:var(--accent)]', mode === 'upload');
+      uploadBtn.classList.toggle('border-[color:var(--border)]', mode !== 'upload');
+      uploadBtn.classList.toggle('text-[color:var(--fg-50)]', mode !== 'upload');
+
+      youtubeBtn.classList.toggle('border-brand-blue', mode === 'youtube');
+      youtubeBtn.classList.toggle('bg-brand-blue/10', mode === 'youtube');
+      youtubeBtn.classList.toggle('text-[color:var(--accent)]', mode === 'youtube');
+      youtubeBtn.classList.toggle('border-[color:var(--border)]', mode !== 'youtube');
+      youtubeBtn.classList.toggle('text-[color:var(--fg-50)]', mode !== 'youtube');
+
+      uploadZone.classList.toggle('hidden', mode !== 'upload');
+      youtubeZone.classList.toggle('hidden', mode !== 'youtube');
+    }
+
+    document.getElementById('source-upload-btn').addEventListener('click', () => setVideoSourceMode('upload'));
+    document.getElementById('source-youtube-btn').addEventListener('click', () => setVideoSourceMode('youtube'));
+
+    function extractYoutubeId(url) {
+      if (!url) return null;
+      const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtube\.com\/embed\/|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/
+      ];
+      for (const p of patterns) {
+        const m = url.match(p);
+        if (m) return m[1];
+      }
+      // Si l'utilisateur a collé directement l'ID (11 caractères)
+      if (/^[a-zA-Z0-9_-]{11}$/.test(url.trim())) return url.trim();
+      return null;
+    }
+
     document.getElementById('upload-lecon-btn').addEventListener('click', async () => {
       const section = document.getElementById('new-lecon-section').value.trim() || 'Contenu';
       const titre = document.getElementById('new-lecon-titre').value.trim();
       const type = document.getElementById('new-lecon-type').value;
-      const fileInput = document.getElementById('new-lecon-file');
-      const file = fileInput.files[0];
       const progressEl = document.getElementById('upload-progress');
       const errorEl = document.getElementById('upload-error');
       const uploadBtn = document.getElementById('upload-lecon-btn');
 
       errorEl.classList.add('hidden');
 
-      if (!titre || !file) {
-        errorEl.textContent = 'Renseigne un titre et choisis un fichier.';
+      if (!titre) {
+        errorEl.textContent = 'Renseigne un titre.';
         errorEl.classList.remove('hidden');
         return;
+      }
+
+      let path = null;
+      let youtubeId = null;
+
+      if (type === 'video' && videoSourceMode === 'youtube') {
+        const url = document.getElementById('new-lecon-youtube').value.trim();
+        youtubeId = extractYoutubeId(url);
+        if (!youtubeId) {
+          errorEl.textContent = "Lien YouTube invalide, vérifie l'URL collée.";
+          errorEl.classList.remove('hidden');
+          return;
+        }
+      } else {
+        const fileInput = document.getElementById('new-lecon-file');
+        const file = fileInput.files[0];
+        if (!file) {
+          errorEl.textContent = 'Choisis un fichier.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        uploadBtn.disabled = true;
+        progressEl.textContent = 'Upload en cours... (peut prendre du temps pour une vidéo)';
+
+        const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        path = `${currentContentFormationId}/${Date.now()}-${safeFileName}`;
+
+        const { error: uploadError } = await supabaseClient
+          .storage
+          .from('formations-content')
+          .upload(path, file);
+
+        if (uploadError) {
+          progressEl.textContent = '';
+          errorEl.textContent = "Erreur d'upload : " + uploadError.message;
+          errorEl.classList.remove('hidden');
+          uploadBtn.disabled = false;
+          return;
+        }
       }
 
       uploadBtn.disabled = true;
-      progressEl.textContent = 'Upload en cours... (peut prendre du temps pour une vidéo)';
-
-      const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const path = `${currentContentFormationId}/${Date.now()}-${safeFileName}`;
-
-      const { error: uploadError } = await supabaseClient
-        .storage
-        .from('formations-content')
-        .upload(path, file);
-
-      if (uploadError) {
-        progressEl.textContent = '';
-        errorEl.textContent = "Erreur d'upload : " + uploadError.message;
-        errorEl.classList.remove('hidden');
-        uploadBtn.disabled = false;
-        return;
-      }
 
       // Déterminer l'ordre suivant
       const { data: existing } = await supabaseClient
@@ -2726,6 +2801,7 @@
           type,
           section,
           chemin_storage: path,
+          youtube_id: youtubeId,
           ordre: nextOrdre,
         });
 
@@ -2744,9 +2820,11 @@
     });
 
     async function deleteLecon(id, path) {
-      if (!confirm('Supprimer définitivement cette leçon (et son fichier) ?')) return;
+      if (!confirm('Supprimer définitivement cette leçon (et son fichier éventuel) ?')) return;
 
-      await supabaseClient.storage.from('formations-content').remove([path]);
+      if (path && path !== 'null' && path !== '') {
+        await supabaseClient.storage.from('formations-content').remove([path]);
+      }
       const { error } = await supabaseClient.from('formation_contenu').delete().eq('id', id);
 
       if (error) {
