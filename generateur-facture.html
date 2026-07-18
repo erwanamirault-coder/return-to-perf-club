@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Générateur de devis/factures — Erwan Amirault</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: { blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+
+<style>
+  body { font-family: 'Poppins', sans-serif; background:#f4f5f7; }
+  .font-heading { font-family: 'Oswald', sans-serif; }
+
+  #invoice-page {
+    width: 210mm;
+    background: white;
+    padding: 15mm;
+    margin: 0 auto;
+    box-shadow: 0 0 12px rgba(0,0,0,0.08);
+    color: #1a1a1a;
+    font-size: 12.5px;
+  }
+
+  @media print {
+    body { background: white; }
+    .no-print { display: none !important; }
+    #invoice-page { box-shadow: none; margin: 0; padding: 15mm; width: auto; min-height: 297mm; }
+    @page { size: A4; margin: 0; }
+  }
+
+  .field-input {
+    width: 100%; padding: 6px 8px; border-radius: 6px;
+    border: 1px solid #d8dde3; font-size: 13px; outline: none;
+  }
+  .field-input:focus { border-color: #2D7AED; }
+  .field-label { font-size: 11px; font-weight: 600; color: #667085; margin-bottom: 3px; display:block; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <!-- ============ BARRE D'ACTIONS (non imprimée) ============ -->
+  <div class="no-print sticky top-0 z-40 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+    <a href="admin.html" class="text-sm text-gray-500 hover:text-gray-800">← Retour admin</a>
+    <h1 class="font-heading uppercase text-lg font-bold">Générateur de devis / factures</h1>
+    <button onclick="window.print()" class="px-5 py-2.5 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-heading uppercase text-xs font-semibold">
+      🖨️ Télécharger en PDF
+    </button>
+  </div>
+
+  <div id="main-content" class="no-print px-4 py-8 max-w-lg mx-auto">
+    <div class="rounded-xl border border-gray-200 bg-white p-5 mb-5">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Type de document</p>
+      <div class="grid grid-cols-2 gap-2 mb-4">
+        <button type="button" id="type-devis-btn" class="doc-type-toggle px-3 py-2 rounded-lg border-2 border-brand-blue bg-brand-blue/10 text-xs font-semibold text-brand-blue">DEVIS</button>
+        <button type="button" id="type-facture-btn" class="doc-type-toggle px-3 py-2 rounded-lg border-2 border-gray-200 text-xs font-semibold text-gray-500">FACTURE</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <div><label class="field-label">Numéro</label><input id="f-numero" class="field-input" value="001/26"></div>
+        <div><label class="field-label">Date</label><input id="f-date" type="date" class="field-input"></div>
+      </div>
+      <div><label class="field-label">Échéance</label><input id="f-echeance" type="date" class="field-input mb-2"></div>
+
+      <label class="field-label">Objet</label>
+      <textarea id="f-objet" rows="2" class="field-input mb-2">Suivi individualisé en Réathlétisation &amp; Préparation Physique</textarea>
+    </div>
+
+    <div class="rounded-xl border border-gray-200 bg-white p-5 mb-5">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Émetteur (toi)</p>
+      <label class="field-label">Nom / Raison sociale</label>
+      <input id="em-nom" class="field-input mb-2" value="Return To Perf">
+      <label class="field-label">Adresse</label>
+      <input id="em-adresse" class="field-input mb-2" value="20240 SOLARO - France">
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <div><label class="field-label">E-mail</label><input id="em-email" class="field-input" value="erwan.amirault@gmail.com"></div>
+        <div><label class="field-label">Téléphone</label><input id="em-telephone" class="field-input" value="+ 33 6 95 78 92 04"></div>
+      </div>
+      <label class="field-label">SIRET</label>
+      <input id="em-siret" class="field-input" value="994 632 727 00016">
+    </div>
+
+    <div class="rounded-xl border border-gray-200 bg-white p-5 mb-5">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Destinataire (client)</p>
+      <label class="field-label">Nom</label>
+      <input id="dest-nom" class="field-input mb-2" placeholder="Prénom Nom">
+      <label class="field-label">Adresse</label>
+      <input id="dest-adresse" class="field-input mb-2" placeholder="Ville">
+      <div class="grid grid-cols-2 gap-2">
+        <div><label class="field-label">E-mail</label><input id="dest-email" class="field-input"></div>
+        <div><label class="field-label">Téléphone</label><input id="dest-telephone" class="field-input"></div>
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-gray-200 bg-white p-5 mb-5">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Lignes de prestation</p>
+      <div id="lignes-container" class="flex flex-col gap-3"></div>
+      <button type="button" id="add-ligne-btn" class="mt-3 text-xs px-3 py-1.5 rounded-lg border border-brand-blue text-brand-blue font-semibold hover:bg-brand-blue/5 transition-colors">+ Ajouter une ligne</button>
+
+      <div class="mt-4 pt-4 border-t border-gray-200">
+        <label class="field-label">Remise (€, optionnel)</label>
+        <input id="f-remise" type="number" step="0.01" value="0" class="field-input mb-2">
+        <label class="field-label">Mention TVA</label>
+        <input id="f-tva-note" class="field-input" value="TVA Non applicable, art. 293 B du CGI">
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-gray-200 bg-white p-5 mb-5">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Règlement</p>
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <div><label class="field-label">Banque</label><input id="r-banque" class="field-input" value="Crédit Agricole"></div>
+        <div><label class="field-label">BIC</label><input id="r-bic" class="field-input" value="AGRIFRPP872"></div>
+      </div>
+      <label class="field-label">IBAN</label>
+      <input id="r-iban" class="field-input mb-2" value="FR76 1720 6001 9993 0044 7378 597">
+      <label class="field-label">Modalités de paiement</label>
+      <textarea id="r-paiement" rows="2" class="field-input">Paiement : Facture en début de chaque mois.
+Devis valable 30 jours à compter de sa date d'émission.</textarea>
+    </div>
+
+    <div class="rounded-xl border border-gray-200 bg-white p-5">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Mentions légales (bas de page)</p>
+      <textarea id="f-mentions" rows="6" class="field-input text-[10px]">En cas de retard de paiement, une pénalité fixée à 15.60% du montant total concerné, par mois de retard entamé, est exigible sans rappel, dès le lendemain de la date limite de règlement, conformément à la lutte contre les retards de paiement (article 53 de la loi NRE).
+Pour les prestations facturées mensuellement, les pénalités seront calculées sur le montant du devis du mois impayé, et non sur la totalité du contrat ou des prestations globales. Les prestations ne seront réalisées qu'après règlement intégral des sommes dues.
+En cas de retard ou défaut de paiement, l'accès aux séances ou supports fournis pourra être suspendu jusqu'à régularisation.
+Les présentes prestations sont soumises aux conditions générales de vente signées par le client.</textarea>
+    </div>
+  </div>
+
+  <!-- ============ APERÇU / DOCUMENT IMPRIMABLE ============ -->
+  <div class="py-8 px-4">
+    <div id="invoice-page">
+
+      <div class="flex items-start justify-between mb-8">
+        <div class="flex items-center gap-3">
+          <svg width="46" height="46" viewBox="0 0 5000 5000" xmlns="http://www.w3.org/2000/svg">
+            <g transform="matrix(1.49977,0,0,1.36765,-875.914,-643.774)"><ellipse cx="2258.65" cy="2294.96" rx="1278.02" ry="1389.04" style="fill:white;"/></g>
+            <g transform="matrix(1.80276,0,0,2.94477,-1071.77,-4864.87)"><path d="M1184.19,2921.59C1022.41,2808.4 924.46,2660.72 924.46,2499.28C924.46,2493.3 924.594,2487.34 924.861,2481.4C933.536,2289.25 1080.93,2117.98 1308.41,2003.13C1367.23,1973.43 1431.41,1947.52 1499.94,1926C1521.97,1919.21 1544.38,1912.76 1567.12,1906.77C1612.27,1894.9 1659.04,1884.89 1707.17,1876.89C1796.55,1862.07 1890.6,1854.16 1987.68,1854.16C2067.46,1854.16 2145.2,1859.51 2219.99,1869.63C2252.24,1874.02 2283.95,1879.31 2315.03,1885.45C2317.05,1885.82 2319.07,1886.19 2321.08,1886.57C2740.24,1970.6 3044.32,2208.7 3050.8,2490.11C3050.79,2490.6 3050.79,2491.08 3050.79,2491.57C3050.84,2494.31 3050.9,2497.06 3050.9,2499.74C3050.6,2761.38 2793.05,2986.78 2423.55,3087.79L2239.75,2044.12L1858.43,2040.57L1184.19,2921.59ZM1369.84,3024.22C1491.36,2857.35 1762.33,2489.86 1934.17,2263.64C1976.79,2548.31 2035.9,2846.26 2060.85,3142.89C2036.67,3143.89 2012.27,3144.4 1987.68,3144.4C1757.35,3144.4 1544.02,3099.86 1369.84,3024.22Z"/></g>
+            <g transform="matrix(1.05018,0.123149,-0.123149,1.05018,269.988,-435.763)">
+              <g transform="matrix(14.3046,-3.31189,3.61677,15.6214,-199.404,160.469)"><path d="M199.805,172.035L199.609,172.254C199.219,172.895 199.875,173.977 201.582,175.5L225.32,193.125L233.672,206.809C240.609,223.789 244.926,234.895 246.629,240.133C247.449,241.918 248.238,242.258 248.992,241.156C249.73,240.285 250.926,237.938 252.57,234.125C261.375,212.273 266.273,199.98 267.273,197.25C272.617,182.715 275.34,175.023 275.445,174.172C275.996,172.465 275.895,171 275.133,169.773C274.246,168.949 273.031,168.59 271.484,168.695C261.918,169.586 252.164,170.277 242.223,170.77C223.797,171.516 209.82,171.852 200.293,171.777C200.129,171.828 199.965,171.914 199.805,172.035" style="fill:rgb(45,122,237);"/></g>
+              <g transform="matrix(14.3011,-3.32692,3.63318,15.6176,-252.871,174.952)"><path d="M34.316,96.129L33.504,100.387C32.246,109.445 33.164,121.766 36.254,137.348C39.492,154.395 44.027,168.152 49.859,178.613C51.875,182.461 54.086,186.18 56.484,189.777C57.445,191.73 61.48,196.844 68.59,205.105C78.625,214.953 89.543,222.648 101.336,228.191C107.234,230.961 113.352,233.195 119.691,234.891L129.363,237.031C142.887,239.301 156.473,239.512 170.129,237.656C184.145,235.863 198.949,232.121 214.543,226.43C234.379,218.465 246.516,213.102 250.957,210.34L224.715,182.859C214.969,189.805 205.41,195.566 196.031,200.141C186.652,204.715 177.457,208.102 168.445,210.305L155.063,212.715C146.234,213.73 137.586,213.563 129.121,212.207L116.563,209.281L104.273,204.578L98.098,201.379C82.547,193.309 68.875,180.176 57.078,161.988C53.105,155.949 49.125,147.289 45.133,136.004C42.148,127.195 38.883,114.469 35.328,97.832C35.051,96.816 34.715,96.25 34.316,96.129" style="fill:rgb(45,122,237);"/></g>
+            </g>
+          </svg>
+          <div>
+            <p class="font-heading uppercase font-bold text-lg leading-none">Erwan Amirault</p>
+            <p class="text-[9px] tracking-[0.2em] text-gray-500 uppercase mt-1">Préparation physique</p>
+          </div>
+        </div>
+        <p id="p-doc-type" class="font-heading uppercase font-bold text-4xl text-brand-blue">DEVIS</p>
+      </div>
+
+      <div class="flex items-start justify-between mb-3 text-[11px]">
+        <div>
+          <p class="text-brand-blue font-bold">DATE : <span id="p-date" class="font-normal text-black"></span></p>
+          <p class="text-brand-blue font-bold">ÉCHÉANCE : <span id="p-echeance" class="font-normal text-black"></span></p>
+        </div>
+        <p class="text-brand-blue font-bold text-base"><span id="p-doc-type-label">DEVIS</span> N° : <span id="p-numero" class="text-black"></span></p>
+      </div>
+      <div class="border-t-2 border-black mb-4"></div>
+
+      <div class="flex justify-between mb-5 text-[11px]">
+        <div>
+          <p class="text-brand-blue font-bold mb-1.5">ÉMETTEUR :</p>
+          <p id="p-em-nom"></p>
+          <p id="p-em-adresse"></p>
+          <p>E-mail : <span id="p-em-email" class="italic underline"></span></p>
+          <p>Téléphone : <span id="p-em-telephone" class="underline"></span></p>
+          <p>SIRET : <span id="p-em-siret" class="italic"></span></p>
+        </div>
+        <div class="text-right">
+          <p class="text-brand-blue font-bold mb-1.5">DESTINATAIRE :</p>
+          <p id="p-dest-nom"></p>
+          <p id="p-dest-adresse"></p>
+          <p>E-mail : <span id="p-dest-email" class="underline"></span></p>
+          <p>Téléphone : <span id="p-dest-telephone" class="underline"></span></p>
+        </div>
+      </div>
+
+      <p id="p-objet" class="text-[11px] mb-5"></p>
+
+      <table class="w-full text-[11px] mb-1">
+        <thead>
+          <tr class="text-brand-blue font-bold border-b border-black">
+            <td class="py-1.5">Description :</td>
+            <td class="py-1.5 text-right w-24">Prix Unitaire :</td>
+            <td class="py-1.5 text-right w-20">Quantité :</td>
+            <td class="py-1.5 text-right w-24">Total :</td>
+          </tr>
+        </thead>
+        <tbody id="p-lignes-body"></tbody>
+        <tfoot>
+          <tr class="border-t border-black font-semibold">
+            <td class="py-1.5">Total</td>
+            <td class="py-1.5 text-right" id="p-total-pu"></td>
+            <td class="py-1.5 text-right" id="p-total-qte"></td>
+            <td class="py-1.5 text-right" id="p-total-total"></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="flex justify-between items-start mt-6 text-[11px]">
+        <div class="max-w-[55%]">
+          <p id="p-tva-note" class="mb-4"></p>
+          <p class="text-brand-blue font-bold mb-1.5">RÈGLEMENT :</p>
+          <p class="font-semibold mb-1">Par virement bancaire :</p>
+          <p>Banque : <span id="p-banque"></span></p>
+          <p>IBAN : <span id="p-iban"></span></p>
+          <p>BIC : <span id="p-bic"></span></p>
+        </div>
+        <div class="text-right">
+          <p class="font-bold">Montant net HT : <span id="p-montant-ht" class="inline-block w-20"></span></p>
+          <p class="font-bold">REMISE : <span id="p-remise-affiche" class="inline-block w-20"></span></p>
+          <p class="font-bold text-sm">Montant total TTC : <span id="p-montant-ttc" class="inline-block w-20"></span></p>
+        </div>
+      </div>
+
+      <div class="mt-6 text-[11px]">
+        <p>Date et signature du client, précédée de la mention :</p>
+        <p class="italic font-semibold">"Lu et approuvé, bon pour accord" :</p>
+      </div>
+
+      <p id="p-paiement" class="mt-6 text-[11px] whitespace-pre-line"></p>
+
+      <p id="p-mentions" class="mt-6 text-[8px] text-gray-600 leading-relaxed whitespace-pre-line"></p>
+
+    </div>
+  </div>
+
+  <script>
+    let lignes = [
+      { description: "Suivi individualisé comprenant :\n• Bilan initial stratégique - 1H\n• Programmation sur mesure\n• Échanges 6j/7j\n• Analyses des résultats et retour vidéo\n• Accès application dédiée\n• Bilan mensuel d'ajustement - 30Min\n• Engagement sur 3 Mois", prixUnitaire: 600, quantite: 1 }
+    ];
+    let docType = 'DEVIS';
+
+    function euros(n) {
+      return (isNaN(n) ? 0 : n).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '€';
+    }
+
+    function renderLignesForm() {
+      const container = document.getElementById('lignes-container');
+      container.innerHTML = lignes.map((l, i) => `
+        <div class="border border-gray-200 rounded-lg p-3">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[10px] font-semibold text-gray-400">Ligne ${i + 1}</span>
+            ${lignes.length > 1 ? `<button type="button" data-i="${i}" class="remove-ligne-btn text-[10px] text-red-500">Supprimer</button>` : ''}
+          </div>
+          <textarea data-i="${i}" data-field="description" rows="3" class="field-input mb-2 ligne-input text-[12px]">${l.description}</textarea>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="field-label">Prix unitaire (€)</label><input data-i="${i}" data-field="prixUnitaire" type="number" step="0.01" value="${l.prixUnitaire}" class="field-input ligne-input"></div>
+            <div><label class="field-label">Quantité</label><input data-i="${i}" data-field="quantite" type="number" step="1" value="${l.quantite}" class="field-input ligne-input"></div>
+          </div>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.ligne-input').forEach(el => {
+        el.addEventListener('input', () => {
+          const i = Number(el.dataset.i);
+          const field = el.dataset.field;
+          lignes[i][field] = field === 'description' ? el.value : Number(el.value) || 0;
+          renderPreview();
+        });
+      });
+      container.querySelectorAll('.remove-ligne-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          lignes.splice(Number(btn.dataset.i), 1);
+          renderLignesForm();
+          renderPreview();
+        });
+      });
+    }
+
+    document.getElementById('add-ligne-btn').addEventListener('click', () => {
+      lignes.push({ description: '', prixUnitaire: 0, quantite: 1 });
+      renderLignesForm();
+      renderPreview();
+    });
+
+    function setDocType(type) {
+      docType = type;
+      document.getElementById('type-devis-btn').classList.toggle('border-brand-blue', type === 'DEVIS');
+      document.getElementById('type-devis-btn').classList.toggle('bg-brand-blue/10', type === 'DEVIS');
+      document.getElementById('type-devis-btn').classList.toggle('text-brand-blue', type === 'DEVIS');
+      document.getElementById('type-devis-btn').classList.toggle('border-gray-200', type !== 'DEVIS');
+      document.getElementById('type-devis-btn').classList.toggle('text-gray-500', type !== 'DEVIS');
+
+      document.getElementById('type-facture-btn').classList.toggle('border-brand-blue', type === 'FACTURE');
+      document.getElementById('type-facture-btn').classList.toggle('bg-brand-blue/10', type === 'FACTURE');
+      document.getElementById('type-facture-btn').classList.toggle('text-brand-blue', type === 'FACTURE');
+      document.getElementById('type-facture-btn').classList.toggle('border-gray-200', type !== 'FACTURE');
+      document.getElementById('type-facture-btn').classList.toggle('text-gray-500', type !== 'FACTURE');
+
+      renderPreview();
+    }
+    document.getElementById('type-devis-btn').addEventListener('click', () => setDocType('DEVIS'));
+    document.getElementById('type-facture-btn').addEventListener('click', () => setDocType('FACTURE'));
+
+    function renderPreview() {
+      document.getElementById('p-doc-type').textContent = docType;
+      document.getElementById('p-doc-type-label').textContent = docType;
+
+      document.getElementById('p-numero').textContent = document.getElementById('f-numero').value;
+      document.getElementById('p-date').textContent = formatDateFr(document.getElementById('f-date').value);
+      document.getElementById('p-echeance').textContent = formatDateFr(document.getElementById('f-echeance').value);
+
+      document.getElementById('p-em-nom').textContent = document.getElementById('em-nom').value;
+      document.getElementById('p-em-adresse').textContent = document.getElementById('em-adresse').value;
+      document.getElementById('p-em-email').textContent = document.getElementById('em-email').value;
+      document.getElementById('p-em-telephone').textContent = document.getElementById('em-telephone').value;
+      document.getElementById('p-em-siret').textContent = document.getElementById('em-siret').value;
+
+      document.getElementById('p-dest-nom').textContent = document.getElementById('dest-nom').value;
+      document.getElementById('p-dest-adresse').textContent = document.getElementById('dest-adresse').value;
+      document.getElementById('p-dest-email').textContent = document.getElementById('dest-email').value;
+      document.getElementById('p-dest-telephone').textContent = document.getElementById('dest-telephone').value;
+
+      document.getElementById('p-objet').textContent = 'Objet : ' + document.getElementById('f-objet').value;
+
+      const tbody = document.getElementById('p-lignes-body');
+      let totalGeneral = 0;
+      let totalQte = 0;
+      tbody.innerHTML = lignes.map(l => {
+        const t = (l.prixUnitaire || 0) * (l.quantite || 0);
+        totalGeneral += t;
+        totalQte += (l.quantite || 0);
+        return `
+          <tr class="align-top">
+            <td class="py-1.5 whitespace-pre-line pr-2">${escapeHtml(l.description)}</td>
+            <td class="py-1.5 text-right">${euros(l.prixUnitaire)}</td>
+            <td class="py-1.5 text-right">${l.quantite}</td>
+            <td class="py-1.5 text-right">${euros(t)}</td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('p-total-pu').textContent = '';
+      document.getElementById('p-total-qte').textContent = totalQte;
+      document.getElementById('p-total-total').textContent = euros(totalGeneral);
+
+      const remise = Number(document.getElementById('f-remise').value) || 0;
+      const montantHT = totalGeneral - remise;
+
+      document.getElementById('p-tva-note').textContent = document.getElementById('f-tva-note').value;
+      document.getElementById('p-montant-ht').textContent = euros(totalGeneral);
+      document.getElementById('p-remise-affiche').textContent = remise > 0 ? '-' + euros(remise) : '-';
+      document.getElementById('p-montant-ttc').textContent = euros(montantHT);
+
+      document.getElementById('p-banque').textContent = document.getElementById('r-banque').value;
+      document.getElementById('p-iban').textContent = document.getElementById('r-iban').value;
+      document.getElementById('p-bic').textContent = document.getElementById('r-bic').value;
+      document.getElementById('p-paiement').textContent = document.getElementById('r-paiement').value;
+      document.getElementById('p-mentions').textContent = document.getElementById('f-mentions').value;
+    }
+
+    function formatDateFr(isoDate) {
+      if (!isoDate) return '';
+      const [y, m, d] = isoDate.split('-');
+      return `${d} / ${m} / ${y}`;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Rafraîchir l'aperçu à chaque saisie
+    document.querySelectorAll('#main-content input, #main-content textarea').forEach(el => {
+      el.addEventListener('input', renderPreview);
+    });
+
+    function init() {
+      const today = new Date();
+      document.getElementById('f-date').value = today.toISOString().split('T')[0];
+      const echeance = new Date(today);
+      echeance.setMonth(echeance.getMonth() + 1);
+      document.getElementById('f-echeance').value = echeance.toISOString().split('T')[0];
+
+      renderLignesForm();
+      renderPreview();
+    }
+
+    init();
+  </script>
+
+</body>
+</html>
