@@ -2814,8 +2814,12 @@
         return;
       }
 
+      errorEl.classList.add('hidden');
       document.getElementById('new-lecon-titre').value = '';
-      fileInput.value = '';
+      const fileInputReset = document.getElementById('new-lecon-file');
+      if (fileInputReset) fileInputReset.value = '';
+      const youtubeInputReset = document.getElementById('new-lecon-youtube');
+      if (youtubeInputReset) youtubeInputReset.value = '';
       loadContentLecons();
     });
 
