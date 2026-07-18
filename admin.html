@@ -1880,13 +1880,13 @@
       });
       document.querySelectorAll('.ig-edit-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          const automation = automations.find(a => a.id === btn.dataset.id);
+          const automation = automations.find(a => String(a.id) === btn.dataset.id);
           if (automation) startEditAutomation(automation);
         });
       });
       document.querySelectorAll('.ig-duplicate-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          const automation = automations.find(a => a.id === btn.dataset.id);
+          const automation = automations.find(a => String(a.id) === btn.dataset.id);
           if (automation) startDuplicateAutomation(automation);
         });
       });
