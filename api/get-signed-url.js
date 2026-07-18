@@ -55,11 +55,12 @@ module.exports = async (req, res) => {
       return res.status(403).json({ error: "Tu n'as pas accès à cette formation" });
     }
 
-    // 4. Générer l'URL signée temporaire (1h)
+    // 4. Générer l'URL signée temporaire (6h — assez large pour couvrir
+    //    une session de visionnage complète, même avec des pauses)
     const { data: signedData, error: signedError } = await supabase
       .storage
       .from('formations-content')
-      .createSignedUrl(contenu.chemin_storage, 3600);
+      .createSignedUrl(contenu.chemin_storage, 6 * 3600);
 
     if (signedError || !signedData) {
       return res.status(500).json({ error: 'Impossible de générer le lien' });
