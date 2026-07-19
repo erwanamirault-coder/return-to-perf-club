@@ -44,9 +44,9 @@
       <a href="index.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Accueil</a>
       <a href="dashboard.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Mon espace</a>
       <a href="formations.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Formations</a>
+      <a href="parametres.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Paramètres</a>
       <button id="logout-btn" class="underline underline-offset-4 text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Se déconnecter</button>
       <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
-      <a href="a-propos.html" class="shrink-0"></a>
     </div>
   </header>
 
@@ -74,7 +74,6 @@
       if (window.Calendly) {
         const widgetEl = document.getElementById('calendly-widget');
         if (widgetEl) {
-          // Sur mobile, le calendrier et les créneaux s'empilent verticalement : il faut plus de hauteur.
           widgetEl.style.height = window.innerWidth < 640 ? '1150px' : '750px';
         }
         Calendly.initInlineWidget({
