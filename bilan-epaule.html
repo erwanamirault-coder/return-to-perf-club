@@ -82,7 +82,7 @@
 
     <!-- ÉCRAN 0 : Intro (hero) -->
     <div id="screen-intro" class="fade-in">
-      <div class="hero-band mx-4 sm:mx-6 mt-6 rounded-3xl px-7 py-10 sm:py-12 text-white shadow-xl">
+      <div id="hero-band" class="hero-band mx-4 sm:mx-6 mt-6 rounded-3xl px-7 py-10 sm:py-12 text-white shadow-xl">
         <span class="inline-block px-3 py-1 rounded-full bg-white/15 backdrop-blur text-[11px] font-semibold uppercase tracking-widest mb-5">
           Bilan gratuit
         </span>
@@ -222,9 +222,9 @@
     const ZONE = 'epaule';
 
     // ===================================================================
-    // CONFIGURATION DES QUESTIONS
+    // CONFIGURATION PAR DÉFAUT (utilisée tant que l'admin n'a rien réglé)
     // ===================================================================
-    const questions = [
+    let questions = [
       { id: 'q1', label: "À quel point peux-tu lever ton bras complètement au-dessus de la tête sans gêne ?", lo: "douleur + amplitude limitée / sensation de blocage", hi: "amplitude complète des 2 côtés, fluide et confortable, sans douleur" },
       { id: 'q2', label: "À quel point peux-tu porter ta main dans le dos (comme pour attraper une étiquette entre les omoplates) sans douleur ni limitation ?", lo: "douleur + amplitude très limitée", hi: "amplitude complète, fluide et confortable, sans douleur" },
       { id: 'q3', label: "Comment juges-tu la coordination et la fluidité de ton épaule en mouvement ?", lo: "mouvements saccadés / hésitants", hi: "mouvements fluides et naturels" },
@@ -245,6 +245,31 @@
       { max: 100, emoji: '🟢', color: '#22C55E', title: "Ton épaule semble prête, continue à l'entretenir",
         text: "Bonne nouvelle : ton épaule répond globalement bien aux exigences de ton sport.\n\nÀ ce niveau, l'enjeu n'est plus de « réparer » mais d'entretenir et de continuer à progresser sans te blesser." },
     ];
+
+    // ===================================================================
+    // CHARGEMENT DE LA CONFIG ÉDITABLE (admin-bilan.html)
+    // ===================================================================
+    async function loadConfig() {
+      const heroEl = document.getElementById('hero-band');
+      try {
+        const { data } = await supabaseClient.from('bilan_config').select('*').eq('zone', ZONE).maybeSingle();
+
+        if (data) {
+          if (data.hero_mode === 'photo' && data.hero_image_url) {
+            heroEl.style.background = `linear-gradient(rgba(15,76,169,.55), rgba(8,49,110,.75)), url('${data.hero_image_url}') center/cover no-repeat`;
+          } else {
+            heroEl.style.background = `radial-gradient(circle at 20% 0%, ${data.hero_color_from} 0%, ${data.hero_color_to} 100%)`;
+          }
+
+          if (Array.isArray(data.questions) && data.questions.length === 10) {
+            questions = data.questions;
+          }
+        }
+      } catch (err) {
+        // En cas d'erreur, on garde le fond et les questions par défaut définis ci-dessus
+      }
+    }
+    loadConfig();
 
     // ===================================================================
     // MOTEUR
