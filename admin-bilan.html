@@ -1,0 +1,377 @@
+ <!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Bilans genou/épaule</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: { blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)] flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
+    <a href="admin.html" class="text-sm text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">← Retour admin</a>
+    <h1 class="font-heading uppercase text-sm font-bold">Bilans genou / épaule</h1>
+    <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+  </header>
+
+  <p id="denied" class="hidden text-center py-20 text-[color:var(--fg-50)]">Accès réservé.</p>
+
+  <div id="main-content" class="hidden px-6 py-10 max-w-2xl mx-auto">
+
+    <!-- Bandeau du site -->
+    <section class="rounded-xl border border-[color:var(--border)] p-5 mb-6">
+      <h2 class="font-heading uppercase text-sm font-bold text-[color:var(--fg-50)] tracking-wide mb-1">Bandeau d'annonce du site</h2>
+      <p class="text-[11px] text-[color:var(--fg-40)] mb-4">S'affiche tout en haut de chaque page publique. Un seul bandeau actif à la fois — active celui que tu veux montrer, désactive les autres.</p>
+
+      <div id="bannieres-list" class="flex flex-col gap-3 mb-4"></div>
+
+      <button type="button" id="add-banniere-btn" class="text-xs px-3 py-1.5 rounded-lg border border-brand-blue text-brand-blue font-semibold hover:bg-brand-blue/5 transition-colors">
+        + Ajouter un bandeau
+      </button>
+    </section>
+
+    <!-- Sélecteur de zone -->
+    <div class="grid grid-cols-2 gap-2 mb-8">
+      <button type="button" id="tab-genou" class="zone-tab px-4 py-3 rounded-xl border-2 font-heading uppercase text-sm font-bold">🦵 Genou</button>
+      <button type="button" id="tab-epaule" class="zone-tab px-4 py-3 rounded-xl border-2 font-heading uppercase text-sm font-bold">💪 Épaule</button>
+    </div>
+
+    <!-- Arrière-plan -->
+    <section class="rounded-xl border border-[color:var(--border)] p-5 mb-6">
+      <h2 class="font-heading uppercase text-sm font-bold text-[color:var(--fg-50)] tracking-wide mb-4">Arrière-plan du bandeau d'accueil</h2>
+
+      <div class="grid grid-cols-2 gap-2 mb-5">
+        <button type="button" id="mode-couleur-btn" class="mode-tab px-4 py-2.5 rounded-lg border-2 text-xs font-semibold uppercase tracking-wide">🎨 Couleur</button>
+        <button type="button" id="mode-photo-btn" class="mode-tab px-4 py-2.5 rounded-lg border-2 text-xs font-semibold uppercase tracking-wide">🖼️ Photo</button>
+      </div>
+
+      <div id="zone-couleur" class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Couleur de départ</label>
+          <input type="color" id="color-from" value="#3D8BFF" class="w-full h-11 rounded-lg border border-[color:var(--border)] cursor-pointer">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Couleur de fin</label>
+          <input type="color" id="color-to" value="#08316E" class="w-full h-11 rounded-lg border border-[color:var(--border)] cursor-pointer">
+        </div>
+      </div>
+
+      <div id="zone-photo" class="hidden">
+        <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Lien de la photo</label>
+        <input type="url" id="image-url" placeholder="https://..." class="w-full px-4 py-3 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <p class="text-[10px] text-[color:var(--fg-40)] mt-1.5">Un voile bleu semi-transparent est automatiquement ajouté par-dessus pour que le texte reste lisible.</p>
+      </div>
+
+      <!-- Aperçu -->
+      <div class="mt-5">
+        <p class="text-xs font-semibold text-[color:var(--fg-60)] mb-2">Aperçu</p>
+        <div id="preview-band" class="rounded-2xl h-32 flex items-end p-4 text-white">
+          <span class="font-heading uppercase text-lg font-extrabold">Teste ton genou</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Questions -->
+    <section class="rounded-xl border border-[color:var(--border)] p-5 mb-6">
+      <h2 class="font-heading uppercase text-sm font-bold text-[color:var(--fg-50)] tracking-wide mb-1">Les 10 questions</h2>
+      <p class="text-[11px] text-[color:var(--fg-40)] mb-4">Le nombre de questions (10) et l'échelle (0 à 10) sont fixes, car le score sur 100 est calculé dessus. Tu peux modifier librement le texte de chaque question et des deux repères.</p>
+      <div id="questions-list" class="flex flex-col gap-4"></div>
+    </section>
+
+    <div class="flex items-center gap-3">
+      <button type="button" id="save-btn" class="px-6 py-3.5 rounded-xl bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-heading uppercase tracking-wide font-semibold">
+        Enregistrer
+      </button>
+      <a id="preview-link" href="bilan-genou.html" target="_blank" class="px-6 py-3.5 rounded-xl border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors font-heading uppercase tracking-wide font-semibold text-sm">
+        Voir la page →
+      </a>
+      <span id="save-confirm" class="hidden text-sm text-[color:var(--accent)] font-medium">Enregistré ✓</span>
+    </div>
+    <p id="save-error" class="hidden text-xs text-red-500 mt-3"></p>
+
+  </div>
+
+  <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    const ADMIN_EMAIL = "erwan20b@gmail.com";
+
+    const DEFAULT_QUESTIONS_GENOU = [
+      { id: 'q1', label: "À quel point ton genou s'étend complètement sans gêne ?", lo: "douleurs + extension limitée / sensation de blocage", hi: "hyper-extension identique des 2 côtés, fluide et confortable, sans douleurs" },
+      { id: 'q2', label: "À quel point peux-tu fléchir ton genou sans limitation ou appréhension ?", lo: "douleurs + flexion très limitée ou inconfortable", hi: "flexion complète, fluide et confortable, sans douleurs" },
+      { id: 'q3', label: "Comment juges-tu la coordination et la fluidité de ton genou en mouvement ?", lo: "mouvements saccadés / hésitants", hi: "mouvements fluides et naturels" },
+      { id: 'q4', label: "À quel point te sens-tu stable sur une jambe (appuis, équilibre) ?", lo: "très instable avec des compensations sur l'autre jambe", hi: "très stable et équilibré" },
+      { id: 'q5', label: "À quel point contrôles-tu ton genou lors de mouvements latéraux (sauts, réceptions, changements d'appuis) ?", lo: "perte de contrôle fréquente", hi: "contrôle fluide et maîtrisé" },
+      { id: 'q6', label: "Comment ton genou réagit-il à l'enchaînement des entraînements ?", lo: "douleurs / gonflement rapides", hi: "aucune réaction particulière" },
+      { id: 'q7', label: "Ton genou récupère-t-il bien entre deux séances ?", lo: "récupération lente / incomplète", hi: "récupération rapide et complète" },
+      { id: 'q8', label: "Te sens-tu capable d'encaisser des séances intenses ou prolongées ?", lo: "très difficile", hi: "sans difficulté" },
+      { id: 'q9', label: "Ressens-tu de l'appréhension ou de la peur concernant ton genou dans ton quotidien ou dans ton sport ?", lo: "appréhension permanente", hi: "aucune appréhension" },
+      { id: 'q10', label: "As-tu l'impression de pouvoir t'engager à 100 % dans ton sport ?", lo: "je me retiens constamment", hi: "engagement total, sans retenue", withText: true },
+    ];
+
+    const DEFAULT_QUESTIONS_EPAULE = [
+      { id: 'q1', label: "À quel point peux-tu lever ton bras complètement au-dessus de la tête sans gêne ?", lo: "douleur + amplitude limitée / sensation de blocage", hi: "amplitude complète des 2 côtés, fluide et confortable, sans douleur" },
+      { id: 'q2', label: "À quel point peux-tu porter ta main dans le dos (comme pour attraper une étiquette entre les omoplates) sans douleur ni limitation ?", lo: "douleur + amplitude très limitée", hi: "amplitude complète, fluide et confortable, sans douleur" },
+      { id: 'q3', label: "Comment juges-tu la coordination et la fluidité de ton épaule en mouvement ?", lo: "mouvements saccadés / hésitants", hi: "mouvements fluides et naturels" },
+      { id: 'q4', label: "À quel point te sens-tu stable et solide quand tu portes ou tiens une charge à bout de bras (sac, barre, objet lourd) ?", lo: "très instable, je compense avec le reste du corps", hi: "très stable et solide" },
+      { id: 'q5', label: "À quel point contrôles-tu ton épaule lors de mouvements rapides ou au-dessus de la tête (lancer, frappe, mouvement avec charge) ?", lo: "perte de contrôle fréquente", hi: "contrôle fluide et maîtrisé" },
+      { id: 'q6', label: "Comment ton épaule réagit-elle à l'enchaînement des entraînements ?", lo: "douleurs / raideur rapides", hi: "aucune réaction particulière" },
+      { id: 'q7', label: "Ton épaule récupère-t-elle bien entre deux séances ?", lo: "récupération lente / incomplète", hi: "récupération rapide et complète" },
+      { id: 'q8', label: "Te sens-tu capable d'encaisser des séances intenses ou prolongées sollicitant l'épaule (port de charge, mouvements répétés au-dessus de la tête) ?", lo: "très difficile", hi: "sans difficulté" },
+      { id: 'q9', label: "Ressens-tu de l'appréhension ou de la peur concernant ton épaule dans ton quotidien ou ton sport ?", lo: "appréhension permanente", hi: "aucune appréhension" },
+      { id: 'q10', label: "As-tu l'impression de pouvoir t'engager à 100 % dans ton sport, sans te retenir à cause de ton épaule ?", lo: "je me retiens constamment", hi: "engagement total, sans retenue", withText: true },
+    ];
+
+    let currentZone = 'genou';
+    let currentQuestions = DEFAULT_QUESTIONS_GENOU.map(q => ({ ...q }));
+    let currentMode = 'couleur';
+
+    function setZoneTabStyle() {
+      document.getElementById('tab-genou').classList.toggle('border-brand-blue', currentZone === 'genou');
+      document.getElementById('tab-genou').classList.toggle('bg-brand-blue/10', currentZone === 'genou');
+      document.getElementById('tab-genou').classList.toggle('border-[color:var(--border)]', currentZone !== 'genou');
+
+      document.getElementById('tab-epaule').classList.toggle('border-brand-blue', currentZone === 'epaule');
+      document.getElementById('tab-epaule').classList.toggle('bg-brand-blue/10', currentZone === 'epaule');
+      document.getElementById('tab-epaule').classList.toggle('border-[color:var(--border)]', currentZone !== 'epaule');
+
+      document.getElementById('preview-link').href = currentZone === 'genou' ? 'bilan-genou.html' : 'bilan-epaule.html';
+      document.querySelector('#preview-band span').textContent = currentZone === 'genou' ? 'Teste ton genou' : 'Teste ton épaule';
+    }
+
+    function setModeTabStyle() {
+      document.getElementById('mode-couleur-btn').classList.toggle('border-brand-blue', currentMode === 'couleur');
+      document.getElementById('mode-couleur-btn').classList.toggle('bg-brand-blue/10', currentMode === 'couleur');
+      document.getElementById('mode-couleur-btn').classList.toggle('border-[color:var(--border)]', currentMode !== 'couleur');
+
+      document.getElementById('mode-photo-btn').classList.toggle('border-brand-blue', currentMode === 'photo');
+      document.getElementById('mode-photo-btn').classList.toggle('bg-brand-blue/10', currentMode === 'photo');
+      document.getElementById('mode-photo-btn').classList.toggle('border-[color:var(--border)]', currentMode !== 'photo');
+
+      document.getElementById('zone-couleur').classList.toggle('hidden', currentMode !== 'couleur');
+      document.getElementById('zone-photo').classList.toggle('hidden', currentMode !== 'photo');
+      updatePreview();
+    }
+
+    function updatePreview() {
+      const preview = document.getElementById('preview-band');
+      if (currentMode === 'photo') {
+        const url = document.getElementById('image-url').value.trim();
+        if (url) {
+          preview.style.background = `linear-gradient(rgba(15,76,169,.55), rgba(8,49,110,.75)), url('${url}') center/cover no-repeat`;
+        } else {
+          preview.style.background = '#334155';
+        }
+      } else {
+        const from = document.getElementById('color-from').value;
+        const to = document.getElementById('color-to').value;
+        preview.style.background = `radial-gradient(circle at 20% 0%, ${from} 0%, ${to} 100%)`;
+      }
+    }
+
+    document.getElementById('tab-genou').addEventListener('click', () => switchZone('genou'));
+    document.getElementById('tab-epaule').addEventListener('click', () => switchZone('epaule'));
+    document.getElementById('mode-couleur-btn').addEventListener('click', () => { currentMode = 'couleur'; setModeTabStyle(); });
+    document.getElementById('mode-photo-btn').addEventListener('click', () => { currentMode = 'photo'; setModeTabStyle(); });
+    document.getElementById('color-from').addEventListener('input', updatePreview);
+    document.getElementById('color-to').addEventListener('input', updatePreview);
+    document.getElementById('image-url').addEventListener('input', updatePreview);
+
+    function renderQuestionsList() {
+      const container = document.getElementById('questions-list');
+      container.innerHTML = currentQuestions.map((q, i) => `
+        <div class="rounded-lg border border-[color:var(--border)] p-4">
+          <p class="text-[11px] font-semibold text-brand-blue uppercase tracking-wide mb-2">Question ${i + 1}${q.withText ? ' (avec champ commentaire libre)' : ''}</p>
+          <label class="block text-[11px] text-[color:var(--fg-50)] mb-1">Texte de la question</label>
+          <textarea data-i="${i}" data-field="label" rows="2" class="q-field w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-2">${q.label}</textarea>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] text-[color:var(--fg-50)] mb-1">Repère à 0</label>
+              <input data-i="${i}" data-field="lo" value="${q.lo}" class="q-field w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            </div>
+            <div>
+              <label class="block text-[11px] text-[color:var(--fg-50)] mb-1">Repère à 10</label>
+              <input data-i="${i}" data-field="hi" value="${q.hi}" class="q-field w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.q-field').forEach(el => {
+        el.addEventListener('input', () => {
+          currentQuestions[Number(el.dataset.i)][el.dataset.field] = el.value;
+        });
+      });
+    }
+
+    async function switchZone(zone) {
+      currentZone = zone;
+      setZoneTabStyle();
+      await loadZoneConfig();
+    }
+
+    async function loadZoneConfig() {
+      document.getElementById('save-error').classList.add('hidden');
+      const { data } = await supabaseClient.from('bilan_config').select('*').eq('zone', currentZone).maybeSingle();
+
+      if (data) {
+        currentMode = data.hero_mode || 'couleur';
+        document.getElementById('color-from').value = data.hero_color_from || '#3D8BFF';
+        document.getElementById('color-to').value = data.hero_color_to || '#08316E';
+        document.getElementById('image-url').value = data.hero_image_url || '';
+        currentQuestions = (Array.isArray(data.questions) && data.questions.length === 10)
+          ? data.questions.map(q => ({ ...q }))
+          : (currentZone === 'genou' ? DEFAULT_QUESTIONS_GENOU : DEFAULT_QUESTIONS_EPAULE).map(q => ({ ...q }));
+      } else {
+        currentMode = 'couleur';
+        document.getElementById('color-from').value = '#3D8BFF';
+        document.getElementById('color-to').value = '#08316E';
+        document.getElementById('image-url').value = '';
+        currentQuestions = (currentZone === 'genou' ? DEFAULT_QUESTIONS_GENOU : DEFAULT_QUESTIONS_EPAULE).map(q => ({ ...q }));
+      }
+
+      setModeTabStyle();
+      renderQuestionsList();
+    }
+
+    document.getElementById('save-btn').addEventListener('click', async () => {
+      const btn = document.getElementById('save-btn');
+      const errorEl = document.getElementById('save-error');
+      const confirmEl = document.getElementById('save-confirm');
+      errorEl.classList.add('hidden');
+      confirmEl.classList.add('hidden');
+      btn.disabled = true;
+      btn.textContent = 'Enregistrement...';
+
+      const payload = {
+        zone: currentZone,
+        hero_mode: currentMode,
+        hero_color_from: document.getElementById('color-from').value,
+        hero_color_to: document.getElementById('color-to').value,
+        hero_image_url: document.getElementById('image-url').value.trim() || null,
+        questions: currentQuestions,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabaseClient.from('bilan_config').upsert(payload, { onConflict: 'zone' });
+
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer';
+
+      if (error) {
+        errorEl.textContent = "Erreur : " + error.message;
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      confirmEl.classList.remove('hidden');
+      setTimeout(() => confirmEl.classList.add('hidden'), 2500);
+    });
+
+    // ===================================================================
+    // BANDEAU DU SITE
+    // ===================================================================
+    async function loadBannieres() {
+      const { data, error } = await supabaseClient.from('bannieres').select('*').order('ordre', { ascending: true });
+      const list = document.getElementById('bannieres-list');
+
+      if (error) {
+        list.innerHTML = `<p class="text-xs text-red-500">Erreur : ${error.message}</p>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        list.innerHTML = `<p class="text-xs text-[color:var(--fg-50)]">Aucun bandeau pour l'instant.</p>`;
+        return;
+      }
+
+      list.innerHTML = data.map(b => `
+        <div class="rounded-lg border ${b.actif ? 'border-brand-blue' : 'border-[color:var(--border)]'} p-3">
+          <div class="flex items-start gap-2 mb-2">
+            <button type="button" data-id="${b.id}" data-actif="${b.actif}" class="banniere-toggle shrink-0 mt-0.5 w-10 h-6 rounded-full transition-colors ${b.actif ? 'bg-brand-blue' : 'bg-[color:var(--border-strong)]'} relative">
+              <span class="absolute top-0.5 ${b.actif ? 'right-0.5' : 'left-0.5'} w-5 h-5 rounded-full bg-white transition-all"></span>
+            </button>
+            <div class="flex-1">
+              <textarea data-id="${b.id}" data-field="titre" rows="2" class="banniere-field w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue mb-1.5">${b.titre}</textarea>
+              <input data-id="${b.id}" data-field="lien" value="${b.lien}" placeholder="lien (ex: bilan-genou.html)" class="banniere-field w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <button type="button" data-id="${b.id}" class="delete-banniere-btn text-[11px] text-red-500 hover:underline">Supprimer</button>
+          </div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.banniere-toggle').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const nowActif = btn.dataset.actif !== 'true';
+          await supabaseClient.from('bannieres').update({ actif: nowActif }).eq('id', btn.dataset.id);
+          loadBannieres();
+        });
+      });
+
+      list.querySelectorAll('.banniere-field').forEach(el => {
+        el.addEventListener('change', async () => {
+          await supabaseClient.from('bannieres').update({ [el.dataset.field]: el.value }).eq('id', el.dataset.id);
+        });
+      });
+
+      list.querySelectorAll('.delete-banniere-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Supprimer ce bandeau ?')) return;
+          await supabaseClient.from('bannieres').delete().eq('id', btn.dataset.id);
+          loadBannieres();
+        });
+      });
+    }
+
+    document.getElementById('add-banniere-btn').addEventListener('click', async () => {
+      await supabaseClient.from('bannieres').insert({
+        titre: 'Nouveau bandeau — modifie ce texte',
+        lien: '#',
+        actif: false,
+        ordre: 99,
+      });
+      loadBannieres();
+    });
+
+    async function checkAccess() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user || user.email !== ADMIN_EMAIL) {
+        document.getElementById('denied').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('main-content').classList.remove('hidden');
+      setZoneTabStyle();
+      await loadZoneConfig();
+      await loadBannieres();
+    }
+
+    checkAccess();
+  </script>
+
+</body>
+</html>
