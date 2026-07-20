@@ -13,6 +13,28 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css">
 <script src="supabase-config.js"></script>
+  <script>
+    (async () => {
+      try {
+        const { data } = await supabaseClient
+          .from('bannieres')
+          .select('*')
+          .eq('actif', true)
+          .order('ordre', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (data) {
+          const banner = document.getElementById('site-banner');
+          document.getElementById('site-banner-text').textContent = data.titre;
+          banner.href = data.lien;
+          banner.classList.remove('hidden');
+        }
+      } catch (err) {
+        // Pas de bandeau si erreur, rien de grave
+      }
+    })();
+  </script>
 
 <script>
   tailwind.config = {
@@ -39,8 +61,8 @@
 <!-- ============ DÉBUT BANDEAU + MENU (identique sur toutes les pages) ============ -->
 
 <!-- Bandeau annonce -->
-<a href="cadeau.html" class="block bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-center text-xs sm:text-sm font-medium py-2 px-4">
-  🎁 Bilan de mobilité offert — 10 minutes, 100% gratuit. J'en profite →
+<a href="cadeau.html" id="site-banner" class="hidden bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-center text-xs sm:text-sm font-medium py-2 px-4">
+  <span id="site-banner-text"></span>
 </a>
 
 <!-- Barre de navigation -->
