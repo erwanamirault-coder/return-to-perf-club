@@ -7,6 +7,11 @@
 <title>Erwan Amirault</title>
 <meta name="description" content="Fais le bilan complet de ta mobilité : épaules, hanches, chevilles, genoux, colonne. Gratuit, en moins de 10 minutes.">
 
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0F4CA9">
+<link rel="icon" href="/icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -311,6 +316,11 @@
     }, { threshold: 0.15 });
 
     document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+    }
   </script>
 </body>
 </html>
