@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Télécharger l'app — Erwan Amirault</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000', white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+  .os-tab.active { background: #2D7AED; color: white; border-color: #2D7AED; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)] flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
+    <a href="index.html" class="flex items-center gap-2">
+      <span class="font-heading uppercase font-bold text-sm tracking-wide">Erwan Amirault</span>
+    </a>
+    <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+  </header>
+
+  <main class="px-6 py-14 max-w-lg mx-auto">
+    <div class="text-center mb-10">
+      <div class="w-16 h-16 rounded-2xl bg-brand-blue mx-auto mb-5 flex items-center justify-center">
+        <span class="font-heading font-bold text-white text-2xl">RP</span>
+      </div>
+      <h1 class="font-heading uppercase text-2xl sm:text-3xl font-bold mb-3">Télécharger l'app</h1>
+      <p class="text-sm text-[color:var(--fg-60)] max-w-sm mx-auto">
+        Installe Return To Perf sur ton téléphone pour y accéder en un tap, sans repasser par ton navigateur.
+      </p>
+    </div>
+
+    <!-- Sélecteur OS -->
+    <div class="grid grid-cols-2 gap-2 mb-8">
+      <button type="button" id="tab-android" class="os-tab px-4 py-3 rounded-xl border-2 border-[color:var(--border)] font-heading uppercase text-sm font-bold transition-colors">
+        🤖 Android
+      </button>
+      <button type="button" id="tab-iphone" class="os-tab px-4 py-3 rounded-xl border-2 border-[color:var(--border)] font-heading uppercase text-sm font-bold transition-colors">
+        📱 iPhone
+      </button>
+    </div>
+
+    <!-- ANDROID -->
+    <div id="content-android" class="hidden">
+      <a href="Return_To_Perf.apk" download class="flex items-center justify-center gap-3 w-full px-6 py-4 rounded-xl bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-heading uppercase tracking-wide font-semibold mb-8">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v13m0 0-4-4m4 4 4-4M5 19h14"/>
+        </svg>
+        Télécharger le fichier .apk
+      </a>
+
+      <div class="flex flex-col gap-4">
+        <div class="flex gap-3">
+          <span class="font-heading font-bold text-brand-blue shrink-0">1</span>
+          <p class="text-sm text-[color:var(--fg-70)]">Ouvre le fichier téléchargé depuis tes notifications ou ton dossier "Téléchargements".</p>
+        </div>
+        <div class="flex gap-3">
+          <span class="font-heading font-bold text-brand-blue shrink-0">2</span>
+          <p class="text-sm text-[color:var(--fg-70)]">Android affichera un message de sécurité ("Autoriser cette source ?") — c'est normal pour toute app installée hors du Play Store. Accepte.</p>
+        </div>
+        <div class="flex gap-3">
+          <span class="font-heading font-bold text-brand-blue shrink-0">3</span>
+          <p class="text-sm text-[color:var(--fg-70)]">Clique sur "Installer". Une fois fait, l'icône Return To Perf apparaît sur ton écran d'accueil.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- IPHONE -->
+    <div id="content-iphone" class="hidden">
+      <div class="rounded-xl border border-brand-blue-dark bg-brand-blue/5 p-4 mb-6">
+        <p class="text-xs text-[color:var(--fg-70)]">
+          Apple ne permet pas d'installer une app hors de l'App Store. Mais tu peux ajouter Return To Perf à ton écran d'accueil en 30 secondes — elle fonctionnera exactement comme une vraie app, en plein écran.
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-4">
+        <div class="flex gap-3">
+          <span class="font-heading font-bold text-brand-blue shrink-0">1</span>
+          <p class="text-sm text-[color:var(--fg-70)]">Ouvre <a href="index.html" class="text-brand-blue underline">ce site</a> avec <span class="font-semibold">Safari</span> (pas Chrome — l'option n'apparaît que dans Safari sur iPhone).</p>
+        </div>
+        <div class="flex gap-3">
+          <span class="font-heading font-bold text-brand-blue shrink-0">2</span>
+          <p class="text-sm text-[color:var(--fg-70)]">Appuie sur l'icône de partage <span class="font-semibold">⬆️ (carré avec une flèche vers le haut)</span>, en bas de l'écran.</p>
+        </div>
+        <div class="flex gap-3">
+          <span class="font-heading font-bold text-brand-blue shrink-0">3</span>
+          <p class="text-sm text-[color:var(--fg-70)]">Fais défiler et appuie sur <span class="font-semibold">"Sur l'écran d'accueil"</span>.</p>
+        </div>
+        <div class="flex gap-3">
+          <span class="font-heading font-bold text-brand-blue shrink-0">4</span>
+          <p class="text-sm text-[color:var(--fg-70)]">Appuie sur "Ajouter" en haut à droite. L'icône Return To Perf apparaît sur ton écran d'accueil.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="theme.js"></script>
+  <script>
+    function setTab(os) {
+      document.getElementById('tab-android').classList.toggle('active', os === 'android');
+      document.getElementById('tab-iphone').classList.toggle('active', os === 'iphone');
+      document.getElementById('content-android').classList.toggle('hidden', os !== 'android');
+      document.getElementById('content-iphone').classList.toggle('hidden', os !== 'iphone');
+    }
+
+    document.getElementById('tab-android').addEventListener('click', () => setTab('android'));
+    document.getElementById('tab-iphone').addEventListener('click', () => setTab('iphone'));
+
+    // Détecte l'appareil pour ouvrir directement sur le bon onglet
+    const isIphone = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    setTab(isIphone ? 'iphone' : 'android');
+  </script>
+
+</body>
+</html>
