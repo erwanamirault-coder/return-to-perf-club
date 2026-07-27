@@ -53,6 +53,13 @@
       </button>
     </section>
 
+    <!-- Résultats reçus -->
+    <section class="rounded-xl border border-[color:var(--border)] p-5 mb-6">
+      <h2 class="font-heading uppercase text-sm font-bold text-[color:var(--fg-50)] tracking-wide mb-1">📩 Résultats reçus</h2>
+      <p class="text-[11px] text-[color:var(--fg-40)] mb-4">Les personnes ayant complété un bilan et laissé leurs coordonnées.</p>
+      <div id="leads-list" class="flex flex-col gap-3"></div>
+    </section>
+
     <!-- Sélecteur de zone -->
     <div class="grid grid-cols-2 gap-2 mb-8">
       <button type="button" id="tab-genou" class="zone-tab px-4 py-3 rounded-xl border-2 font-heading uppercase text-sm font-bold">🦵 Genou</button>
@@ -358,6 +365,49 @@
       loadBannieres();
     });
 
+    // ===================================================================
+    // RÉSULTATS REÇUS (bilan_leads)
+    // ===================================================================
+    function escapeHtmlLead(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    async function loadLeads() {
+      const list = document.getElementById('leads-list');
+      const { data, error } = await supabaseClient
+        .from('bilan_leads')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        list.innerHTML = `<p class="text-xs text-red-500">Erreur : ${error.message}</p>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        list.innerHTML = `<p class="text-xs text-[color:var(--fg-50)]">Aucun résultat reçu pour l'instant.</p>`;
+        return;
+      }
+
+      const zoneLabel = { genou: '🦵 Genou', epaule: '💪 Épaule' };
+      const scoreColor = (s) => s <= 33 ? 'text-red-500' : (s <= 66 ? 'text-orange-500' : 'text-green-500');
+
+      list.innerHTML = data.map(l => `
+        <div class="rounded-lg border border-[color:var(--border)] p-4">
+          <div class="flex items-center justify-between mb-2 flex-wrap gap-1">
+            <p class="font-heading font-bold text-sm">${escapeHtmlLead(l.nom) || 'Sans nom'} — ${zoneLabel[l.zone] || l.zone}</p>
+            <span class="font-heading font-bold text-sm ${scoreColor(l.score)}">${l.score}/100</span>
+          </div>
+          <p class="text-xs text-[color:var(--fg-60)] mb-1">
+            📞 <a href="tel:${escapeHtmlLead(l.telephone)}" class="text-brand-blue hover:underline">${escapeHtmlLead(l.telephone) || '—'}</a>
+          </p>
+          ${l.commentaire ? `<p class="text-xs text-[color:var(--fg-50)] italic mb-1">"${escapeHtmlLead(l.commentaire)}"</p>` : ''}
+          <p class="text-[10px] text-[color:var(--fg-40)]">${new Date(l.created_at).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+        </div>
+      `).join('');
+    }
+
     async function checkAccess() {
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user || user.email !== ADMIN_EMAIL) {
@@ -368,6 +418,7 @@
       setZoneTabStyle();
       await loadZoneConfig();
       await loadBannieres();
+      await loadLeads();
     }
 
     checkAccess();
