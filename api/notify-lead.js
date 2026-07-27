@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { zone, nom, telephone, score, commentaire } = req.body;
+    const { zone, nom, email, telephone, score, commentaire } = req.body;
 
     const zoneLabel = zone === 'genou' ? 'Genou' : zone === 'epaule' ? 'Épaule' : zone;
 
@@ -27,6 +27,7 @@ module.exports = async (req, res) => {
         html: `
           <h2>Nouveau bilan ${zoneLabel}</h2>
           <p><strong>Nom :</strong> ${nom || '—'}</p>
+          <p><strong>Email :</strong> ${email || '—'}</p>
           <p><strong>Téléphone :</strong> ${telephone || '—'}</p>
           <p><strong>Score :</strong> ${score}/100</p>
           ${commentaire ? `<p><strong>Précision laissée :</strong> ${commentaire}</p>` : ''}
