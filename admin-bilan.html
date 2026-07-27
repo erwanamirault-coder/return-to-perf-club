@@ -401,6 +401,7 @@
           </div>
           <p class="text-xs text-[color:var(--fg-60)] mb-1">
             📞 <a href="tel:${escapeHtmlLead(l.telephone)}" class="text-brand-blue hover:underline">${escapeHtmlLead(l.telephone) || '—'}</a>
+            ${l.email ? ` · ✉️ <a href="mailto:${escapeHtmlLead(l.email)}" class="text-brand-blue hover:underline">${escapeHtmlLead(l.email)}</a>` : ''}
           </p>
           ${l.commentaire ? `<p class="text-xs text-[color:var(--fg-50)] italic mb-1">"${escapeHtmlLead(l.commentaire)}"</p>` : ''}
           <p class="text-[10px] text-[color:var(--fg-40)]">${new Date(l.created_at).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
