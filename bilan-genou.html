@@ -173,6 +173,12 @@
           <p id="result-text" class="text-sm text-[color:var(--fg-70)] leading-relaxed whitespace-pre-line"></p>
         </div>
 
+        <a href="https://calendly.com/erwan-amirault/30min" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 w-full px-6 py-4 rounded-xl border-2 border-brand-blue text-brand-blue hover:bg-brand-blue/5 transition-colors font-heading uppercase tracking-wide font-semibold mb-4">
+          📅 Réserver directement un appel bilan
+        </a>
+
+        <p class="text-center text-xs text-[color:var(--fg-40)] mb-4">— ou —</p>
+
         <div class="rounded-2xl bg-[color:var(--card)] border border-[color:var(--border)] p-5 sm:p-6">
           <p class="font-heading uppercase text-sm font-bold mb-2">📩 Reçois mon avis personnalisé</p>
           <p class="text-sm text-[color:var(--fg-60)] mb-4">
@@ -433,6 +439,13 @@
       }
 
       showScreen('screen-thanks');
+
+      // Notification email à Erwan (n'empêche jamais l'utilisateur de continuer)
+      fetch('/api/notify-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ zone: ZONE, nom, telephone, score, commentaire: commentaireForm || answers.commentaire || null }),
+      }).catch(() => {});
     });
   </script>
 
