@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teste-toi — Erwan Amirault</title>
+<meta name="description" content="Découvre en 2 minutes si ton genou ou ton épaule sont prêts à encaisser les exigences de ton sport. Bilan gratuit.">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700;800&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000', white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+  .card { transition: transform .15s ease, border-color .15s ease; }
+  .card:hover { transform: translateY(-4px); }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)] flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
+    <a href="index.html" class="flex items-center gap-2">
+      <span class="font-heading uppercase font-bold text-sm tracking-wide">Erwan Amirault</span>
+    </a>
+    <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+  </header>
+
+  <main class="px-6 py-14 max-w-lg mx-auto">
+    <div class="text-center mb-10">
+      <span class="inline-block px-3 py-1 rounded-full bg-brand-blue/10 text-brand-blue text-[11px] font-semibold uppercase tracking-widest mb-5">
+        Bilan gratuit · 2 minutes
+      </span>
+      <h1 class="font-heading uppercase text-3xl sm:text-4xl font-extrabold leading-tight mb-4">Teste-toi</h1>
+      <p class="text-sm text-[color:var(--fg-60)] max-w-sm mx-auto">
+        Choisis la zone qui te préoccupe, et découvre en 2 minutes si elle est prête à encaisser les exigences réelles de ton sport.
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-5">
+
+      <a href="bilan-genou.html" class="card block rounded-3xl overflow-hidden border border-[color:var(--border-strong)] hover:border-brand-blue">
+        <div class="p-7 sm:p-8 text-white" style="background: radial-gradient(circle at 20% 0%, #3D8BFF 0%, #08316E 100%);">
+          <span class="text-4xl mb-3 block">🦵</span>
+          <p class="font-heading uppercase text-2xl font-extrabold mb-1">Teste ton genou</p>
+          <p class="text-white/70 text-sm">2 min · 10 questions · score /100</p>
+        </div>
+      </a>
+
+      <a href="bilan-epaule.html" class="card block rounded-3xl overflow-hidden border border-[color:var(--border-strong)] hover:border-brand-blue">
+        <div class="p-7 sm:p-8 text-white" style="background: radial-gradient(circle at 20% 0%, #3D8BFF 0%, #08316E 100%);">
+          <span class="text-4xl mb-3 block">💪</span>
+          <p class="font-heading uppercase text-2xl font-extrabold mb-1">Teste ton épaule</p>
+          <p class="text-white/70 text-sm">2 min · 10 questions · score /100</p>
+        </div>
+      </a>
+
+    </div>
+
+    <p class="text-center text-xs text-[color:var(--fg-40)] mt-8 leading-relaxed">
+      Ces tests ne sont pas des diagnostics médicaux et ne remplacent pas un avis professionnel — ce sont des auto-évaluations fonctionnelles orientées performance & reprise sportive.
+    </p>
+  </main>
+
+  <script src="theme.js"></script>
+
+</body>
+</html>
