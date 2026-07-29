@@ -46,6 +46,7 @@
       <a href="generateur-facture.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">🧾 Devis/Factures</a>
       <a href="admin-bilan.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">🦵 Bilans</a>
       <a href="admin-services.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">💼 Mes services</a>
+      <a href="admin-banque-exercices.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">🎥 Banque exos</a>
       <a href="dashboard.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Mon espace</a>
       <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
       <a href="a-propos.html" class="shrink-0">
@@ -1098,7 +1099,10 @@
               <input type="text" placeholder="Repos" class="ex-repos px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
               <input type="text" placeholder="RPE" class="ex-rpe px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
               <input type="text" placeholder="Tempo" class="ex-tempo px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="text" placeholder="Lien vidéo" class="ex-video px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-2">
+              <div class="flex gap-1.5 sm:col-span-2">
+                <input type="text" placeholder="Lien vidéo" class="ex-video flex-1 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+                <button type="button" class="open-bank-picker-btn shrink-0 px-3 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] text-xs font-semibold hover:bg-brand-blue/5 transition-colors">🎥 Banque</button>
+              </div>
               <textarea placeholder="Explication de l'exercice (consignes, points d'attention...)" rows="2" class="ex-description px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-4"></textarea>
             </div>
             <p class="text-[10px] text-[color:var(--fg-40)] mb-2">💡 La charge sert au calcul du tonnage (Statistiques). Laisse vide si non applicable (cardio, gym au poids du corps...).</p>
@@ -1119,6 +1123,7 @@
       document.querySelectorAll('.save-exercise-btn').forEach(btn => btn.addEventListener('click', () => saveExercise(btn)));
       document.querySelectorAll('.cancel-edit-btn').forEach(btn => btn.addEventListener('click', () => resetForm(btn.closest('[data-jour]'))));
       document.querySelectorAll('.save-comment-btn').forEach(btn => btn.addEventListener('click', () => saveComment(btn)));
+      document.querySelectorAll('.open-bank-picker-btn').forEach(btn => btn.addEventListener('click', () => openBankPicker(btn.closest('[data-jour]'))));
 
       // Bannière de restauration de brouillon local (si la page a été quittée par erreur)
       document.querySelectorAll('[data-jour]').forEach(card => {
@@ -2971,6 +2976,89 @@
       }
       loadContentLecons();
     }
+  </script>
+
+  <!-- Panneau : sélection depuis la banque d'exercices -->
+  <div id="bank-picker-panel" class="hidden fixed inset-0 z-50 bg-black/50 flex items-start sm:items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-[color:var(--bg)] rounded-2xl border border-[color:var(--border)] max-w-lg w-full p-6 my-8 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-heading uppercase text-lg font-bold">🎥 Choisir dans la banque</h2>
+        <button type="button" id="close-bank-picker-btn" class="text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">✕</button>
+      </div>
+      <input type="text" id="bank-picker-search" placeholder="Rechercher un exercice..." class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-4">
+      <div id="bank-picker-list" class="flex-1 overflow-y-auto flex flex-col gap-4"></div>
+      <a href="admin-banque-exercices.html" target="_blank" class="text-xs text-brand-blue hover:underline mt-4">Gérer la banque d'exercices →</a>
+    </div>
+  </div>
+
+  <script>
+    let bankExercicesCache = null;
+    let bankPickerTargetCard = null;
+
+    async function openBankPicker(card) {
+      bankPickerTargetCard = card;
+      document.getElementById('bank-picker-panel').classList.remove('hidden');
+      document.getElementById('bank-picker-search').value = '';
+
+      if (!bankExercicesCache) {
+        const { data } = await supabaseClient.from('banque_exercices').select('*').order('categorie', { ascending: true }).order('nom', { ascending: true });
+        bankExercicesCache = data || [];
+      }
+      renderBankPicker('');
+    }
+
+    function renderBankPicker(term) {
+      const list = document.getElementById('bank-picker-list');
+      const filtered = term
+        ? bankExercicesCache.filter(e => e.nom.toLowerCase().includes(term) || e.categorie.toLowerCase().includes(term))
+        : bankExercicesCache;
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<p class="text-xs text-[color:var(--fg-50)]">Aucun résultat. <a href="admin-banque-exercices.html" target="_blank" class="text-brand-blue hover:underline">Ajoute des vidéos ici</a>.</p>`;
+        return;
+      }
+
+      const byCategorie = {};
+      const order = [];
+      filtered.forEach(e => {
+        if (!byCategorie[e.categorie]) { byCategorie[e.categorie] = []; order.push(e.categorie); }
+        byCategorie[e.categorie].push(e);
+      });
+
+      list.innerHTML = order.map(cat => `
+        <div>
+          <p class="text-[11px] uppercase tracking-widest font-semibold text-brand-blue mb-1.5">${cat}</p>
+          <div class="flex flex-col gap-1">
+            ${byCategorie[cat].map(e => `
+              <button type="button" data-id="${e.id}" class="pick-exercice-btn text-left text-sm px-2.5 py-2 rounded-lg hover:bg-[color:var(--card)] transition-colors">${e.nom}</button>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.pick-exercice-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const ex = bankExercicesCache.find(e => String(e.id) === btn.dataset.id);
+          if (!ex || !bankPickerTargetCard) return;
+
+          const exerciceInput = bankPickerTargetCard.querySelector('.ex-exercice');
+          const videoInput = bankPickerTargetCard.querySelector('.ex-video');
+          if (exerciceInput && !exerciceInput.value.trim()) exerciceInput.value = ex.nom;
+          if (videoInput) videoInput.value = ex.lien_video;
+
+          document.getElementById('bank-picker-panel').classList.add('hidden');
+          bankPickerTargetCard = null;
+        });
+      });
+    }
+
+    document.getElementById('bank-picker-search').addEventListener('input', (e) => {
+      renderBankPicker(e.target.value.trim().toLowerCase());
+    });
+    document.getElementById('close-bank-picker-btn').addEventListener('click', () => {
+      document.getElementById('bank-picker-panel').classList.add('hidden');
+      bankPickerTargetCard = null;
+    });
   </script>
 
 </body>
