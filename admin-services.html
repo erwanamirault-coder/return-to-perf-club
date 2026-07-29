@@ -92,6 +92,12 @@
           <textarea id="f-points" rows="5" placeholder="✅ Premier point&#10;✅ Deuxième point&#10;🔎 Détail inclus" class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></textarea>
         </div>
 
+        <div>
+          <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Contenu détaillé (page "En savoir plus", optionnel)</label>
+          <textarea id="f-description-longue" rows="10" placeholder="## Titre de section&#10;Texte du paragraphe...&#10;&#10;## Autre section&#10;1. Première étape&#10;2. Deuxième étape" class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue font-mono text-xs"></textarea>
+          <p class="text-[10px] text-[color:var(--fg-40)] mt-1">Laisse vide pour ne pas afficher de bouton "En savoir plus". Utilise "## " pour un titre de section, "**texte**" pour du gras, une ligne vide entre les paragraphes.</p>
+        </div>
+
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Texte du bouton</label>
@@ -193,6 +199,7 @@
         document.getElementById('f-titre').value = offre.titre;
         document.getElementById('f-description').value = offre.description || '';
         document.getElementById('f-points').value = offre.points || '';
+        document.getElementById('f-description-longue').value = offre.description_longue || '';
         document.getElementById('f-bouton-texte').value = offre.bouton_texte || '';
         document.getElementById('f-bouton-lien').value = offre.bouton_lien || '';
         document.getElementById('f-ordre').value = offre.ordre;
@@ -205,6 +212,7 @@
         document.getElementById('f-titre').value = '';
         document.getElementById('f-description').value = '';
         document.getElementById('f-points').value = '';
+        document.getElementById('f-description-longue').value = '';
         document.getElementById('f-bouton-texte').value = '';
         document.getElementById('f-bouton-lien').value = '';
         document.getElementById('f-ordre').value = offres.length + 1;
@@ -229,6 +237,7 @@
         titre: document.getElementById('f-titre').value.trim(),
         description: document.getElementById('f-description').value.trim(),
         points: document.getElementById('f-points').value.trim(),
+        description_longue: document.getElementById('f-description-longue').value.trim() || null,
         bouton_texte: document.getElementById('f-bouton-texte').value.trim() || null,
         bouton_lien: document.getElementById('f-bouton-lien').value.trim() || null,
         ordre: Number(document.getElementById('f-ordre').value) || 0,
