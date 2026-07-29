@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Banque d'exercices</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { brand: { blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } } },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)] flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
+    <a href="admin.html" class="text-sm text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">← Retour admin</a>
+    <h1 class="font-heading uppercase text-sm font-bold">Banque d'exercices</h1>
+    <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+  </header>
+
+  <p id="denied" class="hidden text-center py-20 text-[color:var(--fg-50)]">Accès réservé.</p>
+
+  <div id="main-content" class="hidden px-6 py-10 max-w-2xl mx-auto">
+
+    <!-- Import de playlist -->
+    <section class="rounded-xl border border-[color:var(--border)] p-5 mb-8">
+      <h2 class="font-heading uppercase text-sm font-bold text-[color:var(--fg-50)] tracking-wide mb-1">Importer une playlist YouTube</h2>
+      <p class="text-[11px] text-[color:var(--fg-40)] mb-4">Colle le lien d'une playlist entière — toutes ses vidéos seront ajoutées d'un coup à la catégorie choisie.</p>
+
+      <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Lien de la playlist</label>
+      <input type="url" id="playlist-url" placeholder="https://www.youtube.com/playlist?list=..." class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-3">
+
+      <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Catégorie à assigner à toutes ces vidéos</label>
+      <input type="text" id="playlist-categorie" placeholder="Ex: Squat, Mobilité épaule, Gainage..." class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-4">
+
+      <button type="button" id="import-btn" class="w-full px-6 py-3 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-heading uppercase tracking-wide font-semibold text-sm">
+        Importer cette playlist
+      </button>
+      <p id="import-status" class="text-xs text-[color:var(--fg-50)] mt-2"></p>
+      <p id="import-error" class="hidden text-xs text-red-500 mt-2"></p>
+    </section>
+
+    <!-- Ajout manuel -->
+    <section class="rounded-xl border border-[color:var(--border)] p-5 mb-8">
+      <h2 class="font-heading uppercase text-sm font-bold text-[color:var(--fg-50)] tracking-wide mb-4">Ajouter une vidéo manuellement</h2>
+      <div class="grid sm:grid-cols-2 gap-3 mb-3">
+        <input type="text" id="manual-nom" placeholder="Nom de l'exercice" class="px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="text" id="manual-categorie" placeholder="Catégorie" class="px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      </div>
+      <input type="url" id="manual-lien" placeholder="Lien de la vidéo" class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-3">
+      <button type="button" id="manual-add-btn" class="px-5 py-2.5 rounded-lg border border-brand-blue text-brand-blue text-xs font-semibold hover:bg-brand-blue/5 transition-colors">
+        + Ajouter cette vidéo
+      </button>
+    </section>
+
+    <!-- Liste -->
+    <section>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-heading uppercase text-sm font-bold text-[color:var(--fg-50)] tracking-wide">Ta banque (<span id="total-count">0</span> vidéos)</h2>
+        <input type="text" id="search-input" placeholder="Rechercher..." class="px-3 py-1.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue w-40">
+      </div>
+      <div id="bank-list" class="flex flex-col gap-5"></div>
+    </section>
+
+  </div>
+
+  <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    const ADMIN_EMAIL = "erwan20b@gmail.com";
+    let allExercices = [];
+    let searchTerm = '';
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    async function loadBank() {
+      const { data, error } = await supabaseClient.from('banque_exercices').select('*').order('categorie', { ascending: true }).order('nom', { ascending: true });
+      if (error) {
+        document.getElementById('bank-list').innerHTML = `<p class="text-xs text-red-500">Erreur : ${error.message}</p>`;
+        return;
+      }
+      allExercices = data || [];
+      renderBank();
+    }
+
+    function renderBank() {
+      const list = document.getElementById('bank-list');
+      document.getElementById('total-count').textContent = allExercices.length;
+
+      const filtered = searchTerm
+        ? allExercices.filter(e => e.nom.toLowerCase().includes(searchTerm) || e.categorie.toLowerCase().includes(searchTerm))
+        : allExercices;
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<p class="text-xs text-[color:var(--fg-50)]">Aucun exercice pour l'instant.</p>`;
+        return;
+      }
+
+      const byCategorie = {};
+      const order = [];
+      filtered.forEach(e => {
+        if (!byCategorie[e.categorie]) { byCategorie[e.categorie] = []; order.push(e.categorie); }
+        byCategorie[e.categorie].push(e);
+      });
+
+      list.innerHTML = order.map(cat => `
+        <div>
+          <p class="text-[11px] uppercase tracking-widest font-semibold text-brand-blue mb-2">${escapeHtml(cat)} (${byCategorie[cat].length})</p>
+          <div class="flex flex-col gap-1.5">
+            ${byCategorie[cat].map(e => `
+              <div class="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)]">
+                <a href="${escapeHtml(e.lien_video)}" target="_blank" class="text-xs hover:text-brand-blue transition-colors truncate">🎥 ${escapeHtml(e.nom)}</a>
+                <button data-id="${e.id}" class="delete-btn text-[11px] px-2 py-1 rounded-md border border-red-300 text-red-500 hover:bg-red-500/10 transition-colors shrink-0">Supprimer</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Supprimer cet exercice de la banque ?')) return;
+          await supabaseClient.from('banque_exercices').delete().eq('id', btn.dataset.id);
+          loadBank();
+        });
+      });
+    }
+
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      searchTerm = e.target.value.trim().toLowerCase();
+      renderBank();
+    });
+
+    function extractYoutubeId(url) {
+      const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+      return m ? m[1] : null;
+    }
+
+    document.getElementById('import-btn').addEventListener('click', async () => {
+      const playlistUrl = document.getElementById('playlist-url').value.trim();
+      const categorie = document.getElementById('playlist-categorie').value.trim();
+      const statusEl = document.getElementById('import-status');
+      const errorEl = document.getElementById('import-error');
+      const btn = document.getElementById('import-btn');
+
+      errorEl.classList.add('hidden');
+      statusEl.textContent = '';
+
+      if (!playlistUrl || !categorie) {
+        errorEl.textContent = 'Renseigne le lien de la playlist et une catégorie.';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      statusEl.textContent = 'Récupération des vidéos depuis YouTube...';
+
+      try {
+        const res = await fetch('/api/import-youtube-playlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ playlistUrl }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || 'Erreur inconnue');
+
+        const rows = data.videos.map(v => ({
+          categorie,
+          nom: v.nom,
+          lien_video: v.lien_video,
+          youtube_id: v.youtube_id,
+        }));
+
+        const { error } = await supabaseClient.from('banque_exercices').insert(rows);
+        if (error) throw new Error(error.message);
+
+        statusEl.textContent = `✓ ${rows.length} vidéo(s) importée(s) dans "${categorie}".`;
+        document.getElementById('playlist-url').value = '';
+        document.getElementById('playlist-categorie').value = '';
+        loadBank();
+      } catch (err) {
+        statusEl.textContent = '';
+        errorEl.textContent = 'Erreur : ' + err.message;
+        errorEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById('manual-add-btn').addEventListener('click', async () => {
+      const nom = document.getElementById('manual-nom').value.trim();
+      const categorie = document.getElementById('manual-categorie').value.trim();
+      const lien = document.getElementById('manual-lien').value.trim();
+
+      if (!nom || !categorie || !lien) {
+        alert('Remplis les 3 champs.');
+        return;
+      }
+
+      const { error } = await supabaseClient.from('banque_exercices').insert({
+        nom, categorie, lien_video: lien, youtube_id: extractYoutubeId(lien),
+      });
+
+      if (error) { alert('Erreur : ' + error.message); return; }
+
+      document.getElementById('manual-nom').value = '';
+      document.getElementById('manual-categorie').value = '';
+      document.getElementById('manual-lien').value = '';
+      loadBank();
+    });
+
+    async function checkAccess() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user || user.email !== ADMIN_EMAIL) {
+        document.getElementById('denied').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('main-content').classList.remove('hidden');
+      loadBank();
+    }
+
+    checkAccess();
+  </script>
+
+</body>
+</html>
