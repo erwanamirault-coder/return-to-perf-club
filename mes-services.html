@@ -334,7 +334,6 @@
           `;
         }
         // standard
-        const savoirPlusLien = o.titre && o.titre.includes('R.N.P') ? 'service-rnp.html' : `service-detail.html?id=${o.id}`;
         return `
           <div class="rounded-2xl border border-[color:var(--border-strong)] p-7 sm:p-8 mb-6">
             ${o.badge ? `<span class="inline-block mb-4 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold border border-brand-blue-dark text-[color:var(--accent)]">${escapeHtmlOffre(o.badge)}</span>` : ''}
@@ -343,7 +342,7 @@
             ${renderPoints(o.points, 'text-sm text-[color:var(--fg-70)]')}
             <div class="flex items-center gap-4 flex-wrap">
               ${o.bouton_texte && o.bouton_lien ? `<a href="${o.bouton_lien}" target="_blank" rel="noopener noreferrer" class="inline-block px-8 py-3 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-xs text-white">${escapeHtmlOffre(o.bouton_texte)}</a>` : ''}
-              ${(o.description_longue || o.titre.includes('R.N.P')) ? `<a href="${savoirPlusLien}" class="text-xs text-brand-blue hover:underline">En savoir plus →</a>` : ''}
+              ${o.description_longue ? `<a href="service-detail.html?id=${o.id}" class="text-xs text-brand-blue hover:underline">En savoir plus →</a>` : ''}
             </div>
           </div>
         `;
