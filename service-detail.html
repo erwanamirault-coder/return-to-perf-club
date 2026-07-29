@@ -38,6 +38,20 @@
   #content ol li::before { content: counter(step); position: absolute; left: 1rem; top: 1rem; width: 1.5rem; height: 1.5rem; border-radius: 999px; background: #2D7AED; color: white; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; }
   #content p { margin-bottom: 1rem; line-height: 1.7; color: var(--fg-70); }
   .hero-band { background: radial-gradient(circle at 20% 0%, #3D8BFF 0%, #08316E 100%); }
+
+  .profile-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin: 1.5rem 0; }
+  @media (min-width: 640px) { .profile-grid { grid-template-columns: repeat(3, 1fr); } }
+  .profile-card { border-radius: 1rem; border: 1px solid var(--border); background: var(--card); padding: 1.25rem; }
+  .profile-card h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--fg); }
+  .profile-card p { font-size: 0.85rem; color: var(--fg-60); margin-bottom: 0; line-height: 1.6; }
+
+  .faq-list { display: flex; flex-direction: column; gap: 0.6rem; margin: 1rem 0; }
+  .faq-item { border: 1px solid var(--border); border-radius: 0.75rem; padding: 0.9rem 1.1rem; background: var(--card); }
+  .faq-item summary { cursor: pointer; font-weight: 600; font-size: 0.9rem; color: var(--fg); list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary::after { content: '+'; font-size: 1.2rem; color: #2D7AED; margin-left: 1rem; transition: transform .2s ease; }
+  .faq-item[open] summary::after { transform: rotate(45deg); }
+  .faq-item p { margin-top: 0.75rem; margin-bottom: 0; font-size: 0.85rem; }
 </style>
 </head>
 <body class="min-h-screen">
@@ -82,29 +96,103 @@
       return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    // Convertisseur minimal : ## titres, **gras**, listes à tirets, paragraphes
-    function renderMarkdownLite(text) {
+    // Convertisseur : ## sections, ### sous-titres (rendus en cartes de
+    // profils ou en FAQ dépliable selon le titre de la section), **gras**,
+    // listes à tirets, étapes numérotées, paragraphes.
+    function renderInline(str) {
+      return escapeHtml(str).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    }
+
+    function renderPlainBlock(text) {
       const lines = text.split('\n');
       let html = '';
       let inList = false;
+      let listType = null;
 
       lines.forEach(line => {
         const trimmed = line.trim();
-        if (trimmed.startsWith('## ')) {
-          if (inList) { html += '</ul>'; inList = false; }
-          html += `<h2>${escapeHtml(trimmed.slice(3))}</h2>`;
-        } else if (trimmed.startsWith('- ')) {
-          if (!inList) { html += '<ul>'; inList = true; }
-          html += `<li class="flex gap-2"><span class="text-brand-blue shrink-0">•</span><span>${escapeHtml(trimmed.slice(2)).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</span></li>`;
+        if (trimmed.startsWith('- ')) {
+          if (!inList || listType !== 'ul') { if (inList) html += listType === 'ul' ? '</ul>' : '</ol>'; html += '<ul>'; inList = true; listType = 'ul'; }
+          html += `<li class="flex gap-2"><span class="text-brand-blue shrink-0">•</span><span>${renderInline(trimmed.slice(2))}</span></li>`;
+        } else if (/^\d+\.\s/.test(trimmed)) {
+          if (!inList || listType !== 'ol') { if (inList) html += listType === 'ul' ? '</ul>' : '</ol>'; html += '<ol>'; inList = true; listType = 'ol'; }
+          html += `<li>${renderInline(trimmed.replace(/^\d+\.\s*/, ''))}</li>`;
         } else if (trimmed === '') {
-          if (inList) { html += '</ul>'; inList = false; }
+          if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; listType = null; }
         } else {
-          if (inList) { html += '</ul>'; inList = false; }
-          const withBold = escapeHtml(trimmed).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-          html += `<p>${withBold}</p>`;
+          if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; listType = null; }
+          html += `<p>${renderInline(trimmed)}</p>`;
         }
       });
-      if (inList) html += '</ul>';
+      if (inList) html += listType === 'ul' ? '</ul>' : '</ol>';
+      return html;
+    }
+
+    function renderMarkdownLite(text) {
+      const sectionBlocks = text.split(/\n(?=## )/);
+      let html = '';
+
+      sectionBlocks.forEach(block => {
+        const lines = block.split('\n');
+        let sectionTitle = '';
+        let body = block;
+
+        if (lines[0].startsWith('## ')) {
+          sectionTitle = lines[0].slice(3).trim();
+          body = lines.slice(1).join('\n');
+          html += `<h2>${escapeHtml(sectionTitle)}</h2>`;
+        }
+
+        const subBlocks = body.split(/\n(?=### )/).filter(b => b.trim() !== '');
+        const hasSubHeadings = subBlocks.some(b => b.trim().startsWith('### '));
+
+        if (!hasSubHeadings) {
+          html += renderPlainBlock(body);
+          return;
+        }
+
+        const isFaq = /question/i.test(sectionTitle);
+        const isProfiles = /toi|profil|âge|age/i.test(sectionTitle);
+
+        if (isFaq) {
+          html += '<div class="faq-list">';
+          subBlocks.forEach(sub => {
+            const subLines = sub.split('\n');
+            if (subLines[0].trim().startsWith('### ')) {
+              const q = escapeHtml(subLines[0].trim().slice(4).trim());
+              const a = renderInline(subLines.slice(1).join(' ').trim());
+              html += `<details class="faq-item"><summary>${q}</summary><p>${a}</p></details>`;
+            } else {
+              html += renderPlainBlock(sub);
+            }
+          });
+          html += '</div>';
+        } else if (isProfiles) {
+          html += '<div class="profile-grid">';
+          subBlocks.forEach(sub => {
+            const subLines = sub.split('\n');
+            if (subLines[0].trim().startsWith('### ')) {
+              const t = escapeHtml(subLines[0].trim().slice(4).trim());
+              const p = renderInline(subLines.slice(1).join(' ').trim());
+              html += `<div class="profile-card"><h3>${t}</h3><p>${p}</p></div>`;
+            } else {
+              html += renderPlainBlock(sub);
+            }
+          });
+          html += '</div>';
+        } else {
+          subBlocks.forEach(sub => {
+            const subLines = sub.split('\n');
+            if (subLines[0].trim().startsWith('### ')) {
+              html += `<h3 class="font-heading uppercase text-base font-bold mt-4 mb-1.5">${escapeHtml(subLines[0].trim().slice(4).trim())}</h3>`;
+              html += renderPlainBlock(subLines.slice(1).join('\n'));
+            } else {
+              html += renderPlainBlock(sub);
+            }
+          });
+        }
+      });
+
       return html;
     }
 
