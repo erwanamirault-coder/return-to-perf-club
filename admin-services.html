@@ -169,6 +169,9 @@
             <p class="font-heading font-bold text-sm">${escapeHtml(o.titre)} ${o.actif ? '' : '<span class="text-[10px] font-normal text-[color:var(--fg-50)]">(masquée)</span>'}</p>
           </div>
           <div class="flex items-center gap-2">
+            <button type="button" data-id="${o.id}" data-type="${o.type}" class="availability-btn text-xs px-2.5 py-1 rounded-md border ${o.type === 'bientot' ? 'border-orange-300 text-orange-500' : 'border-green-300 text-green-600'}">
+              ${o.type === 'bientot' ? '🔜 Bientôt dispo' : '✅ Disponible'}
+            </button>
             <button type="button" data-id="${o.id}" data-actif="${o.actif}" class="toggle-btn text-xs px-2.5 py-1 rounded-md ${o.actif ? 'bg-brand-blue text-white' : 'bg-[color:var(--card)] text-[color:var(--fg-40)]'}">
               ${o.actif ? 'Actif' : 'Inactif'}
             </button>
@@ -176,6 +179,14 @@
           </div>
         </div>
       `).join('');
+
+      list.querySelectorAll('.availability-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const newType = btn.dataset.type === 'bientot' ? 'standard' : 'bientot';
+          await supabaseClient.from('offres_services').update({ type: newType }).eq('id', btn.dataset.id);
+          loadOffres();
+        });
+      });
 
       list.querySelectorAll('.toggle-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
