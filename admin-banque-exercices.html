@@ -113,6 +113,7 @@
     const ADMIN_EMAIL = "erwan20b@gmail.com";
     let allExercices = [];
     let searchTerm = '';
+    let collapsedCategories = {};
 
     function escapeHtml(str) {
       if (!str) return '';
@@ -149,10 +150,21 @@
         byCategorie[e.categorie].push(e);
       });
 
-      list.innerHTML = order.map(cat => `
+      list.innerHTML = order.map(cat => {
+        const collapsed = collapsedCategories[cat] === true;
+        return `
         <div>
-          <p class="text-[11px] uppercase tracking-widest font-semibold text-brand-blue mb-2">${escapeHtml(cat)} (${byCategorie[cat].length})</p>
-          <div class="flex flex-col gap-1.5">
+          <div class="flex items-center justify-between mb-2 gap-2">
+            <button type="button" class="category-toggle-btn flex items-center gap-2 flex-1 text-left" data-cat="${escapeHtml(cat)}">
+              <span class="text-[color:var(--fg-40)] text-xs transition-transform" style="display:inline-block; transform:rotate(${collapsed ? '-90deg' : '0deg'})">▼</span>
+              <span class="text-[11px] uppercase tracking-widest font-semibold text-brand-blue">${escapeHtml(cat)} (${byCategorie[cat].length})</span>
+            </button>
+            <div class="flex items-center gap-2 shrink-0">
+              <button type="button" data-cat="${escapeHtml(cat)}" class="rename-category-btn text-[10px] text-brand-blue hover:underline">✏️ Renommer</button>
+              <button type="button" data-cat="${escapeHtml(cat)}" class="delete-category-btn text-[10px] text-red-500 hover:underline">🗑️ Supprimer</button>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5 ${collapsed ? 'hidden' : ''}">
             ${byCategorie[cat].map(e => `
               <div class="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)]">
                 <a href="${escapeHtml(e.lien_video)}" target="_blank" class="text-xs hover:text-brand-blue transition-colors truncate">🎥 ${escapeHtml(e.nom)}</a>
@@ -164,7 +176,8 @@
             `).join('')}
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
 
       list.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
@@ -178,6 +191,42 @@
         btn.addEventListener('click', () => {
           const ex = allExercices.find(e => String(e.id) === btn.dataset.id);
           if (ex) openEditPanel(ex);
+        });
+      });
+
+      list.querySelectorAll('.category-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const cat = btn.dataset.cat;
+          collapsedCategories[cat] = !collapsedCategories[cat];
+          renderBank();
+        });
+      });
+
+      list.querySelectorAll('.rename-category-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const oldCat = btn.dataset.cat;
+          const newCat = prompt(`Renommer la catégorie "${oldCat}" en :`, oldCat);
+          if (!newCat || !newCat.trim() || newCat.trim() === oldCat) return;
+
+          const { error } = await supabaseClient.from('banque_exercices').update({ categorie: newCat.trim() }).eq('categorie', oldCat);
+          if (error) { alert('Erreur : ' + error.message); return; }
+
+          if (collapsedCategories[oldCat] !== undefined) {
+            collapsedCategories[newCat.trim()] = collapsedCategories[oldCat];
+            delete collapsedCategories[oldCat];
+          }
+          loadBank();
+        });
+      });
+
+      list.querySelectorAll('.delete-category-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const cat = btn.dataset.cat;
+          const count = allExercices.filter(e => e.categorie === cat).length;
+          if (!confirm(`Supprimer les ${count} vidéo(s) de la catégorie "${cat}" ? Tu pourras réimporter la playlist ensuite.`)) return;
+
+          await supabaseClient.from('banque_exercices').delete().eq('categorie', cat);
+          loadBank();
         });
       });
     }
