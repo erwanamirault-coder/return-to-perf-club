@@ -192,10 +192,22 @@
           youtube_id: v.youtube_id,
         }));
 
-        const { error } = await supabaseClient.from('banque_exercices').insert(rows);
+        // Ne garder que les vidéos pas encore présentes dans la banque (peu importe la catégorie)
+        const { data: existing } = await supabaseClient.from('banque_exercices').select('youtube_id');
+        const existingIds = new Set((existing || []).map(e => e.youtube_id));
+        const newRows = rows.filter(r => !existingIds.has(r.youtube_id));
+
+        if (newRows.length === 0) {
+          statusEl.textContent = `Aucune nouvelle vidéo — cette playlist est déjà entièrement importée.`;
+          document.getElementById('playlist-url').value = '';
+          document.getElementById('playlist-categorie').value = '';
+          return;
+        }
+
+        const { error } = await supabaseClient.from('banque_exercices').insert(newRows);
         if (error) throw new Error(error.message);
 
-        statusEl.textContent = `✓ ${rows.length} vidéo(s) importée(s) dans "${categorie}".`;
+        statusEl.textContent = `✓ ${newRows.length} nouvelle(s) vidéo(s) importée(s) dans "${categorie}"${rows.length > newRows.length ? ` (${rows.length - newRows.length} déjà présente(s), ignorée(s))` : ''}.`;
         document.getElementById('playlist-url').value = '';
         document.getElementById('playlist-categorie').value = '';
         loadBank();
