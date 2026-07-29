@@ -114,6 +114,13 @@
     let allExercices = [];
     let searchTerm = '';
     let collapsedCategories = {};
+    let categoriePlaylistMap = {};
+
+    async function loadCategoriePlaylists() {
+      const { data } = await supabaseClient.from('banque_categories').select('*');
+      categoriePlaylistMap = {};
+      (data || []).forEach(row => { categoriePlaylistMap[row.categorie] = row.playlist_url; });
+    }
 
     function escapeHtml(str) {
       if (!str) return '';
@@ -127,6 +134,7 @@
         return;
       }
       allExercices = data || [];
+      await loadCategoriePlaylists();
       renderBank();
     }
 
@@ -160,6 +168,7 @@
               <span class="text-[11px] uppercase tracking-widest font-semibold text-brand-blue">${escapeHtml(cat)} (${byCategorie[cat].length})</span>
             </button>
             <div class="flex items-center gap-2 shrink-0">
+              <button type="button" data-cat="${escapeHtml(cat)}" class="sync-category-btn text-[10px] text-brand-blue hover:underline">🔄 Mettre à jour</button>
               <button type="button" data-cat="${escapeHtml(cat)}" class="rename-category-btn text-[10px] text-brand-blue hover:underline">✏️ Renommer</button>
               <button type="button" data-cat="${escapeHtml(cat)}" class="delete-category-btn text-[10px] text-red-500 hover:underline">🗑️ Supprimer</button>
             </div>
@@ -200,6 +209,10 @@
           collapsedCategories[cat] = !collapsedCategories[cat];
           renderBank();
         });
+      });
+
+      list.querySelectorAll('.sync-category-btn').forEach(btn => {
+        btn.addEventListener('click', () => syncCategoryFromPlaylist(btn.dataset.cat));
       });
 
       list.querySelectorAll('.rename-category-btn').forEach(btn => {
@@ -285,6 +298,59 @@
       renderBank();
     });
 
+    async function syncCategoryFromPlaylist(categorie) {
+      let playlistUrl = categoriePlaylistMap[categorie];
+
+      if (!playlistUrl) {
+        playlistUrl = prompt(`Aucun lien de playlist connu pour "${categorie}".\nColle-le une première fois (il sera mémorisé pour les prochaines mises à jour) :`);
+        if (!playlistUrl || !playlistUrl.trim()) return;
+        playlistUrl = playlistUrl.trim();
+      } else {
+        const confirmed = confirm(`Remettre à jour "${categorie}" depuis :\n${playlistUrl}\n\nLes vidéos retirées de la playlist seront supprimées de la banque, et les nouvelles seront ajoutées.`);
+        if (!confirmed) return;
+      }
+
+      try {
+        const res = await fetch('/api/import-youtube-playlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ playlistUrl }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur inconnue');
+
+        const fetchedVideos = data.videos; // [{ nom, youtube_id, lien_video }]
+        const fetchedIds = new Set(fetchedVideos.map(v => v.youtube_id));
+
+        const existing = allExercices.filter(e => e.categorie === categorie);
+        const existingIds = new Set(existing.map(e => e.youtube_id));
+
+        const toDelete = existing.filter(e => !fetchedIds.has(e.youtube_id));
+        const toInsert = fetchedVideos.filter(v => !existingIds.has(v.youtube_id)).map(v => ({ categorie, nom: v.nom, lien_video: v.lien_video, youtube_id: v.youtube_id }));
+        const toUpdate = fetchedVideos.filter(v => existingIds.has(v.youtube_id) && existing.find(e => e.youtube_id === v.youtube_id)?.nom !== v.nom);
+
+        if (toDelete.length) {
+          await supabaseClient.from('banque_exercices').delete().in('id', toDelete.map(e => e.id));
+        }
+        if (toInsert.length) {
+          await supabaseClient.from('banque_exercices').insert(toInsert);
+        }
+        for (const v of toUpdate) {
+          const row = existing.find(e => e.youtube_id === v.youtube_id);
+          await supabaseClient.from('banque_exercices').update({ nom: v.nom }).eq('id', row.id);
+        }
+
+        await supabaseClient.from('banque_categories').upsert({
+          categorie, playlist_url: playlistUrl, updated_at: new Date().toISOString(),
+        }, { onConflict: 'categorie' });
+
+        alert(`"${categorie}" mise à jour : +${toInsert.length} ajoutée(s), -${toDelete.length} retirée(s), ${toUpdate.length} renommée(s).`);
+        loadBank();
+      } catch (err) {
+        alert('Erreur : ' + err.message);
+      }
+    }
+
     function extractYoutubeId(url) {
       const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
       return m ? m[1] : null;
@@ -324,6 +390,7 @@
           nom: v.nom,
           lien_video: v.lien_video,
           youtube_id: v.youtube_id,
+          playlist_url: playlistUrl,
         }));
 
         // Ne garder que les vidéos pas encore présentes dans la banque (peu importe la catégorie)
@@ -340,6 +407,11 @@
 
         const { error } = await supabaseClient.from('banque_exercices').insert(newRows);
         if (error) throw new Error(error.message);
+
+        // Mémorise le lien pour pouvoir remettre à jour cette catégorie plus tard
+        await supabaseClient.from('banque_categories').upsert({
+          categorie, playlist_url: playlistUrl, updated_at: new Date().toISOString(),
+        }, { onConflict: 'categorie' });
 
         statusEl.textContent = `✓ ${newRows.length} nouvelle(s) vidéo(s) importée(s) dans "${categorie}"${rows.length > newRows.length ? ` (${rows.length - newRows.length} déjà présente(s), ignorée(s))` : ''}.`;
         document.getElementById('playlist-url').value = '';
