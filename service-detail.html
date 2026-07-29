@@ -30,10 +30,14 @@
 <style>
   body { font-family: 'Poppins', sans-serif; }
   h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
-  #content h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; font-weight: 700; font-size: 1.15rem; margin-top: 2rem; margin-bottom: 0.75rem; }
+  #content h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; font-weight: 700; font-size: 1.25rem; margin-top: 2.5rem; margin-bottom: 1rem; }
   #content strong { font-weight: 600; color: var(--fg); }
-  #content ul { list-style: disc; padding-left: 1.25rem; margin: 0.75rem 0; display: flex; flex-direction: column; gap: 0.4rem; }
+  #content ul { list-style: none; padding-left: 0; margin: 0.75rem 0; display: flex; flex-direction: column; gap: 0.5rem; }
+  #content ol { list-style: none; padding-left: 0; margin: 1rem 0; display: flex; flex-direction: column; gap: 0.75rem; counter-reset: step; }
+  #content ol li { counter-increment: step; position: relative; padding: 1rem 1rem 1rem 3.25rem; border-radius: 0.75rem; background: var(--card); border: 1px solid var(--border); }
+  #content ol li::before { content: counter(step); position: absolute; left: 1rem; top: 1rem; width: 1.5rem; height: 1.5rem; border-radius: 999px; background: #2D7AED; color: white; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; }
   #content p { margin-bottom: 1rem; line-height: 1.7; color: var(--fg-70); }
+  .hero-band { background: radial-gradient(circle at 20% 0%, #3D8BFF 0%, #08316E 100%); }
 </style>
 </head>
 <body class="min-h-screen">
@@ -52,8 +56,10 @@
     <div id="loading" class="text-center text-sm text-[color:var(--fg-50)]">Chargement...</div>
 
     <div id="offer-content" class="hidden">
-      <span id="offer-badge" class="hidden inline-block mb-4 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold bg-brand-blue-dark text-white"></span>
-      <h1 id="offer-titre" class="font-heading uppercase text-2xl sm:text-3xl font-bold mb-8"></h1>
+      <div class="hero-band rounded-3xl px-7 py-10 sm:py-12 text-white shadow-xl mb-8">
+        <span id="offer-badge" class="hidden inline-block mb-4 px-3 py-1 rounded-full bg-white/15 backdrop-blur text-[11px] uppercase tracking-widest font-semibold"></span>
+        <h1 id="offer-titre" class="font-heading uppercase text-2xl sm:text-3xl font-extrabold leading-tight"></h1>
+      </div>
 
       <div id="content"></div>
 
@@ -89,7 +95,7 @@
           html += `<h2>${escapeHtml(trimmed.slice(3))}</h2>`;
         } else if (trimmed.startsWith('- ')) {
           if (!inList) { html += '<ul>'; inList = true; }
-          html += `<li>${escapeHtml(trimmed.slice(2))}</li>`;
+          html += `<li class="flex gap-2"><span class="text-brand-blue shrink-0">•</span><span>${escapeHtml(trimmed.slice(2)).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</span></li>`;
         } else if (trimmed === '') {
           if (inList) { html += '</ul>'; inList = false; }
         } else {
