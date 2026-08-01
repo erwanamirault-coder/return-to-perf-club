@@ -142,12 +142,32 @@
     ✓
   </div>
   <h1 class="font-heading uppercase text-3xl font-bold mb-4">Paiement confirmé, merci !</h1>
-  <p class="text-[color:var(--fg-70)] mb-8 max-w-md">
-    Ta formation est maintenant débloquée. Tu peux y accéder directement depuis ton espace.
-  </p>
-  <a href="dashboard.html" class="inline-block bg-brand-blue text-white px-8 py-3 rounded-lg font-heading uppercase tracking-wide font-semibold hover:bg-brand-blue-dark transition-colors">
-    Retour à mon espace
-  </a>
+
+  <!-- Cas par défaut : accès à du contenu -->
+  <div id="acces-contenu" class="hidden">
+    <p class="text-[color:var(--fg-70)] mb-8 max-w-md">
+      Ta formation est maintenant débloquée. Tu peux y accéder directement depuis ton espace.
+    </p>
+    <a href="dashboard.html" class="inline-block bg-brand-blue text-white px-8 py-3 rounded-lg font-heading uppercase tracking-wide font-semibold hover:bg-brand-blue-dark transition-colors">
+      Retour à mon espace
+    </a>
+  </div>
+
+  <!-- Cas rendez-vous : formulaire de coordonnées -->
+  <div id="prise-rdv" class="hidden w-full max-w-md">
+    <p class="text-[color:var(--fg-70)] mb-8">
+      Il ne reste plus qu'à caler ton rendez-vous ensemble. Laisse-moi tes coordonnées et tes disponibilités, je te recontacte rapidement.
+    </p>
+    <form id="rdv-form" class="flex flex-col gap-3 text-left">
+      <input type="text" id="rdv-nom" placeholder="Nom / prénom" required class="w-full px-4 py-3 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      <input type="tel" id="rdv-telephone" placeholder="Téléphone portable" required class="w-full px-4 py-3 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      <textarea id="rdv-disponibilites" placeholder="Tes disponibilités (jours/horaires qui t'arrangent)" rows="3" class="w-full px-4 py-3 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></textarea>
+      <button type="submit" id="rdv-submit-btn" class="mt-2 w-full px-6 py-4 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-heading uppercase tracking-wide font-semibold">
+        Envoyer mes disponibilités
+      </button>
+    </form>
+    <p id="rdv-confirm" class="hidden text-sm text-[color:var(--accent)] font-medium mt-4">C'est envoyé ✓ Je te recontacte rapidement pour caler ça ensemble.</p>
+  </div>
 </main>
 
 <footer class="text-center px-6 py-8">
@@ -175,5 +195,50 @@
 </footer>
 
 <script src="theme.js"></script>
+<script>
+  async function loadCase() {
+    const params = new URLSearchParams(window.location.search);
+    const formationId = params.get('formation');
+    if (!formationId) { document.getElementById('acces-contenu').classList.remove('hidden'); return; }
+
+    const { data: formation } = await supabaseClient.from('formations').select('necessite_rdv').eq('id', formationId).maybeSingle();
+
+    if (formation && formation.necessite_rdv) {
+      document.getElementById('prise-rdv').classList.remove('hidden');
+      document.getElementById('rdv-form').dataset.formationId = formationId;
+    } else {
+      document.getElementById('acces-contenu').classList.remove('hidden');
+    }
+  }
+
+  document.getElementById('rdv-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('rdv-submit-btn');
+    const formationId = e.target.dataset.formationId;
+    const nom = document.getElementById('rdv-nom').value.trim();
+    const telephone = document.getElementById('rdv-telephone').value.trim();
+    const disponibilites = document.getElementById('rdv-disponibilites').value.trim();
+
+    btn.disabled = true;
+    btn.textContent = 'Envoi...';
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    const { error } = await supabaseClient.from('rdv_contacts').insert({
+      formation_id: formationId,
+      user_id: user.id,
+      nom, telephone, disponibilites,
+    });
+
+    btn.disabled = false;
+
+    if (error) { alert("Erreur lors de l'envoi : " + error.message); return; }
+
+    document.getElementById('rdv-form').classList.add('hidden');
+    document.getElementById('rdv-confirm').classList.remove('hidden');
+  });
+
+  loadCase();
+</script>
 </body>
 </html>
