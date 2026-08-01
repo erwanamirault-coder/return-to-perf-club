@@ -4,11 +4,11 @@
 <script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Détail de l'offre — Erwan Amirault</title>
+<title>Return To Perf</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700;800&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -17,10 +17,7 @@
     theme: {
       extend: {
         colors: {
-          brand: {
-            black: '#000000', white: '#FFFFFF',
-            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
-          }
+          brand: { blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } }
         },
         fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
       }
@@ -30,6 +27,7 @@
 <style>
   body { font-family: 'Poppins', sans-serif; }
   h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+
   #content h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; font-weight: 700; font-size: 1.25rem; margin-top: 2.5rem; margin-bottom: 1rem; }
   #content strong { font-weight: 600; color: var(--fg); }
   #content ul { list-style: none; padding-left: 0; margin: 0.75rem 0; display: flex; flex-direction: column; gap: 0.5rem; }
@@ -37,7 +35,7 @@
   #content ol li { counter-increment: step; position: relative; padding: 1rem 1rem 1rem 3.25rem; border-radius: 0.75rem; background: var(--card); border: 1px solid var(--border); }
   #content ol li::before { content: counter(step); position: absolute; left: 1rem; top: 1rem; width: 1.5rem; height: 1.5rem; border-radius: 999px; background: #2D7AED; color: white; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; }
   #content p { margin-bottom: 1rem; line-height: 1.7; color: var(--fg-70); }
-  .hero-band { background: radial-gradient(circle at 20% 0%, #3D8BFF 0%, #08316E 100%); }
+  .hero-band { background: radial-gradient(circle at 20% 0%, #3D8BFF 0%, #08316E 100%); background-size: cover; background-position: center; }
 
   .profile-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin: 1.5rem 0; }
   @media (min-width: 640px) { .profile-grid { grid-template-columns: repeat(3, 1fr); } }
@@ -70,9 +68,20 @@
     <div id="loading" class="text-center text-sm text-[color:var(--fg-50)]">Chargement...</div>
 
     <div id="offer-content" class="hidden">
-      <div class="hero-band rounded-3xl px-7 py-10 sm:py-12 text-white shadow-xl mb-8">
-        <span id="offer-badge" class="hidden inline-block mb-4 px-3 py-1 rounded-full bg-white/15 backdrop-blur text-[11px] uppercase tracking-widest font-semibold"></span>
-        <h1 id="offer-titre" class="font-heading uppercase text-2xl sm:text-3xl font-extrabold leading-tight"></h1>
+      <div id="hero-band" class="hero-band rounded-3xl px-7 py-12 sm:py-16 text-white shadow-xl mb-8 relative overflow-hidden">
+        <div id="hero-overlay" class="absolute inset-0"></div>
+        <div class="relative">
+          <svg id="hero-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-4 opacity-90">
+            <circle cx="6" cy="6" r="2.2"/>
+            <circle cx="18" cy="6" r="2.2"/>
+            <circle cx="12" cy="12" r="2.2"/>
+            <circle cx="6" cy="18" r="2.2"/>
+            <circle cx="18" cy="18" r="2.2"/>
+            <path d="M7.7 7.5 10.3 10.5M16.3 7.5 13.7 10.5M7.7 16.5 10.3 13.5M16.3 16.5 13.7 13.5"/>
+          </svg>
+          <span id="offer-badge" class="hidden inline-block mb-4 px-3 py-1 rounded-full bg-white/15 backdrop-blur text-[11px] uppercase tracking-widest font-semibold"></span>
+          <h1 id="offer-titre" class="font-heading uppercase text-3xl sm:text-4xl md:text-5xl font-extrabold leading-[1.05]"></h1>
+        </div>
       </div>
 
       <div id="content"></div>
@@ -96,9 +105,6 @@
       return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    // Convertisseur : ## sections, ### sous-titres (rendus en cartes de
-    // profils ou en FAQ dépliable selon le titre de la section), **gras**,
-    // listes à tirets, étapes numérotées, paragraphes.
     function renderInline(str) {
       return escapeHtml(str).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     }
@@ -200,12 +206,7 @@
       const params = new URLSearchParams(window.location.search);
       const id = params.get('id');
 
-      const { data, error } = await supabaseClient
-        .from('offres_services')
-        .select('*')
-        .eq('id', id)
-        .eq('actif', true)
-        .maybeSingle();
+      const { data, error } = await supabaseClient.from('offres_services').select('*').eq('id', id).maybeSingle();
 
       document.getElementById('loading').classList.add('hidden');
 
@@ -216,11 +217,25 @@
 
       document.title = data.titre + ' | Erwan Amirault';
 
+      if (data.image_url) {
+        document.getElementById('hero-band').style.backgroundImage = `linear-gradient(rgba(8,49,110,.45), rgba(8,49,110,.75)), url('${data.image_url}')`;
+        document.getElementById('hero-band').style.backgroundSize = 'cover';
+        document.getElementById('hero-band').style.backgroundPosition = 'center';
+        document.getElementById('hero-icon').classList.add('hidden');
+      }
+
       if (data.badge) {
         document.getElementById('offer-badge').textContent = data.badge;
         document.getElementById('offer-badge').classList.remove('hidden');
       }
-      document.getElementById('offer-titre').textContent = data.titre;
+
+      // Titre : accroche bicolore ({{mot}} = en bleu clair) si définie, sinon titre brut
+      if (data.accroche) {
+        const withColor = escapeHtml(data.accroche).replace(/\{\{(.+?)\}\}/g, '<span class="text-brand-blue-light" style="color:#69A0F2">$1</span>');
+        document.getElementById('offer-titre').innerHTML = withColor;
+      } else {
+        document.getElementById('offer-titre').textContent = data.titre;
+      }
 
       if (!data.description_longue) {
         document.getElementById('content').innerHTML = `<p class="text-[color:var(--fg-50)] italic">Le contenu détaillé de cette offre arrive bientôt.</p>`;
@@ -231,11 +246,8 @@
       document.getElementById('content').innerHTML = renderMarkdownLite(data.description_longue);
 
       if (data.bouton_texte && data.bouton_lien) {
-        document.getElementById('cta-zone').innerHTML = `
-          <a href="${data.bouton_lien}" target="_blank" rel="noopener noreferrer" class="inline-block px-10 py-4 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-sm text-white">
-            ${escapeHtml(data.bouton_texte)}
-          </a>
-        `;
+        const cta = document.getElementById('cta-zone');
+        cta.innerHTML = `<a href="${data.bouton_lien}" target="_blank" rel="noopener noreferrer" class="inline-block w-full text-center px-6 py-4 rounded-xl bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-heading uppercase tracking-wide font-semibold shadow-lg shadow-brand-blue/20">${escapeHtml(data.bouton_texte)}</a>`;
       }
 
       document.getElementById('offer-content').classList.remove('hidden');
