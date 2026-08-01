@@ -16,9 +16,7 @@
   tailwind.config = {
     theme: {
       extend: {
-        colors: {
-          brand: { blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } }
-        },
+        colors: { brand: { blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } } },
         fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
       }
     }
@@ -40,16 +38,13 @@
   <p id="denied" class="hidden text-center py-20 text-[color:var(--fg-50)]">Accès réservé.</p>
 
   <div id="main-content" class="hidden px-6 py-10 max-w-2xl mx-auto">
-
     <div class="flex items-center justify-between mb-6">
       <p class="text-sm text-[color:var(--fg-50)]">Gère les cartes affichées sur la page "Mes services".</p>
       <button type="button" id="new-offre-btn" class="px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-xs font-heading uppercase tracking-wide font-semibold shrink-0">
         + Nouvelle offre
       </button>
     </div>
-
     <div id="offres-list" class="flex flex-col gap-3"></div>
-
   </div>
 
   <!-- Panneau d'édition -->
@@ -92,8 +87,17 @@
           <textarea id="f-points" rows="5" placeholder="✅ Premier point&#10;✅ Deuxième point&#10;🔎 Détail inclus" class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></textarea>
         </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Contenu détaillé (page "En savoir plus", optionnel)</label>
+        <div class="border-t border-[color:var(--border)] pt-3">
+          <p class="text-xs font-semibold text-[color:var(--fg-60)] mb-2 uppercase tracking-wide">Page "En savoir plus"</p>
+
+          <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Photo de fond du bandeau (optionnel, lien direct)</label>
+          <input type="url" id="f-image-url" placeholder="https://..." class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-3">
+
+          <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Accroche en grand titre (optionnel)</label>
+          <input type="text" id="f-accroche" placeholder="Le mouvement commence {{dans ton cerveau}}." class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-1">
+          <p class="text-[10px] text-[color:var(--fg-40)] mb-3">Entoure une partie du texte avec {{ }} pour l'afficher en bleu clair (comme sur la page d'accueil). Laisse vide pour afficher simplement le titre.</p>
+
+          <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Contenu détaillé</label>
           <textarea id="f-description-longue" rows="10" placeholder="## Titre de section&#10;Texte du paragraphe...&#10;&#10;## Autre section&#10;1. Première étape&#10;2. Deuxième étape" class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue font-mono text-xs"></textarea>
           <p class="text-[10px] text-[color:var(--fg-40)] mt-1">Laisse vide pour ne pas afficher de bouton "En savoir plus". Utilise "## Titre" pour une section, "**texte**" pour du gras. Dans une section dont le titre contient "questions", les "### Sous-titre" deviennent une FAQ dépliable. Dans une section dont le titre contient "toi"/"profil"/"âge", ils deviennent des cartes côte à côte.</p>
         </div>
@@ -210,6 +214,8 @@
         document.getElementById('f-titre').value = offre.titre;
         document.getElementById('f-description').value = offre.description || '';
         document.getElementById('f-points').value = offre.points || '';
+        document.getElementById('f-image-url').value = offre.image_url || '';
+        document.getElementById('f-accroche').value = offre.accroche || '';
         document.getElementById('f-description-longue').value = offre.description_longue || '';
         document.getElementById('f-bouton-texte').value = offre.bouton_texte || '';
         document.getElementById('f-bouton-lien').value = offre.bouton_lien || '';
@@ -223,6 +229,8 @@
         document.getElementById('f-titre').value = '';
         document.getElementById('f-description').value = '';
         document.getElementById('f-points').value = '';
+        document.getElementById('f-image-url').value = '';
+        document.getElementById('f-accroche').value = '';
         document.getElementById('f-description-longue').value = '';
         document.getElementById('f-bouton-texte').value = '';
         document.getElementById('f-bouton-lien').value = '';
@@ -248,6 +256,8 @@
         titre: document.getElementById('f-titre').value.trim(),
         description: document.getElementById('f-description').value.trim(),
         points: document.getElementById('f-points').value.trim(),
+        image_url: document.getElementById('f-image-url').value.trim() || null,
+        accroche: document.getElementById('f-accroche').value.trim() || null,
         description_longue: document.getElementById('f-description-longue').value.trim() || null,
         bouton_texte: document.getElementById('f-bouton-texte').value.trim() || null,
         bouton_lien: document.getElementById('f-bouton-lien').value.trim() || null,
