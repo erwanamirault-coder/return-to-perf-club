@@ -1,6 +1,7 @@
-// Masque UNIQUEMENT le lien "Bilan" du menu de navigation (nav), sans
-// jamais toucher au bandeau promotionnel en haut de page (qui utilise
-// la même adresse mais n'est pas à l'intérieur de la balise <nav>)
+// Masque le lien de menu dont le texte est exactement "Bilan" (comme
+// affiché dans la navigation). Le bandeau promotionnel du haut n'a
+// jamais ce texte exact (c'est une phrase complète), donc il n'est
+// jamais concerné, peu importe où il se trouve dans la page.
 (async () => {
   try {
     if (typeof supabaseClient === 'undefined') return;
@@ -11,8 +12,10 @@
       .maybeSingle();
 
     if (data && data.valeur === false) {
-      document.querySelectorAll('nav a[href="bilans.html"]').forEach((a) => {
-        a.style.display = 'none';
+      document.querySelectorAll('a').forEach((a) => {
+        if (a.textContent.trim() === 'Bilan') {
+          a.style.display = 'none';
+        }
       });
     }
   } catch (e) {
