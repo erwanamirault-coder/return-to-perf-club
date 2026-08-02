@@ -1,5 +1,6 @@
-// Masque l'onglet "Bilan" du menu public (desktop + mobile) selon le réglage admin
-// Ne cible QUE le lien exact vers bilans.html, pour ne jamais toucher aux liens admin
+// Masque UNIQUEMENT le lien "Bilan" du menu de navigation (nav), sans
+// jamais toucher au bandeau promotionnel en haut de page (qui utilise
+// la même adresse mais n'est pas à l'intérieur de la balise <nav>)
 (async () => {
   try {
     if (typeof supabaseClient === 'undefined') return;
@@ -10,7 +11,7 @@
       .maybeSingle();
 
     if (data && data.valeur === false) {
-      document.querySelectorAll('a[href="bilans.html"]').forEach((a) => {
+      document.querySelectorAll('nav a[href="bilans.html"]').forEach((a) => {
         a.style.display = 'none';
       });
     }
