@@ -419,12 +419,43 @@
 
       document.getElementById('content').innerHTML = renderMarkdownLite(data.description_longue);
 
+      await loadTemoignages(data.id);
+
       if (data.bouton_texte && data.bouton_lien) {
         const cta = document.getElementById('cta-zone');
         cta.innerHTML = `<a href="${data.bouton_lien}" target="_blank" rel="noopener noreferrer" class="inline-block w-full text-center px-6 py-4 rounded-xl bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-heading uppercase tracking-wide font-semibold shadow-lg shadow-brand-blue/20">${escapeHtml(data.bouton_texte)}</a>`;
       }
 
       document.getElementById('offer-content').classList.remove('hidden');
+    }
+
+    async function loadTemoignages(offreId) {
+      const { data: temoignages } = await supabaseClient.from('temoignages').select('*').eq('offre_id', offreId).eq('actif', true).order('ordre', { ascending: true });
+      if (!temoignages || temoignages.length === 0) return;
+
+      // Cherche le titre de section "Vos avis" (ou contenant "avis"/"témoignage")
+      const headings = document.querySelectorAll('#content h2');
+      let targetHeading = null;
+      headings.forEach(h => {
+        if (/avis|témoignage|temoignage/i.test(h.textContent)) targetHeading = h;
+      });
+      if (!targetHeading) return;
+
+      const grid = document.createElement('div');
+      grid.className = 'temoignages-grid';
+      grid.innerHTML = temoignages.map(t => `
+        <div class="temoignage-card">
+          <div class="stars">★★★★★</div>
+          <p class="quote">"${escapeHtml(t.texte)}"</p>
+          <p class="auteur">${escapeHtml(t.auteur)}${t.contexte ? ' — ' + escapeHtml(t.contexte) : ''}</p>
+        </div>
+      `).join('');
+
+      // Retire le paragraphe provisoire ("bientôt disponible") juste après le titre, s'il existe
+      let next = targetHeading.nextElementSibling;
+      if (next && next.tagName === 'P') next.remove();
+
+      targetHeading.insertAdjacentElement('afterend', grid);
     }
 
     // Délégation d'événements pour les blocs interactifs "concept-tabs"
