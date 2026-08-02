@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finalise ta réservation — Erwan Amirault</title>
+<meta name="description" content="Merci pour ton paiement ! Indique tes disponibilités pour qu'on cale ton rendez-vous visio.">
+<meta name="robots" content="noindex">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="supabase-config.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000', white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, h3, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ============ DÉBUT BANDEAU + MENU (à recopier tel quel sur chaque page) ============ -->
+
+<a href="cadeau.html" id="site-banner" class="hidden w-full block bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-center text-xs sm:text-sm font-medium py-2 px-4">
+  <span id="site-banner-text"></span>
+</a>
+
+<nav class="sticky top-0 z-50 bg-brand-blue-dark text-white">
+  <div class="flex items-center justify-between px-6 sm:px-10 py-3">
+    <a href="index.html" class="flex items-center gap-2 font-heading uppercase font-bold text-sm tracking-wide text-white">
+      Erwan Amirault
+    </a>
+
+    <div class="flex items-center gap-3">
+      <div class="hidden md:flex items-center gap-6 text-sm">
+        <span id="desktop-public" class="flex items-center gap-6">
+          <a href="index.html" class="hover:text-brand-blue-light transition-colors">Accueil</a>
+          <a href="cadeau.html" class="hover:text-brand-blue-light transition-colors">Bilan gratuit</a>
+          <a href="a-propos.html" class="hover:text-brand-blue-light transition-colors">À propos</a>
+          <a href="mes-services.html" class="hover:text-brand-blue-light transition-colors">Mes services</a>
+          <a href="formations.html" class="hover:text-brand-blue-light transition-colors">Formations</a>
+          <a href="login.html" class="bg-white text-brand-blue-dark px-4 py-1.5 rounded-lg font-semibold hover:bg-brand-blue-light hover:text-white transition-colors">Se connecter</a>
+        </span>
+        <span id="desktop-private" class="hidden items-center gap-6">
+          <a href="dashboard.html" class="hover:text-brand-blue-light transition-colors">Mon espace</a>
+          <a href="choix-bilan.html" class="hover:text-brand-blue-light transition-colors">Bilan</a>
+          <a href="a-propos.html" class="hover:text-brand-blue-light transition-colors">À propos</a>
+          <a href="mes-services.html" class="hover:text-brand-blue-light transition-colors">Mes services</a>
+          <a href="formations.html" class="hover:text-brand-blue-light transition-colors">Formations</a>
+          <a href="admin.html" id="admin-link-desktop" class="hidden hover:text-brand-blue-light transition-colors">Admin</a>
+          <a href="parametres.html" class="hover:text-brand-blue-light transition-colors">Paramètres</a>
+          <a href="#" id="logout-desktop" class="bg-white text-brand-blue-dark px-4 py-1.5 rounded-lg font-semibold hover:bg-brand-blue-light hover:text-white transition-colors">Déconnexion</a>
+        </span>
+      </div>
+
+      <button id="theme-toggle" class="w-9 h-9 rounded-full border border-white/30 flex items-center justify-center hover:border-white transition-colors shrink-0"></button>
+
+      <button id="nav-burger" class="w-9 h-9 flex items-center justify-center text-2xl leading-none md:hidden">☰</button>
+    </div>
+  </div>
+
+  <div id="mobile-panel" class="md:hidden hidden flex-col gap-4 px-6 pb-5 text-sm">
+    <div id="mobile-public" class="flex flex-col gap-4">
+      <a href="index.html" class="hover:text-brand-blue-light transition-colors">Accueil</a>
+      <a href="cadeau.html" class="hover:text-brand-blue-light transition-colors">Bilan gratuit</a>
+      <a href="a-propos.html" class="hover:text-brand-blue-light transition-colors">À propos</a>
+      <a href="mes-services.html" class="hover:text-brand-blue-light transition-colors">Mes services</a>
+      <a href="formations.html" class="hover:text-brand-blue-light transition-colors">Formations</a>
+      <a href="login.html" class="bg-white text-brand-blue-dark px-4 py-2 rounded-lg font-semibold text-center">Se connecter</a>
+    </div>
+    <div id="mobile-private" class="hidden flex-col gap-4">
+      <a href="dashboard.html" class="hover:text-brand-blue-light transition-colors">Mon espace</a>
+      <a href="choix-bilan.html" class="hover:text-brand-blue-light transition-colors">Bilan</a>
+      <a href="a-propos.html" class="hover:text-brand-blue-light transition-colors">À propos</a>
+      <a href="mes-services.html" class="hover:text-brand-blue-light transition-colors">Mes services</a>
+      <a href="formations.html" class="hover:text-brand-blue-light transition-colors">Formations</a>
+      <a href="admin.html" id="admin-link-mobile" class="hidden hover:text-brand-blue-light transition-colors">Admin</a>
+      <a href="parametres.html" class="hover:text-brand-blue-light transition-colors">Paramètres</a>
+      <a href="#" id="logout-mobile" class="bg-white text-brand-blue-dark px-4 py-2 rounded-lg font-semibold text-center">Déconnexion</a>
+    </div>
+  </div>
+</nav>
+
+<script>
+  (async function initNav() {
+    const els = {
+      dp: document.getElementById('desktop-public'),
+      dv: document.getElementById('desktop-private'),
+      mp: document.getElementById('mobile-public'),
+      mv: document.getElementById('mobile-private'),
+      adminD: document.getElementById('admin-link-desktop'),
+      adminM: document.getElementById('admin-link-mobile'),
+    };
+    try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session && session.user) {
+        els.dp.classList.add('hidden'); els.dp.classList.remove('flex');
+        els.dv.classList.remove('hidden'); els.dv.classList.add('flex');
+        els.mp.classList.add('hidden'); els.mp.classList.remove('flex');
+        els.mv.classList.remove('hidden'); els.mv.classList.add('flex');
+        const email = (session.user.email || '').toLowerCase().trim();
+        if (email === 'erwan20b@gmail.com') {
+          els.adminD.classList.remove('hidden');
+          els.adminM.classList.remove('hidden');
+        }
+      }
+    } catch (e) { /* pas connecté : on garde les liens publics */ }
+  })();
+
+  document.getElementById('nav-burger').addEventListener('click', function () {
+    const panel = document.getElementById('mobile-panel');
+    panel.classList.toggle('hidden');
+    panel.classList.toggle('flex');
+  });
+
+  async function handleLogout(e) {
+    e.preventDefault();
+    await supabaseClient.auth.signOut();
+    window.location.href = 'index.html';
+  }
+  document.getElementById('logout-desktop').addEventListener('click', handleLogout);
+  document.getElementById('logout-mobile').addEventListener('click', handleLogout);
+</script>
+<!-- ============ FIN BANDEAU + MENU ============ -->
+
+  <main class="px-6 py-14 sm:py-20 max-w-xl mx-auto">
+
+    <div id="form-view">
+      <div class="text-center mb-10">
+        <span class="inline-block mb-4 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold bg-brand-blue text-white">
+          ✅ Paiement confirmé
+        </span>
+        <h1 class="font-heading uppercase text-2xl sm:text-3xl font-bold leading-tight mb-4">
+          Encore une étape : <span class="text-brand-blue">calons ton rendez-vous</span>
+        </h1>
+        <p class="text-[color:var(--fg-70)] text-base leading-relaxed">
+          Remplis ce court formulaire pour que je puisse te recontacter et fixer ton créneau de séance visio 1 to 1.
+        </p>
+      </div>
+
+      <form id="rdv-form" class="flex flex-col gap-5">
+        <div>
+          <label class="block text-sm font-semibold mb-1.5">Prénom et nom *</label>
+          <input type="text" id="f-nom" required class="w-full px-4 py-3 rounded-lg border border-[color:var(--border)] bg-[color:var(--card)] focus:outline-none focus:border-brand-blue">
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-5">
+          <div>
+            <label class="block text-sm font-semibold mb-1.5">Email *</label>
+            <input type="email" id="f-email" required class="w-full px-4 py-3 rounded-lg border border-[color:var(--border)] bg-[color:var(--card)] focus:outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-1.5">Téléphone</label>
+            <input type="tel" id="f-telephone" class="w-full px-4 py-3 rounded-lg border border-[color:var(--border)] bg-[color:var(--card)] focus:outline-none focus:border-brand-blue">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1.5">Quel est ton objectif principal ? *</label>
+          <textarea id="f-objectif" required rows="3" placeholder="Ex : reprendre le sport après une blessure, améliorer ma mobilité pour le judo..." class="w-full px-4 py-3 rounded-lg border border-[color:var(--border)] bg-[color:var(--card)] focus:outline-none focus:border-brand-blue resize-none"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1.5">As-tu une douleur ou une blessure actuellement ?</label>
+          <textarea id="f-blessure" rows="3" placeholder="Décris si besoin (zone concernée, depuis quand, contexte...)" class="w-full px-4 py-3 rounded-lg border border-[color:var(--border)] bg-[color:var(--card)] focus:outline-none focus:border-brand-blue resize-none"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1.5">Tes disponibilités pour le rendez-vous *</label>
+          <textarea id="f-disponibilites" required rows="3" placeholder="Ex : Lundi et mercredi après 18h, ou weekend plutôt le matin..." class="w-full px-4 py-3 rounded-lg border border-[color:var(--border)] bg-[color:var(--card)] focus:outline-none focus:border-brand-blue resize-none"></textarea>
+        </div>
+
+        <p id="form-error" class="hidden text-sm text-red-500"></p>
+
+        <button type="submit" id="submit-btn" class="mt-2 px-8 py-4 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-white">
+          Envoyer mes disponibilités
+        </button>
+      </form>
+    </div>
+
+    <div id="success-view" class="hidden text-center py-10">
+      <div class="text-5xl mb-6">🎉</div>
+      <h1 class="font-heading uppercase text-2xl sm:text-3xl font-bold leading-tight mb-4">
+        C'est envoyé, <span class="text-brand-blue">merci !</span>
+      </h1>
+      <p class="text-[color:var(--fg-70)] text-base leading-relaxed max-w-md mx-auto">
+        Je reviens vers toi très vite pour caler ton rendez-vous visio en fonction de tes disponibilités.
+      </p>
+    </div>
+
+  </main>
+
+  <footer class="text-center px-6 pb-10">
+    <p class="text-xs text-[color:var(--fg-40)] italic max-w-sm mx-auto">
+      La blessure n'est qu'une étape, pas toute l'histoire. Alors changeons-la ensemble.
+    </p>
+  </footer>
+
+  <script src="theme.js"></script>
+  <script>
+    // Récupère l'id de session Stripe si présent dans l'URL (?session_id=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    const stripeSessionId = urlParams.get('session_id') || null;
+
+    const form = document.getElementById('rdv-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const errorEl = document.getElementById('form-error');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl.classList.add('hidden');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Envoi en cours...';
+
+      const payload = {
+        nom: document.getElementById('f-nom').value.trim(),
+        email: document.getElementById('f-email').value.trim().toLowerCase(),
+        telephone: document.getElementById('f-telephone').value.trim(),
+        objectif: document.getElementById('f-objectif').value.trim(),
+        blessure: document.getElementById('f-blessure').value.trim(),
+        disponibilites: document.getElementById('f-disponibilites').value.trim(),
+        stripe_session_id: stripeSessionId,
+      };
+
+      const { error } = await supabaseClient.from('demandes_visio').insert(payload);
+
+      if (error) {
+        errorEl.textContent = "Une erreur est survenue lors de l'envoi. Réessaie, ou contacte directement erwan.amirault@gmail.com.";
+        errorEl.classList.remove('hidden');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Envoyer mes disponibilités';
+        return;
+      }
+
+      document.getElementById('form-view').classList.add('hidden');
+      document.getElementById('success-view').classList.remove('hidden');
+    });
+  </script>
+</body>
+</html>
