@@ -39,6 +39,20 @@
 
   <div id="main-content" class="hidden px-6 py-10 max-w-2xl mx-auto">
 
+    <!-- Navigation -->
+    <section class="rounded-xl border border-[color:var(--border)] p-5 mb-6">
+      <h2 class="font-heading uppercase text-sm font-bold text-[color:var(--fg-50)] tracking-wide mb-4">Navigation</h2>
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-semibold">Onglet "Bilan" dans le menu</p>
+          <p class="text-xs text-[color:var(--fg-50)]">Visible sur toutes les pages du site (à côté de "Mon espace")</p>
+        </div>
+        <button type="button" id="toggle-nav-bilan" class="shrink-0 w-12 h-7 rounded-full transition-colors relative">
+          <span class="absolute top-0.5 w-6 h-6 rounded-full bg-white transition-all"></span>
+        </button>
+      </div>
+    </section>
+
     <!-- Bandeau du site -->
     <section class="rounded-xl border border-[color:var(--border)] p-5 mb-6">
       <h2 class="font-heading uppercase text-sm font-bold text-[color:var(--fg-50)] tracking-wide mb-1">Bandeau d'annonce du site</h2>
@@ -126,6 +140,31 @@
       if (!str) return '';
       return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
+
+    // ===================================================================
+    // NAVIGATION — onglet Bilan dans le menu
+    // ===================================================================
+    let navBilanVisible = true;
+
+    function renderNavToggle() {
+      const btn = document.getElementById('toggle-nav-bilan');
+      const knob = btn.querySelector('span');
+      btn.classList.toggle('bg-brand-blue', navBilanVisible);
+      btn.classList.toggle('bg-[color:var(--border-strong)]', !navBilanVisible);
+      knob.style.left = navBilanVisible ? '1.375rem' : '0.125rem';
+    }
+
+    async function loadNavSetting() {
+      const { data } = await supabaseClient.from('site_settings').select('valeur').eq('cle', 'nav_bilan_visible').maybeSingle();
+      if (data) navBilanVisible = data.valeur;
+      renderNavToggle();
+    }
+
+    document.getElementById('toggle-nav-bilan').addEventListener('click', async () => {
+      navBilanVisible = !navBilanVisible;
+      renderNavToggle();
+      await supabaseClient.from('site_settings').upsert({ cle: 'nav_bilan_visible', valeur: navBilanVisible });
+    });
 
     // ===================================================================
     // BANDEAU DU SITE
@@ -383,6 +422,7 @@
       await loadZoneConfig();
       await loadBannieres();
       await loadLeads();
+      await loadNavSetting();
     }
 
     checkAccess();
