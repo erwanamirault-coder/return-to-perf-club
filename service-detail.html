@@ -255,11 +255,20 @@
           return;
         }
 
+        const hasPipeHeadings = subBlocks.some(function(b) {
+          const line0 = b.split('\n')[0].trim();
+          return line0.startsWith('### ') && line0.includes('|');
+        });
+        const hasImagesInSubBlocks = subBlocks.some(function(b) {
+          const rest = b.split('\n').slice(1).join('\n').trim();
+          return /^!\[/.test(rest);
+        });
+
         const isFaq = /question/i.test(sectionTitle);
-        const isProfiles = /toi|profil|âge|age/i.test(sectionTitle);
-        const isParcours = /parcours/i.test(sectionTitle);
-        const isConceptTabs = /pilote/i.test(sectionTitle);
+        const isProfiles = /toi|profil|âge|age/i.test(sectionTitle) && !hasPipeHeadings;
         const isTemoignages = /avis|témoignage|temoignage/i.test(sectionTitle);
+        const isParcours = hasPipeHeadings && hasImagesInSubBlocks;
+        const isConceptTabs = hasPipeHeadings && !hasImagesInSubBlocks;
 
         if (isConceptTabs) {
           const items = [];
