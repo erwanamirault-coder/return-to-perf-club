@@ -56,6 +56,27 @@
   .cta-inline-btn { display: inline-block; padding: 0.9rem 1.85rem; border-radius: 999px; background: #2D7AED; color: white; font-family: 'Oswald', sans-serif; text-transform: uppercase; font-weight: 600; font-size: 0.8rem; white-space: nowrap; transition: background .15s ease; }
   .cta-inline-btn:hover { background: #0F4CA9; }
 
+  .steps-zigzag { position: relative; margin: 2.5rem 0 1rem; }
+  .steps-zigzag::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--border); transform: translateX(-50%); display: none; }
+  @media (min-width: 768px) { .steps-zigzag::before { display: block; } }
+  .step-row { display: flex; flex-direction: column; align-items: center; gap: 1.75rem; margin-bottom: 3.5rem; position: relative; }
+  @media (min-width: 768px) { .step-row { flex-direction: row; } .step-row.reverse { flex-direction: row-reverse; } }
+  .step-row:last-child { margin-bottom: 0; }
+  .step-dot { display: none; }
+  @media (min-width: 768px) { .step-dot { display: block; position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 14px; height: 14px; border-radius: 999px; background: #2D7AED; border: 3px solid var(--bg); z-index: 2; } }
+  .step-phone { flex: 0 0 auto; width: 200px; }
+  .phone-frame { aspect-ratio: 9/18; border-radius: 1.75rem; border: 7px solid #111; background: #000; overflow: hidden; position: relative; box-shadow: 0 16px 32px rgba(0,0,0,.15); }
+  .phone-frame::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 38%; height: 1rem; background: #111; border-radius: 0 0 0.9rem 0.9rem; z-index: 2; }
+  .phone-frame img { width: 100%; height: 100%; object-fit: cover; }
+  .step-text { flex: 1; text-align: center; }
+  @media (min-width: 768px) { .step-text { text-align: left; } .step-row.reverse .step-text { text-align: right; } }
+  .step-label { color: #2D7AED; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: .06em; font-size: .78rem; font-weight: 700; margin-bottom: .5rem; }
+  .step-title { font-family: 'Oswald', sans-serif; text-transform: uppercase; font-weight: 800; font-size: 1.5rem; margin-bottom: .75rem; color: var(--fg); line-height: 1.15; }
+  .step-desc { color: var(--fg-60); font-size: .92rem; line-height: 1.65; max-width: 26rem; }
+  @media (min-width: 768px) { .step-row:not(.reverse) .step-desc { margin-right: auto; } .step-row.reverse .step-desc { margin-left: auto; } }
+  .step-text-only { text-align: center; margin: 0 auto; }
+  @media (min-width: 768px) { .step-text-only { text-align: left; margin: 0; } }
+
   .faq-list { display: flex; flex-direction: column; gap: 0.6rem; margin: 1.25rem 0; }
   .faq-item { border: 1px solid var(--border); border-radius: 0.75rem; padding: 1rem 1.25rem; background: var(--card); }
   .faq-item summary { cursor: pointer; font-weight: 600; font-size: 0.92rem; color: var(--fg); list-style: none; display: flex; justify-content: space-between; align-items: center; }
@@ -201,8 +222,36 @@
 
         const isFaq = /question/i.test(sectionTitle);
         const isProfiles = /toi|profil|âge|age/i.test(sectionTitle);
+        const isParcours = /parcours/i.test(sectionTitle);
 
-        if (isFaq) {
+        if (isParcours) {
+          html += '<div class="steps-zigzag">';
+          subBlocks.forEach((sub, idx) => {
+            const subLines = sub.split('\n');
+            if (subLines[0].trim().startsWith('### ')) {
+              const headerParts = subLines[0].trim().slice(4).split('|').map(s => s.trim());
+              const label = headerParts[0] || '';
+              const title = headerParts[1] || '';
+              let rest = subLines.slice(1).join('\n').trim();
+              let imgTag = '';
+              const imgMatch = rest.match(/^!\[(.*?)\]\((.*?)\)/);
+              if (imgMatch) {
+                imgTag = `<img src="${imgMatch[2]}" alt="${escapeHtml(imgMatch[1])}">`;
+                rest = rest.slice(imgMatch[0].length).trim();
+              }
+              const desc = renderInline(rest);
+              const reverseClass = idx % 2 === 1 ? ' reverse' : '';
+              html += `<div class="step-row${reverseClass}">
+                <div class="step-phone"><div class="phone-frame">${imgTag}</div></div>
+                <span class="step-dot"></span>
+                <div class="step-text"><p class="step-label">${escapeHtml(label)}</p><h3 class="step-title">${escapeHtml(title)}</h3><p class="step-desc">${desc}</p></div>
+              </div>`;
+            } else {
+              html += renderPlainBlock(sub);
+            }
+          });
+          html += '</div>';
+        } else if (isFaq) {
           html += '<div class="faq-list">';
           subBlocks.forEach(sub => {
             const subLines = sub.split('\n');
