@@ -279,7 +279,9 @@
 
       // Titre : accroche bicolore ({{mot}} = en bleu) si définie, sinon titre brut
       if (data.accroche) {
-        const withColor = escapeHtml(data.accroche).replace(/\{\{(.+?)\}\}/g, '<span class="text-brand-blue" style="color:#2D7AED">$1</span>');
+        const withColor = escapeHtml(data.accroche)
+          .replace(/\n/g, '<br>')
+          .replace(/\{\{(.+?)\}\}/g, '<span class="text-brand-blue" style="color:#2D7AED">$1</span>');
         document.getElementById('offer-titre').innerHTML = withColor;
       } else {
         document.getElementById('offer-titre').textContent = data.titre;
