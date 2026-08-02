@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Réservations visio — Admin</title>
+<meta name="robots" content="noindex">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="supabase-config.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000', white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, h3, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ============ DÉBUT BANDEAU + MENU (à recopier tel quel sur chaque page) ============ -->
+
+<a href="cadeau.html" id="site-banner" class="hidden w-full block bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-center text-xs sm:text-sm font-medium py-2 px-4">
+  <span id="site-banner-text"></span>
+</a>
+
+<nav class="sticky top-0 z-50 bg-brand-blue-dark text-white">
+  <div class="flex items-center justify-between px-6 sm:px-10 py-3">
+    <a href="index.html" class="flex items-center gap-2 font-heading uppercase font-bold text-sm tracking-wide text-white">
+      Erwan Amirault
+    </a>
+
+    <div class="flex items-center gap-3">
+      <div class="hidden md:flex items-center gap-6 text-sm">
+        <span id="desktop-public" class="flex items-center gap-6">
+          <a href="index.html" class="hover:text-brand-blue-light transition-colors">Accueil</a>
+          <a href="cadeau.html" class="hover:text-brand-blue-light transition-colors">Bilan gratuit</a>
+          <a href="a-propos.html" class="hover:text-brand-blue-light transition-colors">À propos</a>
+          <a href="mes-services.html" class="hover:text-brand-blue-light transition-colors">Mes services</a>
+          <a href="formations.html" class="hover:text-brand-blue-light transition-colors">Formations</a>
+          <a href="login.html" class="bg-white text-brand-blue-dark px-4 py-1.5 rounded-lg font-semibold hover:bg-brand-blue-light hover:text-white transition-colors">Se connecter</a>
+        </span>
+        <span id="desktop-private" class="hidden items-center gap-6">
+          <a href="dashboard.html" class="hover:text-brand-blue-light transition-colors">Mon espace</a>
+          <a href="choix-bilan.html" class="hover:text-brand-blue-light transition-colors">Bilan</a>
+          <a href="a-propos.html" class="hover:text-brand-blue-light transition-colors">À propos</a>
+          <a href="mes-services.html" class="hover:text-brand-blue-light transition-colors">Mes services</a>
+          <a href="formations.html" class="hover:text-brand-blue-light transition-colors">Formations</a>
+          <a href="admin.html" id="admin-link-desktop" class="hidden hover:text-brand-blue-light transition-colors">Admin</a>
+          <a href="parametres.html" class="hover:text-brand-blue-light transition-colors">Paramètres</a>
+          <a href="#" id="logout-desktop" class="bg-white text-brand-blue-dark px-4 py-1.5 rounded-lg font-semibold hover:bg-brand-blue-light hover:text-white transition-colors">Déconnexion</a>
+        </span>
+      </div>
+
+      <button id="theme-toggle" class="w-9 h-9 rounded-full border border-white/30 flex items-center justify-center hover:border-white transition-colors shrink-0"></button>
+
+      <button id="nav-burger" class="w-9 h-9 flex items-center justify-center text-2xl leading-none md:hidden">☰</button>
+    </div>
+  </div>
+
+  <div id="mobile-panel" class="md:hidden hidden flex-col gap-4 px-6 pb-5 text-sm">
+    <div id="mobile-public" class="flex flex-col gap-4">
+      <a href="index.html" class="hover:text-brand-blue-light transition-colors">Accueil</a>
+      <a href="cadeau.html" class="hover:text-brand-blue-light transition-colors">Bilan gratuit</a>
+      <a href="a-propos.html" class="hover:text-brand-blue-light transition-colors">À propos</a>
+      <a href="mes-services.html" class="hover:text-brand-blue-light transition-colors">Mes services</a>
+      <a href="formations.html" class="hover:text-brand-blue-light transition-colors">Formations</a>
+      <a href="login.html" class="bg-white text-brand-blue-dark px-4 py-2 rounded-lg font-semibold text-center">Se connecter</a>
+    </div>
+    <div id="mobile-private" class="hidden flex-col gap-4">
+      <a href="dashboard.html" class="hover:text-brand-blue-light transition-colors">Mon espace</a>
+      <a href="choix-bilan.html" class="hover:text-brand-blue-light transition-colors">Bilan</a>
+      <a href="a-propos.html" class="hover:text-brand-blue-light transition-colors">À propos</a>
+      <a href="mes-services.html" class="hover:text-brand-blue-light transition-colors">Mes services</a>
+      <a href="formations.html" class="hover:text-brand-blue-light transition-colors">Formations</a>
+      <a href="admin.html" id="admin-link-mobile" class="hidden hover:text-brand-blue-light transition-colors">Admin</a>
+      <a href="parametres.html" class="hover:text-brand-blue-light transition-colors">Paramètres</a>
+      <a href="#" id="logout-mobile" class="bg-white text-brand-blue-dark px-4 py-2 rounded-lg font-semibold text-center">Déconnexion</a>
+    </div>
+  </div>
+</nav>
+
+<script>
+  (async function initNav() {
+    const els = {
+      dp: document.getElementById('desktop-public'),
+      dv: document.getElementById('desktop-private'),
+      mp: document.getElementById('mobile-public'),
+      mv: document.getElementById('mobile-private'),
+      adminD: document.getElementById('admin-link-desktop'),
+      adminM: document.getElementById('admin-link-mobile'),
+    };
+    try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session && session.user) {
+        els.dp.classList.add('hidden'); els.dp.classList.remove('flex');
+        els.dv.classList.remove('hidden'); els.dv.classList.add('flex');
+        els.mp.classList.add('hidden'); els.mp.classList.remove('flex');
+        els.mv.classList.remove('hidden'); els.mv.classList.add('flex');
+        const email = (session.user.email || '').toLowerCase().trim();
+        if (email === 'erwan20b@gmail.com') {
+          els.adminD.classList.remove('hidden');
+          els.adminM.classList.remove('hidden');
+        }
+      }
+    } catch (e) { /* pas connecté : on garde les liens publics */ }
+  })();
+
+  document.getElementById('nav-burger').addEventListener('click', function () {
+    const panel = document.getElementById('mobile-panel');
+    panel.classList.toggle('hidden');
+    panel.classList.toggle('flex');
+  });
+
+  async function handleLogout(e) {
+    e.preventDefault();
+    await supabaseClient.auth.signOut();
+    window.location.href = 'index.html';
+  }
+  document.getElementById('logout-desktop').addEventListener('click', handleLogout);
+  document.getElementById('logout-mobile').addEventListener('click', handleLogout);
+</script>
+<!-- ============ FIN BANDEAU + MENU ============ -->
+
+  <main class="px-6 py-10 max-w-4xl mx-auto">
+
+    <div id="access-denied" class="hidden text-center py-20">
+      <h1 class="font-heading uppercase text-xl font-bold mb-3">Accès réservé</h1>
+      <p class="text-[color:var(--fg-60)]">Cette page est réservée à l'administrateur.</p>
+      <a href="login.html" class="inline-block mt-6 px-6 py-3 rounded-lg bg-brand-blue text-white font-semibold">Se connecter</a>
+    </div>
+
+    <div id="admin-content" class="hidden">
+      <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
+        <h1 class="font-heading uppercase text-2xl font-bold">Réservations visio 1 to 1</h1>
+        <div class="flex gap-2 text-sm">
+          <button data-filter="nouveau" class="filter-btn px-4 py-2 rounded-lg bg-brand-blue text-white font-semibold">Nouvelles</button>
+          <button data-filter="toutes" class="filter-btn px-4 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] font-semibold">Toutes</button>
+        </div>
+      </div>
+
+      <div id="loading" class="text-center py-10 text-[color:var(--fg-60)]">Chargement...</div>
+      <div id="empty" class="hidden text-center py-16 text-[color:var(--fg-60)]">Aucune demande pour le moment.</div>
+      <div id="list" class="flex flex-col gap-4"></div>
+    </div>
+
+  </main>
+
+  <script src="theme.js"></script>
+  <script>
+    let currentFilter = 'nouveau';
+    let allDemandes = [];
+
+    async function checkAccessAndLoad() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const email = session && session.user ? (session.user.email || '').toLowerCase().trim() : null;
+
+      if (email !== 'erwan20b@gmail.com') {
+        document.getElementById('access-denied').classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('admin-content').classList.remove('hidden');
+      await loadDemandes();
+    }
+
+    async function loadDemandes() {
+      document.getElementById('loading').classList.remove('hidden');
+      document.getElementById('list').innerHTML = '';
+      document.getElementById('empty').classList.add('hidden');
+
+      const { data, error } = await supabaseClient
+        .from('demandes_visio')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      document.getElementById('loading').classList.add('hidden');
+
+      if (error) {
+        document.getElementById('list').innerHTML = `<p class="text-red-500 text-sm">Erreur de chargement : ${error.message}</p>`;
+        return;
+      }
+
+      allDemandes = data || [];
+      render();
+    }
+
+    function render() {
+      const filtered = currentFilter === 'toutes'
+        ? allDemandes
+        : allDemandes.filter(d => d.statut === currentFilter);
+
+      const listEl = document.getElementById('list');
+      const emptyEl = document.getElementById('empty');
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+      emptyEl.classList.add('hidden');
+
+      listEl.innerHTML = filtered.map(d => {
+        const date = new Date(d.created_at).toLocaleString('fr-FR', {
+          day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        const isNouveau = d.statut === 'nouveau';
+
+        return `
+          <div class="rounded-2xl border ${isNouveau ? 'border-brand-blue' : 'border-[color:var(--border)]'} bg-[color:var(--card)] p-6">
+            <div class="flex items-start justify-between gap-4 mb-4 flex-wrap">
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <h3 class="font-heading font-bold text-lg">${escapeHtml(d.nom)}</h3>
+                  ${isNouveau ? '<span class="px-2 py-0.5 rounded-full bg-brand-blue text-white text-[10px] uppercase font-bold">Nouveau</span>' : ''}
+                </div>
+                <p class="text-xs text-[color:var(--fg-50)]">${date}</p>
+              </div>
+              <button data-id="${d.id}" data-current-statut="${d.statut}" class="toggle-statut-btn shrink-0 px-4 py-2 rounded-lg text-sm font-semibold ${isNouveau ? 'bg-brand-blue text-white' : 'bg-[color:var(--border)] text-[color:var(--fg-70)]'}">
+                ${isNouveau ? 'Marquer traité' : 'Remettre en nouveau'}
+              </button>
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-3 text-sm mb-4">
+              <p><span class="font-semibold">Email :</span> <a href="mailto:${escapeHtml(d.email)}" class="text-brand-blue underline">${escapeHtml(d.email)}</a></p>
+              <p><span class="font-semibold">Téléphone :</span> ${d.telephone ? escapeHtml(d.telephone) : '—'}</p>
+            </div>
+
+            ${d.objectif ? `<div class="mb-3"><p class="text-xs font-semibold uppercase text-[color:var(--fg-50)] mb-1">Objectif</p><p class="text-sm text-[color:var(--fg-70)]">${escapeHtml(d.objectif)}</p></div>` : ''}
+            ${d.blessure ? `<div class="mb-3"><p class="text-xs font-semibold uppercase text-[color:var(--fg-50)] mb-1">Douleur / blessure</p><p class="text-sm text-[color:var(--fg-70)]">${escapeHtml(d.blessure)}</p></div>` : ''}
+            ${d.disponibilites ? `<div><p class="text-xs font-semibold uppercase text-[color:var(--fg-50)] mb-1">Disponibilités</p><p class="text-sm text-[color:var(--fg-70)]">${escapeHtml(d.disponibilites)}</p></div>` : ''}
+          </div>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.toggle-statut-btn').forEach(btn => {
+        btn.addEventListener('click', () => toggleStatut(btn.dataset.id, btn.dataset.currentStatut));
+      });
+    }
+
+    async function toggleStatut(id, currentStatut) {
+      const newStatut = currentStatut === 'nouveau' ? 'traite' : 'nouveau';
+      const { error } = await supabaseClient
+        .from('demandes_visio')
+        .update({ statut: newStatut })
+        .eq('id', id);
+
+      if (!error) {
+        const demande = allDemandes.find(d => d.id === id);
+        if (demande) demande.statut = newStatut;
+        render();
+      }
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentFilter = btn.dataset.filter;
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          b.classList.remove('bg-brand-blue', 'text-white');
+          b.classList.add('bg-[color:var(--card)]', 'border', 'border-[color:var(--border)]');
+        });
+        btn.classList.add('bg-brand-blue', 'text-white');
+        btn.classList.remove('bg-[color:var(--card)]', 'border', 'border-[color:var(--border)]');
+        render();
+      });
+    });
+
+    checkAccessAndLoad();
+  </script>
+</body>
+</html>
