@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Réglages du site</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { brand: { blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } } },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)] flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
+    <a href="admin.html" class="text-sm text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">← Retour admin</a>
+    <h1 class="font-heading uppercase text-sm font-bold">Réglages du site</h1>
+    <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+  </header>
+
+  <p id="denied" class="hidden text-center py-20 text-[color:var(--fg-50)]">Accès réservé.</p>
+
+  <div id="main-content" class="hidden px-6 py-10 max-w-lg mx-auto">
+    <section class="rounded-xl border border-[color:var(--border)] p-5">
+      <h2 class="font-heading uppercase text-sm font-bold text-[color:var(--fg-50)] tracking-wide mb-4">Navigation</h2>
+
+      <div class="flex items-center justify-between py-3 border-b border-[color:var(--border)]">
+        <div>
+          <p class="text-sm font-semibold">Onglet "Bilan" dans le menu</p>
+          <p class="text-xs text-[color:var(--fg-50)]">Visible sur toutes les pages du site</p>
+        </div>
+        <button type="button" id="toggle-nav-bilan" class="shrink-0 w-12 h-7 rounded-full transition-colors relative">
+          <span class="absolute top-0.5 w-6 h-6 rounded-full bg-white transition-all"></span>
+        </button>
+      </div>
+      <p id="save-status" class="hidden text-xs text-[color:var(--accent)] font-medium mt-3"></p>
+    </section>
+  </div>
+
+  <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    const ADMIN_EMAIL = "erwan20b@gmail.com";
+    let currentValue = true;
+
+    function renderToggle() {
+      const btn = document.getElementById('toggle-nav-bilan');
+      const knob = btn.querySelector('span');
+      btn.classList.toggle('bg-brand-blue', currentValue);
+      btn.classList.toggle('bg-[color:var(--border-strong)]', !currentValue);
+      knob.style.left = currentValue ? '1.375rem' : '0.125rem';
+    }
+
+    async function loadSettings() {
+      const { data, error } = await supabaseClient.from('site_settings').select('*').eq('cle', 'nav_bilan_visible').maybeSingle();
+      if (!error && data) currentValue = data.valeur;
+      renderToggle();
+    }
+
+    document.getElementById('toggle-nav-bilan').addEventListener('click', async () => {
+      currentValue = !currentValue;
+      renderToggle();
+
+      const { error } = await supabaseClient.from('site_settings').upsert({ cle: 'nav_bilan_visible', valeur: currentValue });
+
+      const statusEl = document.getElementById('save-status');
+      if (error) {
+        statusEl.textContent = 'Erreur : ' + error.message;
+        statusEl.className = 'text-xs text-red-500 font-medium mt-3';
+      } else {
+        statusEl.textContent = currentValue ? 'Onglet visible ✓' : 'Onglet masqué ✓';
+        statusEl.className = 'text-xs text-[color:var(--accent)] font-medium mt-3';
+      }
+      statusEl.classList.remove('hidden');
+    });
+
+    async function checkAccess() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user || user.email !== ADMIN_EMAIL) {
+        document.getElementById('denied').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('main-content').classList.remove('hidden');
+      loadSettings();
+    }
+
+    checkAccess();
+  </script>
+
+</body>
+</html>
