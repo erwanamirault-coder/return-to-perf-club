@@ -69,3 +69,36 @@
     // Erreur silencieuse : la navigation reste visible par défaut
   }
 })();
+
+// ============ PASTILLE DE NOTIFICATION (nouvelles demandes de RDV visio) ============
+// Affiche un petit badge rouge sur le lien "Admin" du menu (desktop + mobile)
+// quand il existe des demandes de RDV visio non traitées. Ne s'affiche que
+// pour l'admin connecté ; ne fait rien si le lien Admin n'est pas dans la page.
+(async () => {
+  try {
+    if (typeof supabaseClient === 'undefined') return;
+
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session || !session.user) return;
+
+    const email = (session.user.email || '').toLowerCase().trim();
+    if (email !== 'erwan20b@gmail.com') return;
+
+    const { count, error } = await supabaseClient
+      .from('demandes_visio')
+      .select('id', { count: 'exact', head: true })
+      .eq('statut', 'nouveau');
+
+    if (error || !count) return;
+
+    document.querySelectorAll('#admin-link-desktop, #admin-link-mobile').forEach((link) => {
+      if (link.querySelector('.notif-badge')) return; // déjà ajoutée
+      const badge = document.createElement('span');
+      badge.className = 'notif-badge inline-flex items-center justify-center ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none align-middle';
+      badge.textContent = count;
+      link.appendChild(badge);
+    });
+  } catch (e) {
+    // Erreur silencieuse : pas de pastille si problème
+  }
+})();
