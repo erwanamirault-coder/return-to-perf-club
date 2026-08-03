@@ -46,10 +46,9 @@
 })();
 
 // ============ MASQUAGE DU LIEN "BILAN" SELON LE RÉGLAGE ADMIN ============
-// Masque le lien de menu dont le texte est exactement "Bilan" (comme
-// affiché dans la navigation). Le bandeau promotionnel du haut n'a
-// jamais ce texte exact (c'est une phrase complète), donc il n'est
-// jamais concerné, peu importe où il se trouve dans la page.
+// Masque les liens de menu "Bilan" (espace privé) et "Bilan gratuit" (menu
+// public). Comparaison en texte exact pour ne jamais toucher au bandeau
+// promotionnel du haut, qui n'a jamais l'un de ces deux textes précis.
 (async () => {
   try {
     if (typeof supabaseClient === 'undefined') return;
@@ -60,7 +59,8 @@
       .maybeSingle();
     if (data && data.valeur === false) {
       document.querySelectorAll('a').forEach((a) => {
-        if (a.textContent.trim() === 'Bilan') {
+        const texte = a.textContent.trim();
+        if (texte === 'Bilan' || texte === 'Bilan gratuit') {
           a.style.display = 'none';
         }
       });
