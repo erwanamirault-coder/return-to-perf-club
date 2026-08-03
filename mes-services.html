@@ -191,7 +191,7 @@
   </section>
 
   <!-- OFFRES (gérées depuis l'admin) — grille responsive -->
-  <section id="offres-container" class="px-6 pb-6 max-w-5xl mx-auto flex flex-wrap justify-center gap-5 items-stretch"></section>
+  <section id="offres-container" class="px-6 py-6 max-w-5xl mx-auto flex flex-wrap justify-center gap-x-6 gap-y-10 items-stretch"></section>
 
   <!-- RÉSULTATS CLIENTS -->
   <section class="px-6 py-14 max-w-2xl mx-auto border-t border-[color:var(--border)]">
@@ -292,7 +292,7 @@
       if (!points) return '';
       const lines = points.split('\n').map(l => l.trim()).filter(Boolean);
       if (lines.length === 0) return '';
-      return `<div class="flex flex-col gap-1.5 ${sizeClass} mb-5">${lines.map(l => `<p>${escapeHtmlOffre(l)}</p>`).join('')}</div>`;
+      return `<div class="flex flex-col gap-2.5 ${sizeClass} mb-6">${lines.map(l => `<p>${escapeHtmlOffre(l)}</p>`).join('')}</div>`;
     }
 
     async function loadOffres() {
@@ -309,10 +309,10 @@
         if (o.type === 'phare') {
           // Offre phare : même taille que les autres dans la grille, juste un style mis en avant (bordure bleue)
           return `
-            <div class="w-full sm:w-[calc(50%-10px)] lg:w-[calc(33.333%-13.333px)] rounded-2xl border-2 border-brand-blue bg-brand-blue/5 p-6 sm:p-7 flex flex-col h-full">
-              ${o.badge ? `<span class="inline-block mb-4 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold bg-brand-blue text-white self-start">${escapeHtmlOffre(o.badge)}</span>` : ''}
-              <h3 class="font-heading uppercase text-lg font-bold mb-3">${escapeHtmlOffre(o.titre)}</h3>
-              <p class="text-sm text-[color:var(--fg-70)] leading-relaxed mb-4">${escapeHtmlOffre(o.description)}</p>
+            <div class="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] rounded-2xl border-2 border-brand-blue bg-brand-blue/5 p-7 sm:p-8 flex flex-col h-full shadow-sm hover:shadow-md transition-shadow">
+              ${o.badge ? `<span class="inline-block mb-5 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold bg-brand-blue text-white self-start">${escapeHtmlOffre(o.badge)}</span>` : ''}
+              <h3 class="font-heading uppercase text-lg font-bold mb-4">${escapeHtmlOffre(o.titre)}</h3>
+              <p class="text-sm text-[color:var(--fg-70)] leading-relaxed mb-5">${escapeHtmlOffre(o.description)}</p>
               ${renderPoints(o.points, 'text-sm text-[color:var(--fg-70)] flex-1')}
               <div class="flex items-center gap-4 flex-wrap mt-auto pt-2">
                 ${o.bouton_texte && o.bouton_lien ? `<a href="${o.bouton_lien}" target="_blank" rel="noopener noreferrer" class="inline-block px-6 py-3 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-xs text-white">${escapeHtmlOffre(o.bouton_texte)}</a>` : ''}
@@ -323,20 +323,20 @@
         }
         if (o.type === 'bientot') {
           return `
-            <div class="w-full sm:w-[calc(50%-10px)] lg:w-[calc(33.333%-13.333px)] rounded-2xl border border-dashed border-[color:var(--border-strong)] p-6 sm:p-7 opacity-70 flex flex-col h-full">
-              ${o.badge ? `<span class="inline-block mb-4 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold bg-[color:var(--card)] text-[color:var(--fg-50)] self-start">${escapeHtmlOffre(o.badge)}</span>` : ''}
-              <h3 class="font-heading uppercase text-lg font-bold mb-3">${escapeHtmlOffre(o.titre)}</h3>
-              <p class="text-sm text-[color:var(--fg-60)] leading-relaxed mb-3 flex-1">${escapeHtmlOffre(o.description)}</p>
+            <div class="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] rounded-2xl border border-dashed border-[color:var(--border-strong)] p-7 sm:p-8 opacity-70 flex flex-col h-full">
+              ${o.badge ? `<span class="inline-block mb-5 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold bg-[color:var(--card)] text-[color:var(--fg-50)] self-start">${escapeHtmlOffre(o.badge)}</span>` : ''}
+              <h3 class="font-heading uppercase text-lg font-bold mb-4">${escapeHtmlOffre(o.titre)}</h3>
+              <p class="text-sm text-[color:var(--fg-60)] leading-relaxed mb-4 flex-1">${escapeHtmlOffre(o.description)}</p>
               ${o.description_longue ? `<a href="service-detail.html?id=${o.id}" class="text-xs text-brand-blue hover:underline">En savoir plus →</a>` : ''}
             </div>
           `;
         }
         // standard
         return `
-          <div class="w-full sm:w-[calc(50%-10px)] lg:w-[calc(33.333%-13.333px)] rounded-2xl border border-[color:var(--border-strong)] p-6 sm:p-7 flex flex-col h-full">
-            ${o.badge ? `<span class="inline-block mb-4 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold border border-brand-blue-dark text-[color:var(--accent)] self-start">${escapeHtmlOffre(o.badge)}</span>` : ''}
-            <h3 class="font-heading uppercase text-lg font-bold mb-3">${escapeHtmlOffre(o.titre)}</h3>
-            <p class="text-sm text-[color:var(--fg-70)] leading-relaxed mb-4">${escapeHtmlOffre(o.description)}</p>
+          <div class="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] rounded-2xl border border-[color:var(--border-strong)] p-7 sm:p-8 flex flex-col h-full shadow-sm hover:shadow-md transition-shadow">
+            ${o.badge ? `<span class="inline-block mb-5 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold border border-brand-blue-dark text-[color:var(--accent)] self-start">${escapeHtmlOffre(o.badge)}</span>` : ''}
+            <h3 class="font-heading uppercase text-lg font-bold mb-4">${escapeHtmlOffre(o.titre)}</h3>
+            <p class="text-sm text-[color:var(--fg-70)] leading-relaxed mb-5">${escapeHtmlOffre(o.description)}</p>
             ${renderPoints(o.points, 'text-sm text-[color:var(--fg-70)] flex-1')}
             <div class="flex items-center gap-4 flex-wrap mt-auto pt-2">
               ${o.bouton_texte && o.bouton_lien ? `<a href="${o.bouton_lien}" target="_blank" rel="noopener noreferrer" class="inline-block px-6 py-3 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-xs text-white">${escapeHtmlOffre(o.bouton_texte)}</a>` : ''}
