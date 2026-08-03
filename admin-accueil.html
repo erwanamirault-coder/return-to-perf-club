@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Page d'accueil</title>
+<meta name="robots" content="noindex">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="supabase-config.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000', white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, h3, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ============ DÉBUT BANDEAU + MENU (à recopier tel quel sur chaque page) ============ -->
+
+<a href="cadeau.html" id="site-banner" class="hidden w-full block bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-center text-xs sm:text-sm font-medium py-2 px-4">
+  <span id="site-banner-text"></span>
+</a>
+
+<nav class="sticky top-0 z-50 bg-brand-blue-dark text-white">
+  <div class="flex items-center justify-between px-6 sm:px-10 py-3">
+    <a href="index.html" class="flex items-center gap-2 font-heading uppercase font-bold text-sm tracking-wide text-white">
+      Erwan Amirault
+    </a>
+
+    <div class="flex items-center gap-3">
+      <div class="hidden md:flex items-center gap-6 text-sm">
+        <span id="desktop-public" class="flex items-center gap-6">
+          <a href="index.html" class="hover:text-brand-blue-light transition-colors">Accueil</a>
+          <a href="cadeau.html" class="hover:text-brand-blue-light transition-colors">Bilan gratuit</a>
+          <a href="a-propos.html" class="hover:text-brand-blue-light transition-colors">À propos</a>
+          <a href="mes-services.html" class="hover:text-brand-blue-light transition-colors">Mes services</a>
+          <a href="formations.html" class="hover:text-brand-blue-light transition-colors">Formations</a>
+          <a href="login.html" class="bg-white text-brand-blue-dark px-4 py-1.5 rounded-lg font-semibold hover:bg-brand-blue-light hover:text-white transition-colors">Se connecter</a>
+        </span>
+        <span id="desktop-private" class="hidden items-center gap-6">
+          <a href="dashboard.html" class="hover:text-brand-blue-light transition-colors">Mon espace</a>
+          <a href="choix-bilan.html" class="hover:text-brand-blue-light transition-colors">Bilan</a>
+          <a href="a-propos.html" class="hover:text-brand-blue-light transition-colors">À propos</a>
+          <a href="mes-services.html" class="hover:text-brand-blue-light transition-colors">Mes services</a>
+          <a href="formations.html" class="hover:text-brand-blue-light transition-colors">Formations</a>
+          <a href="admin.html" id="admin-link-desktop" class="hidden hover:text-brand-blue-light transition-colors">Admin</a>
+          <a href="parametres.html" class="hover:text-brand-blue-light transition-colors">Paramètres</a>
+          <a href="#" id="logout-desktop" class="bg-white text-brand-blue-dark px-4 py-1.5 rounded-lg font-semibold hover:bg-brand-blue-light hover:text-white transition-colors">Déconnexion</a>
+        </span>
+      </div>
+
+      <button id="theme-toggle" class="w-9 h-9 rounded-full border border-white/30 flex items-center justify-center hover:border-white transition-colors shrink-0"></button>
+
+      <button id="nav-burger" class="w-9 h-9 flex items-center justify-center text-2xl leading-none md:hidden">☰</button>
+    </div>
+  </div>
+
+  <div id="mobile-panel" class="md:hidden hidden flex-col gap-4 px-6 pb-5 text-sm">
+    <div id="mobile-public" class="flex flex-col gap-4">
+      <a href="index.html" class="hover:text-brand-blue-light transition-colors">Accueil</a>
+      <a href="cadeau.html" class="hover:text-brand-blue-light transition-colors">Bilan gratuit</a>
+      <a href="a-propos.html" class="hover:text-brand-blue-light transition-colors">À propos</a>
+      <a href="mes-services.html" class="hover:text-brand-blue-light transition-colors">Mes services</a>
+      <a href="formations.html" class="hover:text-brand-blue-light transition-colors">Formations</a>
+      <a href="login.html" class="bg-white text-brand-blue-dark px-4 py-2 rounded-lg font-semibold text-center">Se connecter</a>
+    </div>
+    <div id="mobile-private" class="hidden flex-col gap-4">
+      <a href="dashboard.html" class="hover:text-brand-blue-light transition-colors">Mon espace</a>
+      <a href="choix-bilan.html" class="hover:text-brand-blue-light transition-colors">Bilan</a>
+      <a href="a-propos.html" class="hover:text-brand-blue-light transition-colors">À propos</a>
+      <a href="mes-services.html" class="hover:text-brand-blue-light transition-colors">Mes services</a>
+      <a href="formations.html" class="hover:text-brand-blue-light transition-colors">Formations</a>
+      <a href="admin.html" id="admin-link-mobile" class="hidden hover:text-brand-blue-light transition-colors">Admin</a>
+      <a href="parametres.html" class="hover:text-brand-blue-light transition-colors">Paramètres</a>
+      <a href="#" id="logout-mobile" class="bg-white text-brand-blue-dark px-4 py-2 rounded-lg font-semibold text-center">Déconnexion</a>
+    </div>
+  </div>
+</nav>
+
+<script>
+  (async function initNav() {
+    const els = {
+      dp: document.getElementById('desktop-public'),
+      dv: document.getElementById('desktop-private'),
+      mp: document.getElementById('mobile-public'),
+      mv: document.getElementById('mobile-private'),
+      adminD: document.getElementById('admin-link-desktop'),
+      adminM: document.getElementById('admin-link-mobile'),
+    };
+    try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session && session.user) {
+        els.dp.classList.add('hidden'); els.dp.classList.remove('flex');
+        els.dv.classList.remove('hidden'); els.dv.classList.add('flex');
+        els.mp.classList.add('hidden'); els.mp.classList.remove('flex');
+        els.mv.classList.remove('hidden'); els.mv.classList.add('flex');
+        const email = (session.user.email || '').toLowerCase().trim();
+        if (email === 'erwan20b@gmail.com') {
+          els.adminD.classList.remove('hidden');
+          els.adminM.classList.remove('hidden');
+        }
+      }
+    } catch (e) { /* pas connecté : on garde les liens publics */ }
+  })();
+
+  document.getElementById('nav-burger').addEventListener('click', function () {
+    const panel = document.getElementById('mobile-panel');
+    panel.classList.toggle('hidden');
+    panel.classList.toggle('flex');
+  });
+
+  async function handleLogout(e) {
+    e.preventDefault();
+    await supabaseClient.auth.signOut();
+    window.location.href = 'index.html';
+  }
+  document.getElementById('logout-desktop').addEventListener('click', handleLogout);
+  document.getElementById('logout-mobile').addEventListener('click', handleLogout);
+</script>
+<!-- ============ FIN BANDEAU + MENU ============ -->
+
+  <main class="px-6 py-10 max-w-3xl mx-auto">
+
+    <div id="access-denied" class="hidden text-center py-20">
+      <h1 class="font-heading uppercase text-xl font-bold mb-3">Accès réservé</h1>
+      <p class="text-[color:var(--fg-60)]">Cette page est réservée à l'administrateur.</p>
+      <a href="login.html" class="inline-block mt-6 px-6 py-3 rounded-lg bg-brand-blue text-white font-semibold">Se connecter</a>
+    </div>
+
+    <div id="admin-content" class="hidden">
+      <div class="flex items-center justify-between mb-2 flex-wrap gap-3">
+        <h1 class="font-heading uppercase text-2xl font-bold">Page d'accueil</h1>
+        <a href="index.html" target="_blank" class="text-sm text-brand-blue hover:underline">Voir la page en ligne →</a>
+      </div>
+      <p class="text-sm text-[color:var(--fg-60)] mb-8">Chaque carte ci-dessous est un bloc de ta page d'accueil, dans l'ordre d'affichage. Utilise ▲▼ pour réordonner, l'interrupteur pour afficher/masquer, et "Modifier" pour changer le contenu.</p>
+
+      <div id="blocs-list" class="flex flex-col gap-3 mb-8"></div>
+
+      <div class="rounded-xl border-2 border-dashed border-[color:var(--border-strong)] p-5 mb-10">
+        <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-3">+ Ajouter un nouveau bloc</p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <button data-type="hero" class="add-type-btn px-3 py-2.5 rounded-lg border border-[color:var(--border)] hover:border-brand-blue text-xs font-medium transition-colors">🎯 En-tête (hero)</button>
+          <button data-type="carte_duo" class="add-type-btn px-3 py-2.5 rounded-lg border border-[color:var(--border)] hover:border-brand-blue text-xs font-medium transition-colors">🃏 Duo de cartes</button>
+          <button data-type="cadeau_cta" class="add-type-btn px-3 py-2.5 rounded-lg border border-[color:var(--border)] hover:border-brand-blue text-xs font-medium transition-colors">🎁 Encart offre</button>
+          <button data-type="texte_libre" class="add-type-btn px-3 py-2.5 rounded-lg border border-[color:var(--border)] hover:border-brand-blue text-xs font-medium transition-colors">📝 Texte libre</button>
+        </div>
+      </div>
+
+      <!-- Formulaire d'édition (modal simple) -->
+      <div id="edit-panel" class="hidden fixed inset-0 z-50 bg-black/50 flex items-start sm:items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-[color:var(--bg)] rounded-2xl border border-[color:var(--border)] max-w-lg w-full p-6 my-8 max-h-[85vh] overflow-y-auto">
+          <div class="flex items-center justify-between mb-5">
+            <h2 id="edit-panel-title" class="font-heading uppercase text-lg font-bold">Modifier le bloc</h2>
+            <button id="close-edit-panel" class="text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">✕</button>
+          </div>
+
+          <div id="edit-form-fields" class="flex flex-col gap-3"></div>
+
+          <p id="edit-error" class="hidden text-xs text-red-500 mt-3"></p>
+
+          <div class="flex items-center gap-2 mt-5">
+            <button id="save-bloc-btn" class="px-5 py-2.5 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-sm font-semibold">Enregistrer</button>
+            <button id="cancel-edit-btn" class="px-5 py-2.5 rounded-lg border border-[color:var(--border)] text-sm font-medium">Annuler</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="theme.js"></script>
+  <script>
+    const ADMIN_EMAIL = 'erwan20b@gmail.com';
+    let blocs = [];
+    let editingBloc = null; // { id, type, ...champs } ou null si nouveau
+    let editingIsNew = false;
+
+    const typeLabels = {
+      hero: '🎯 En-tête (hero)',
+      carte_duo: '🃏 Duo de cartes',
+      cadeau_cta: '🎁 Encart offre',
+      texte_libre: '📝 Texte libre'
+    };
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    async function checkAccessAndLoad() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const email = session && session.user ? (session.user.email || '').toLowerCase().trim() : null;
+      if (email !== ADMIN_EMAIL) {
+        document.getElementById('access-denied').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('admin-content').classList.remove('hidden');
+      await loadBlocs();
+    }
+
+    async function loadBlocs() {
+      const { data, error } = await supabaseClient
+        .from('accueil_blocs')
+        .select('*')
+        .order('ordre', { ascending: true });
+
+      if (error) {
+        document.getElementById('blocs-list').innerHTML = `<p class="text-red-500 text-sm">Erreur de chargement : ${error.message}</p>`;
+        return;
+      }
+      blocs = data || [];
+      renderBlocsList();
+    }
+
+    function renderBlocsList() {
+      const list = document.getElementById('blocs-list');
+      if (blocs.length === 0) {
+        list.innerHTML = `<p class="text-sm text-[color:var(--fg-50)] text-center py-8">Aucun bloc pour l'instant. Ajoutes-en un ci-dessous.</p>`;
+        return;
+      }
+
+      list.innerHTML = blocs.map((b, i) => `
+        <div class="rounded-xl border ${b.actif ? 'border-[color:var(--border)]' : 'border-[color:var(--border)] opacity-50'} bg-[color:var(--card)] p-4">
+          <div class="flex items-start justify-between gap-3 flex-wrap">
+            <div class="flex items-start gap-2">
+              <div class="flex flex-col shrink-0 mt-0.5">
+                <button data-id="${b.id}" data-dir="up" class="move-btn text-[color:var(--fg-40)] hover:text-brand-blue text-xs leading-none ${i === 0 ? 'opacity-20 pointer-events-none' : ''}">▲</button>
+                <button data-id="${b.id}" data-dir="down" class="move-btn text-[color:var(--fg-40)] hover:text-brand-blue text-xs leading-none ${i === blocs.length - 1 ? 'opacity-20 pointer-events-none' : ''}">▼</button>
+              </div>
+              <div>
+                <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-1">${typeLabels[b.type] || b.type}</p>
+                <p class="text-sm font-medium">${escapeHtml(b.titre) || '<span class="italic text-[color:var(--fg-40)]">Sans titre</span>'}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button data-id="${b.id}" class="toggle-actif-btn text-xs px-2.5 py-1 rounded-full ${b.actif ? 'bg-brand-blue text-white' : 'bg-[color:var(--bg)] text-[color:var(--fg-40)] border border-[color:var(--border)]'}">${b.actif ? 'Visible' : 'Masqué'}</button>
+              <button data-id="${b.id}" class="edit-btn text-xs text-brand-blue hover:underline">Modifier</button>
+              <button data-id="${b.id}" class="delete-btn text-xs text-red-400 hover:text-red-300">Supprimer</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.move-btn').forEach(btn => btn.addEventListener('click', () => moveBloc(btn.dataset.id, btn.dataset.dir)));
+      document.querySelectorAll('.toggle-actif-btn').forEach(btn => btn.addEventListener('click', () => toggleActif(btn.dataset.id)));
+      document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => openEditPanel(blocs.find(b => b.id === btn.dataset.id))));
+      document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', () => deleteBloc(btn.dataset.id)));
+    }
+
+    async function moveBloc(id, dir) {
+      const idx = blocs.findIndex(b => b.id === id);
+      const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
+      if (idx === -1 || swapIdx < 0 || swapIdx >= blocs.length) return;
+
+      [blocs[idx], blocs[swapIdx]] = [blocs[swapIdx], blocs[idx]];
+      renderBlocsList();
+
+      await Promise.all(blocs.map((b, i) => supabaseClient.from('accueil_blocs').update({ ordre: i + 1 }).eq('id', b.id)));
+      blocs.forEach((b, i) => b.ordre = i + 1);
+    }
+
+    async function toggleActif(id) {
+      const bloc = blocs.find(b => b.id === id);
+      const newActif = !bloc.actif;
+      const { error } = await supabaseClient.from('accueil_blocs').update({ actif: newActif }).eq('id', id);
+      if (error) { alert('Erreur : ' + error.message); return; }
+      bloc.actif = newActif;
+      renderBlocsList();
+    }
+
+    async function deleteBloc(id) {
+      if (!confirm('Supprimer définitivement ce bloc de la page d\'accueil ?')) return;
+      const { error } = await supabaseClient.from('accueil_blocs').delete().eq('id', id);
+      if (error) { alert('Erreur : ' + error.message); return; }
+      blocs = blocs.filter(b => b.id !== id);
+      renderBlocsList();
+    }
+
+    document.querySelectorAll('.add-type-btn').forEach(btn => {
+      btn.addEventListener('click', () => openEditPanel(null, btn.dataset.type));
+    });
+
+    // ---------- Panneau d'édition (formulaire dynamique selon le type) ----------
+    function openEditPanel(bloc, forcedType) {
+      editingIsNew = !bloc;
+      const type = bloc ? bloc.type : forcedType;
+      editingBloc = bloc ? { ...bloc } : {
+        type, ordre: blocs.length + 1, actif: true,
+        badge: '', titre: '', texte: '', image_url: '',
+        cta_texte: '', cta_lien: '', cta2_texte: '', cta2_lien: '',
+        extra: type === 'carte_duo' ? { cartes: [{ icone: '✨', titre: '', texte: '', cta_texte: '', cta_lien: '', image_url: null }, { icone: '✨', titre: '', texte: '', cta_texte: '', cta_lien: '', image_url: null }] } : {}
+      };
+
+      document.getElementById('edit-panel-title').textContent = (editingIsNew ? 'Ajouter — ' : 'Modifier — ') + (typeLabels[type] || type);
+      document.getElementById('edit-error').classList.add('hidden');
+      renderEditForm();
+      document.getElementById('edit-panel').classList.remove('hidden');
+    }
+
+    function closeEditPanel() {
+      document.getElementById('edit-panel').classList.add('hidden');
+      editingBloc = null;
+    }
+    document.getElementById('close-edit-panel').addEventListener('click', closeEditPanel);
+    document.getElementById('cancel-edit-btn').addEventListener('click', closeEditPanel);
+
+    function fieldText(label, key, value, placeholder, isTextarea) {
+      if (isTextarea) {
+        return `
+          <div>
+            <label class="block text-xs font-semibold mb-1">${label}</label>
+            <textarea data-key="${key}" rows="3" placeholder="${escapeHtml(placeholder || '')}" class="edit-field w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue resize-none">${escapeHtml(value)}</textarea>
+          </div>
+        `;
+      }
+      return `
+        <div>
+          <label class="block text-xs font-semibold mb-1">${label}</label>
+          <input data-key="${key}" type="text" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder || '')}" class="edit-field w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        </div>
+      `;
+    }
+
+    function imageField(label, key, value) {
+      return `
+        <div>
+          <label class="block text-xs font-semibold mb-1">${label}</label>
+          <div class="flex items-center gap-3">
+            ${value ? `<img src="${escapeHtml(value)}" class="w-14 h-14 rounded-lg object-cover border border-[color:var(--border)]">` : ''}
+            <div class="flex-1">
+              <input type="file" accept="image/*" data-image-key="${key}" class="image-upload-input w-full text-xs">
+              <p class="text-[10px] text-[color:var(--fg-40)] mt-1">Optionnel — laisse vide pour garder l'icône emoji par défaut.</p>
+            </div>
+            ${value ? `<button type="button" data-clear-key="${key}" class="clear-image-btn text-xs text-red-400 hover:text-red-300 shrink-0">Retirer</button>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderEditForm() {
+      const b = editingBloc;
+      const container = document.getElementById('edit-form-fields');
+      let html = '';
+
+      if (b.type === 'hero') {
+        html = `
+          ${fieldText('Badge (petit texte au-dessus du titre)', 'badge', b.badge, 'Ex: Coach en réathlétisation & performance')}
+          ${fieldText('Titre (utilise {{ }} pour surligner en bleu)', 'titre', b.titre, 'Ex: Ta mobilité fait la différence dans {{ton sport.}}')}
+          ${fieldText('Texte / paragraphe', 'texte', b.texte, '', true)}
+        `;
+      } else if (b.type === 'carte_duo') {
+        html = `
+          ${fieldText('Titre de la section', 'titre', b.titre, 'Ex: Tu es plutôt...')}
+          <div class="border-t border-[color:var(--border)] pt-3 mt-1">
+            <p class="text-xs font-semibold mb-2">Carte 1</p>
+            ${cardSubfields(0, b.extra.cartes[0])}
+          </div>
+          <div class="border-t border-[color:var(--border)] pt-3 mt-1">
+            <p class="text-xs font-semibold mb-2">Carte 2</p>
+            ${cardSubfields(1, b.extra.cartes[1])}
+          </div>
+        `;
+      } else if (b.type === 'cadeau_cta') {
+        html = `
+          ${fieldText('Badge', 'badge', b.badge, 'Ex: 🎁 Cadeau offert')}
+          ${fieldText('Titre (utilise {{ }} pour surligner en bleu)', 'titre', b.titre, 'Ex: Fais ton {{bilan de mobilité}} gratuit')}
+          ${fieldText('Texte', 'texte', b.texte, '', true)}
+          <div class="grid grid-cols-2 gap-2">
+            ${fieldText('Badge info 1', 'extra_feature_1', (b.extra && b.extra.feature_1) || '', 'Ex: Moins de 10 min')}
+            ${fieldText('Badge info 2', 'extra_feature_2', (b.extra && b.extra.feature_2) || '', 'Ex: 100% Gratuit')}
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            ${fieldText('Texte bouton principal', 'cta_texte', b.cta_texte, 'Ex: Créer mon compte gratuit')}
+            ${fieldText('Lien bouton principal', 'cta_lien', b.cta_lien, 'signup.html')}
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            ${fieldText('Texte lien secondaire', 'cta2_texte', b.cta2_texte, "Ex: J'ai déjà un compte")}
+            ${fieldText('Lien secondaire', 'cta2_lien', b.cta2_lien, 'login.html')}
+          </div>
+        `;
+      } else if (b.type === 'texte_libre') {
+        html = `
+          ${fieldText('Titre (optionnel, utilise {{ }} pour surligner)', 'titre', b.titre, '')}
+          ${fieldText('Texte (un paragraphe par ligne)', 'texte', b.texte, '', true)}
+          ${imageField('Image (optionnelle)', 'image_url', b.image_url)}
+          <div class="grid grid-cols-2 gap-2">
+            ${fieldText('Texte bouton (optionnel)', 'cta_texte', b.cta_texte, '')}
+            ${fieldText('Lien bouton', 'cta_lien', b.cta_lien, '')}
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+
+      document.querySelectorAll('.edit-field').forEach(el => {
+        el.addEventListener('input', () => {
+          const key = el.dataset.key;
+          if (key.startsWith('extra_')) {
+            const subKey = key.replace('extra_', '');
+            if (!editingBloc.extra) editingBloc.extra = {};
+            editingBloc.extra[subKey] = el.value;
+          } else if (key.startsWith('carte')) {
+            const [, idxStr, field] = key.split('__');
+            const idx = Number(idxStr);
+            editingBloc.extra.cartes[idx][field] = el.value;
+          } else {
+            editingBloc[key] = el.value;
+          }
+        });
+      });
+
+      document.querySelectorAll('.image-upload-input').forEach(el => {
+        el.addEventListener('change', (e) => handleImageUpload(e, el.dataset.imageKey));
+      });
+      document.querySelectorAll('.clear-image-btn').forEach(el => {
+        el.addEventListener('click', () => {
+          setFieldValue(el.dataset.clearKey, null);
+          renderEditForm();
+        });
+      });
+    }
+
+    function cardSubfields(idx, carte) {
+      return `
+        ${fieldText(`Icône emoji`, `carte__${idx}__icone`, carte.icone, '✨')}
+        ${fieldText(`Titre`, `carte__${idx}__titre`, carte.titre, '')}
+        ${fieldText(`Texte`, `carte__${idx}__texte`, carte.texte, '', true)}
+        ${fieldText(`Texte du bouton`, `carte__${idx}__cta_texte`, carte.cta_texte, 'Ex: Faire mon bilan gratuit →')}
+        ${fieldText(`Lien du bouton`, `carte__${idx}__cta_lien`, carte.cta_lien, 'signup.html')}
+        ${imageField('Image (remplace l\'icône emoji)', `carte__${idx}__image_url`, carte.image_url)}
+      `;
+    }
+
+    function setFieldValue(key, value) {
+      if (key.startsWith('extra_')) {
+        const subKey = key.replace('extra_', '');
+        if (!editingBloc.extra) editingBloc.extra = {};
+        editingBloc.extra[subKey] = value;
+      } else if (key.startsWith('carte')) {
+        const [, idxStr, field] = key.split('__');
+        editingBloc.extra.cartes[Number(idxStr)][field] = value;
+      } else {
+        editingBloc[key] = value;
+      }
+    }
+
+    async function handleImageUpload(e, key) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `${Date.now()}-${safeFileName}`;
+
+      const { error: uploadError } = await supabaseClient.storage.from('accueil-images').upload(path, file);
+      if (uploadError) { alert("Erreur d'upload : " + uploadError.message); return; }
+
+      const { data: urlData } = supabaseClient.storage.from('accueil-images').getPublicUrl(path);
+      setFieldValue(key, urlData.publicUrl);
+      renderEditForm();
+    }
+
+    document.getElementById('save-bloc-btn').addEventListener('click', async () => {
+      const errorEl = document.getElementById('edit-error');
+      errorEl.classList.add('hidden');
+
+      const payload = { ...editingBloc };
+      delete payload.updated_at;
+      if (editingIsNew) delete payload.id;
+
+      const query = editingIsNew
+        ? supabaseClient.from('accueil_blocs').insert(payload)
+        : supabaseClient.from('accueil_blocs').update(payload).eq('id', payload.id);
+
+      const { error } = await query;
+      if (error) {
+        errorEl.textContent = "Erreur lors de l'enregistrement : " + error.message;
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      closeEditPanel();
+      await loadBlocs();
+    });
+
+    checkAccessAndLoad();
+  </script>
+</body>
+</html>
