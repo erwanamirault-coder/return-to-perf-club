@@ -80,12 +80,10 @@
 
 <!-- ============ DÉBUT BANDEAU + MENU (à recopier tel quel sur chaque page) ============ -->
 
-<!-- Bandeau annonce -->
 <a href="cadeau.html" id="site-banner" class="hidden w-full block bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-center text-xs sm:text-sm font-medium py-2 px-4">
   <span id="site-banner-text"></span>
 </a>
 
-<!-- Barre de navigation -->
 <nav class="sticky top-0 z-50 bg-brand-blue-dark text-white">
   <div class="flex items-center justify-between px-6 sm:px-10 py-3">
     <a href="index.html" class="flex items-center gap-2 font-heading uppercase font-bold text-sm tracking-wide text-white">
@@ -93,7 +91,6 @@
     </a>
 
     <div class="flex items-center gap-3">
-      <!-- Liens desktop -->
       <div class="hidden md:flex items-center gap-6 text-sm">
         <span id="desktop-public" class="flex items-center gap-6">
           <a href="index.html" class="hover:text-brand-blue-light transition-colors">Accueil</a>
@@ -121,7 +118,6 @@
     </div>
   </div>
 
-  <!-- Panneau mobile -->
   <div id="mobile-panel" class="md:hidden hidden flex-col gap-4 px-6 pb-5 text-sm">
     <div id="mobile-public" class="flex flex-col gap-4">
       <a href="index.html" class="hover:text-brand-blue-light transition-colors">Accueil</a>
@@ -145,7 +141,6 @@
 </nav>
 
 <script>
-  // Détection connexion + affichage des bons liens
   (async function initNav() {
     const els = {
       dp: document.getElementById('desktop-public'),
@@ -210,71 +205,8 @@
       </svg>
     </div>
 
-    <span class="reveal inline-block mb-6 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold border border-brand-blue-dark text-[color:var(--accent)]">
-      Coach en réathlétisation &amp; performance
-    </span>
-
-    <h1 class="reveal font-heading uppercase text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-6 max-w-2xl" style="transition-delay:0.1s">
-      Ta mobilité fait la différence dans <span class="text-brand-blue">ton sport.</span>
-    </h1>
-
-    <p class="reveal text-[color:var(--fg-70)] text-base sm:text-lg leading-relaxed mb-12 max-w-md" style="transition-delay:0.2s">
-      Épaules, hanches, chevilles, genoux, colonne : chaque articulation limitée oblige ton corps à compenser ailleurs. C'est souvent pour ça que tu te blesses, que tu stagnes, ou que tu traînes des douleurs sans explication.
-    </p>
-
-    <!-- Blocs d'orientation -->
-    <h2 class="reveal font-heading uppercase text-xl sm:text-2xl font-bold mb-6">Tu es plutôt...</h2>
-    <div class="grid sm:grid-cols-2 gap-5 w-full max-w-2xl mb-16">
-
-      <a href="signup.html" class="reveal group text-left p-6 rounded-2xl bg-[color:var(--card)] border border-[color:var(--border)] hover:border-brand-blue transition-colors">
-        <svg width="32" height="32" fill="none" viewBox="0 0 24 24" class="mb-4 text-brand-blue"><path d="M19 14c1.5-1.5 3-3.5 3-5.5A3.5 3.5 0 0 0 15 6c0 0-2 2-3 3-1-1-3-3-3-3a3.5 3.5 0 0 0-3.5 2.5C5.5 10.5 5 13 6.5 14.5L12 20l7-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-        <h3 class="font-heading uppercase font-bold text-lg mb-2">Je reviens d'une blessure</h3>
-        <p class="text-sm text-[color:var(--fg-60)] mb-4">
-          Reprends confiance dans ton corps, retrouve tes appuis et progresse sans te reblesser.
-        </p>
-        <span class="text-sm font-semibold text-brand-blue group-hover:text-brand-blue-dark transition-colors">Faire mon bilan gratuit →</span>
-      </a>
-
-      <a href="signup.html" class="reveal group text-left p-6 rounded-2xl bg-[color:var(--card)] border border-[color:var(--border)] hover:border-brand-blue transition-colors" style="transition-delay:0.1s">
-        <svg width="32" height="32" fill="none" viewBox="0 0 24 24" class="mb-4 text-brand-blue"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-        <h3 class="font-heading uppercase font-bold text-lg mb-2">Je veux performer / m'entraîner</h3>
-        <p class="text-sm text-[color:var(--fg-60)] mb-4">
-          Optimise ta mobilité pour gagner en performance sur le judo, le CrossFit ou l'haltérophilie.
-        </p>
-        <span class="text-sm font-semibold text-brand-blue group-hover:text-brand-blue-dark transition-colors">Faire mon bilan gratuit →</span>
-      </a>
-
-    </div>
-
-    <!-- Encart Bilan gratuit -->
-    <div class="reveal w-full max-w-xl p-8 sm:p-10 rounded-2xl bg-[color:var(--card)] border-2 border-brand-blue">
-      <span class="inline-block mb-4 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold bg-brand-blue text-white">
-        🎁 Cadeau offert
-      </span>
-      <h2 class="font-heading uppercase text-2xl sm:text-3xl font-bold leading-tight mb-4">
-        Fais ton <span class="text-brand-blue">bilan de mobilité</span> gratuit
-      </h2>
-      <p class="text-[color:var(--fg-70)] text-base leading-relaxed mb-6 max-w-md mx-auto">
-        Évalue tes 5 articulations en moins de 10 minutes et obtiens ton score global. 100% gratuit, sans engagement.
-      </p>
-      <div class="flex items-center justify-center gap-6 mb-8 text-sm font-medium text-[color:var(--accent)]">
-        <span class="flex items-center gap-2">
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/></svg>
-          Moins de 10 min
-        </span>
-        <span class="flex items-center gap-2">
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          100% Gratuit
-        </span>
-      </div>
-      <a href="signup.html" class="block w-full sm:w-auto sm:inline-block px-10 py-4 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-white mb-4">
-        Créer mon compte gratuit
-      </a>
-      <br>
-      <a href="login.html" class="text-sm text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
-        J'ai déjà un compte
-      </a>
-    </div>
+    <!-- Contenu dynamique : chargé depuis Supabase (table accueil_blocs) -->
+    <div id="blocs-container" class="w-full flex flex-col items-center"></div>
 
   </main>
 
@@ -305,18 +237,121 @@
 
   <script src="theme.js"></script>
   <script>
+    // Transforme {{texte}} en surlignage bleu, comme sur les pages de services
+    function renderHighlight(str) {
+      if (!str) return '';
+      const escaped = str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      return escaped.replace(/\{\{(.+?)\}\}/g, '<span class="text-brand-blue">$1</span>');
+    }
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
 
-    // Animation au scroll : les éléments ".reveal" apparaissent quand ils entrent dans l'écran
-    const revealObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          revealObserver.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.15 });
+    function renderHero(bloc, delay) {
+      return `
+        <span class="reveal inline-block mb-6 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold border border-brand-blue-dark text-[color:var(--accent)]" style="transition-delay:${delay}s">
+          ${escapeHtml(bloc.badge)}
+        </span>
+        <h1 class="reveal font-heading uppercase text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-6 max-w-2xl" style="transition-delay:${delay + 0.1}s">
+          ${renderHighlight(bloc.titre)}
+        </h1>
+        <p class="reveal text-[color:var(--fg-70)] text-base sm:text-lg leading-relaxed mb-12 max-w-md" style="transition-delay:${delay + 0.2}s">
+          ${escapeHtml(bloc.texte)}
+        </p>
+      `;
+    }
 
-    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+    function renderCarteDuo(bloc, delay) {
+      const cartes = (bloc.extra && bloc.extra.cartes) || [];
+      return `
+        <h2 class="reveal font-heading uppercase text-xl sm:text-2xl font-bold mb-6" style="transition-delay:${delay}s">${escapeHtml(bloc.titre)}</h2>
+        <div class="grid sm:grid-cols-2 gap-5 w-full max-w-2xl mb-16">
+          ${cartes.map((c, i) => `
+            <a href="${escapeHtml(c.cta_lien || '#')}" class="reveal group text-left p-6 rounded-2xl bg-[color:var(--card)] border border-[color:var(--border)] hover:border-brand-blue transition-colors" style="transition-delay:${delay + 0.1 + i * 0.1}s">
+              ${c.image_url
+                ? `<img src="${escapeHtml(c.image_url)}" class="w-10 h-10 object-cover rounded-lg mb-4" alt="">`
+                : `<span class="block text-3xl mb-4">${escapeHtml(c.icone || '✨')}</span>`}
+              <h3 class="font-heading uppercase font-bold text-lg mb-2">${escapeHtml(c.titre)}</h3>
+              <p class="text-sm text-[color:var(--fg-60)] mb-4">${escapeHtml(c.texte)}</p>
+              <span class="text-sm font-semibold text-brand-blue group-hover:text-brand-blue-dark transition-colors">${escapeHtml(c.cta_texte || 'En savoir plus →')}</span>
+            </a>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderCadeauCta(bloc, delay) {
+      const feature1 = (bloc.extra && bloc.extra.feature_1) || '';
+      const feature2 = (bloc.extra && bloc.extra.feature_2) || '';
+      return `
+        <div class="reveal w-full max-w-xl p-8 sm:p-10 rounded-2xl bg-[color:var(--card)] border-2 border-brand-blue" style="transition-delay:${delay}s">
+          ${bloc.badge ? `<span class="inline-block mb-4 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold bg-brand-blue text-white">${escapeHtml(bloc.badge)}</span>` : ''}
+          <h2 class="font-heading uppercase text-2xl sm:text-3xl font-bold leading-tight mb-4">${renderHighlight(bloc.titre)}</h2>
+          <p class="text-[color:var(--fg-70)] text-base leading-relaxed mb-6 max-w-md mx-auto">${escapeHtml(bloc.texte)}</p>
+          ${(feature1 || feature2) ? `
+            <div class="flex items-center justify-center gap-6 mb-8 text-sm font-medium text-[color:var(--accent)]">
+              ${feature1 ? `<span class="flex items-center gap-2"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/></svg>${escapeHtml(feature1)}</span>` : ''}
+              ${feature2 ? `<span class="flex items-center gap-2"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>${escapeHtml(feature2)}</span>` : ''}
+            </div>` : ''}
+          ${bloc.cta_texte ? `<a href="${escapeHtml(bloc.cta_lien || '#')}" class="block w-full sm:w-auto sm:inline-block px-10 py-4 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-white mb-4">${escapeHtml(bloc.cta_texte)}</a><br>` : ''}
+          ${bloc.cta2_texte ? `<a href="${escapeHtml(bloc.cta2_lien || '#')}" class="text-sm text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">${escapeHtml(bloc.cta2_texte)}</a>` : ''}
+        </div>
+      `;
+    }
+
+    function renderTexteLibre(bloc, delay) {
+      return `
+        <div class="reveal w-full max-w-2xl text-left" style="transition-delay:${delay}s">
+          ${bloc.image_url ? `<img src="${escapeHtml(bloc.image_url)}" class="w-full rounded-2xl mb-6 object-cover" alt="">` : ''}
+          ${bloc.titre ? `<h2 class="font-heading uppercase text-2xl font-bold mb-4 text-center">${renderHighlight(bloc.titre)}</h2>` : ''}
+          ${bloc.texte ? bloc.texte.split('\n').filter(Boolean).map(p => `<p class="text-[color:var(--fg-70)] leading-relaxed mb-4">${escapeHtml(p)}</p>`).join('') : ''}
+          ${bloc.cta_texte ? `<div class="text-center mt-4"><a href="${escapeHtml(bloc.cta_lien || '#')}" class="inline-block px-8 py-3 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-sm text-white">${escapeHtml(bloc.cta_texte)}</a></div>` : ''}
+        </div>
+      `;
+    }
+
+    async function loadBlocs() {
+      const { data, error } = await supabaseClient
+        .from('accueil_blocs')
+        .select('*')
+        .eq('actif', true)
+        .order('ordre', { ascending: true });
+
+      const container = document.getElementById('blocs-container');
+
+      if (error || !data) {
+        container.innerHTML = '';
+        return;
+      }
+
+      let delay = 0;
+      container.innerHTML = data.map(bloc => {
+        let html = '';
+        if (bloc.type === 'hero') html = renderHero(bloc, delay);
+        else if (bloc.type === 'carte_duo') html = renderCarteDuo(bloc, delay);
+        else if (bloc.type === 'cadeau_cta') html = renderCadeauCta(bloc, delay);
+        else if (bloc.type === 'texte_libre') html = renderTexteLibre(bloc, delay);
+        delay += 0.1;
+        return html;
+      }).join('');
+
+      // Réactive l'animation au scroll pour les éléments injectés dynamiquement
+      const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15 });
+      document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+    }
+
+    loadBlocs();
   </script>
   <script>
     if ('serviceWorker' in navigator) {
