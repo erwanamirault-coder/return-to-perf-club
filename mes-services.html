@@ -191,7 +191,7 @@
   </section>
 
   <!-- OFFRES (gérées depuis l'admin) — grille responsive -->
-  <section id="offres-container" class="px-6 pb-6 max-w-5xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-5 items-start"></section>
+  <section id="offres-container" class="px-6 pb-6 max-w-5xl mx-auto flex flex-wrap justify-center gap-5 items-stretch"></section>
 
   <!-- RÉSULTATS CLIENTS -->
   <section class="px-6 py-14 max-w-2xl mx-auto border-t border-[color:var(--border)]">
@@ -309,7 +309,7 @@
         if (o.type === 'phare') {
           // Offre phare : même taille que les autres dans la grille, juste un style mis en avant (bordure bleue)
           return `
-            <div class="rounded-2xl border-2 border-brand-blue bg-brand-blue/5 p-6 sm:p-7 flex flex-col h-full">
+            <div class="w-full sm:w-[calc(50%-10px)] lg:w-[calc(33.333%-13.333px)] rounded-2xl border-2 border-brand-blue bg-brand-blue/5 p-6 sm:p-7 flex flex-col h-full">
               ${o.badge ? `<span class="inline-block mb-4 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold bg-brand-blue text-white self-start">${escapeHtmlOffre(o.badge)}</span>` : ''}
               <h3 class="font-heading uppercase text-lg font-bold mb-3">${escapeHtmlOffre(o.titre)}</h3>
               <p class="text-sm text-[color:var(--fg-70)] leading-relaxed mb-4">${escapeHtmlOffre(o.description)}</p>
@@ -323,7 +323,7 @@
         }
         if (o.type === 'bientot') {
           return `
-            <div class="rounded-2xl border border-dashed border-[color:var(--border-strong)] p-6 sm:p-7 opacity-70 flex flex-col h-full">
+            <div class="w-full sm:w-[calc(50%-10px)] lg:w-[calc(33.333%-13.333px)] rounded-2xl border border-dashed border-[color:var(--border-strong)] p-6 sm:p-7 opacity-70 flex flex-col h-full">
               ${o.badge ? `<span class="inline-block mb-4 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold bg-[color:var(--card)] text-[color:var(--fg-50)] self-start">${escapeHtmlOffre(o.badge)}</span>` : ''}
               <h3 class="font-heading uppercase text-lg font-bold mb-3">${escapeHtmlOffre(o.titre)}</h3>
               <p class="text-sm text-[color:var(--fg-60)] leading-relaxed mb-3 flex-1">${escapeHtmlOffre(o.description)}</p>
@@ -333,7 +333,7 @@
         }
         // standard
         return `
-          <div class="rounded-2xl border border-[color:var(--border-strong)] p-6 sm:p-7 flex flex-col h-full">
+          <div class="w-full sm:w-[calc(50%-10px)] lg:w-[calc(33.333%-13.333px)] rounded-2xl border border-[color:var(--border-strong)] p-6 sm:p-7 flex flex-col h-full">
             ${o.badge ? `<span class="inline-block mb-4 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold border border-brand-blue-dark text-[color:var(--accent)] self-start">${escapeHtmlOffre(o.badge)}</span>` : ''}
             <h3 class="font-heading uppercase text-lg font-bold mb-3">${escapeHtmlOffre(o.titre)}</h3>
             <p class="text-sm text-[color:var(--fg-70)] leading-relaxed mb-4">${escapeHtmlOffre(o.description)}</p>
