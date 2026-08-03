@@ -69,8 +69,8 @@
     0%, 100% { box-shadow: 0 0 0 0 rgba(45, 122, 237, 0.35); }
     50% { box-shadow: 0 0 0 8px rgba(45, 122, 237, 0); }
   }
-  .offre-highlight {
-    animation: offre-pulse 2.5s ease-in-out infinite;
+  .offre-card:hover {
+    animation: offre-pulse 1.4s ease-in-out infinite;
   }
 </style>
 </head>
@@ -191,7 +191,7 @@
       Mes services
     </span>
     <h1 class="font-heading uppercase text-3xl sm:text-5xl font-bold leading-tight mb-6">
-      Trouve l'accompagnement <span class="text-brand-blue">qui te correspond </span>
+      Trouve l'accompagnement <span class="text-brand-blue">qui te correspond.</span>
     </h1>
     <p class="text-[color:var(--fg-70)] text-base sm:text-lg leading-relaxed">
       Que tu reviennes d'une blessure, que tu veuilles développer une qualité physique précise, ou que tu ne saches simplement pas par où commencer — il y a une formule adaptée à ta situation.
@@ -308,10 +308,10 @@
       const isBientot = o.type === 'bientot';
 
       const cardClasses = isPhare
-        ? 'rounded-2xl border-2 border-brand-blue bg-brand-blue/5 p-7 sm:p-8 flex flex-col h-full shadow-sm hover:shadow-md transition-shadow offre-highlight'
+        ? 'rounded-2xl border-2 border-brand-blue bg-brand-blue/5 p-7 sm:p-8 flex flex-col h-full shadow-sm hover:shadow-md transition-shadow offre-card'
         : isBientot
-        ? 'rounded-2xl border border-dashed border-[color:var(--border-strong)] p-7 sm:p-8 opacity-70 flex flex-col h-full'
-        : 'rounded-2xl border border-[color:var(--border-strong)] p-7 sm:p-8 flex flex-col h-full shadow-sm hover:shadow-md transition-shadow';
+        ? 'rounded-2xl border border-dashed border-[color:var(--border-strong)] p-7 sm:p-8 opacity-70 flex flex-col h-full offre-card'
+        : 'rounded-2xl border border-[color:var(--border-strong)] p-7 sm:p-8 flex flex-col h-full shadow-sm hover:shadow-md transition-shadow offre-card';
 
       const badgeClasses = isPhare
         ? 'inline-block mb-5 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold bg-brand-blue text-white self-start'
