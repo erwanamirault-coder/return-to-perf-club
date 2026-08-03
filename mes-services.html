@@ -64,6 +64,14 @@
 <style>
   body { font-family: 'Poppins', sans-serif; }
   h1, h2, h3, .font-heading { font-family: 'Oswald', sans-serif; }
+
+  @keyframes offre-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(45, 122, 237, 0.35); }
+    50% { box-shadow: 0 0 0 8px rgba(45, 122, 237, 0); }
+  }
+  .offre-highlight {
+    animation: offre-pulse 2.5s ease-in-out infinite;
+  }
 </style>
 </head>
 <body class="min-h-screen">
@@ -191,7 +199,7 @@
   </section>
 
   <!-- OFFRES (gérées depuis l'admin) — grille responsive -->
-  <section id="offres-container" class="px-6 py-6 max-w-5xl mx-auto flex flex-wrap justify-center gap-x-6 gap-y-10 items-stretch"></section>
+  <section id="offres-container" class="px-6 py-6 max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></section>
 
   <!-- RÉSULTATS CLIENTS -->
   <section class="px-6 py-14 max-w-2xl mx-auto border-t border-[color:var(--border)]">
@@ -295,6 +303,82 @@
       return `<div class="flex flex-col gap-2.5 ${sizeClass} mb-6">${lines.map(l => `<p>${escapeHtmlOffre(l)}</p>`).join('')}</div>`;
     }
 
+    function renderCarte(o) {
+      const isPhare = o.type === 'phare';
+      const isBientot = o.type === 'bientot';
+
+      const cardClasses = isPhare
+        ? 'rounded-2xl border-2 border-brand-blue bg-brand-blue/5 p-7 sm:p-8 flex flex-col h-full shadow-sm hover:shadow-md transition-shadow offre-highlight'
+        : isBientot
+        ? 'rounded-2xl border border-dashed border-[color:var(--border-strong)] p-7 sm:p-8 opacity-70 flex flex-col h-full'
+        : 'rounded-2xl border border-[color:var(--border-strong)] p-7 sm:p-8 flex flex-col h-full shadow-sm hover:shadow-md transition-shadow';
+
+      const badgeClasses = isPhare
+        ? 'inline-block mb-5 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold bg-brand-blue text-white self-start'
+        : isBientot
+        ? 'inline-block mb-5 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold bg-[color:var(--card)] text-[color:var(--fg-50)] self-start'
+        : 'inline-block mb-5 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold border border-brand-blue-dark text-[color:var(--accent)] self-start';
+
+      return `
+        <div class="${cardClasses}">
+          ${o.badge ? `<span class="${badgeClasses}">${escapeHtmlOffre(o.badge)}</span>` : ''}
+          <h3 class="font-heading uppercase text-lg font-bold mb-4">${escapeHtmlOffre(o.titre)}</h3>
+          <p class="text-sm text-[color:var(--fg-70)] leading-relaxed mb-5 ${isBientot ? 'flex-1' : ''}">${escapeHtmlOffre(o.description)}</p>
+          ${!isBientot ? renderPoints(o.points, 'text-sm text-[color:var(--fg-70)] flex-1') : ''}
+          ${!isBientot ? `
+            <div class="flex items-center gap-4 flex-wrap mt-auto pt-2">
+              ${o.bouton_texte && o.bouton_lien ? `<a href="${o.bouton_lien}" target="_blank" rel="noopener noreferrer" class="inline-block px-6 py-3 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-xs text-white">${escapeHtmlOffre(o.bouton_texte)}</a>` : ''}
+              ${o.description_longue ? `<a href="service-detail.html?id=${o.id}" class="text-xs text-brand-blue hover:underline">En savoir plus →</a>` : ''}
+            </div>
+          ` : (o.description_longue ? `<a href="service-detail.html?id=${o.id}" class="text-xs text-brand-blue hover:underline">En savoir plus →</a>` : '')}
+        </div>
+      `;
+    }
+
+    function getColumnsForViewport() {
+      if (window.innerWidth >= 1024) return 3;
+      if (window.innerWidth >= 640) return 2;
+      return 1;
+    }
+
+    let cachedOffres = [];
+
+    function renderOffres() {
+      const container = document.getElementById('offres-container');
+      const columns = getColumnsForViewport();
+      const total = cachedOffres.length;
+      const remainder = columns > 1 ? total % columns : 0;
+
+      if (remainder === 0) {
+        container.innerHTML = cachedOffres.map(renderCarte).join('');
+        return;
+      }
+
+      const fullRows = cachedOffres.slice(0, total - remainder);
+      const lastRow = cachedOffres.slice(total - remainder);
+
+      // Les offres des lignes complètes restent dans la grille classique.
+      // Celles de la dernière ligne incomplète sont regroupées dans un wrapper
+      // qui prend toute la largeur de la grille et centre son contenu.
+      const widthClass = columns === 3
+        ? 'w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]'
+        : 'w-full sm:w-[calc(50%-12px)]';
+
+      const lastRowHtml = `
+        <div class="col-span-1 sm:col-span-2 lg:col-span-3 flex flex-wrap justify-center gap-6">
+          ${lastRow.map(o => `<div class="${widthClass}">${renderCarte(o)}</div>`).join('')}
+        </div>
+      `;
+
+      container.innerHTML = fullRows.map(renderCarte).join('') + lastRowHtml;
+    }
+
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(renderOffres, 200);
+    });
+
     async function loadOffres() {
       const container = document.getElementById('offres-container');
       const { data, error } = await supabaseClient
@@ -305,46 +389,8 @@
 
       if (error || !data) { container.innerHTML = ''; return; }
 
-      container.innerHTML = data.map(o => {
-        if (o.type === 'phare') {
-          // Offre phare : même taille que les autres dans la grille, juste un style mis en avant (bordure bleue)
-          return `
-            <div class="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] rounded-2xl border-2 border-brand-blue bg-brand-blue/5 p-7 sm:p-8 flex flex-col h-full shadow-sm hover:shadow-md transition-shadow">
-              ${o.badge ? `<span class="inline-block mb-5 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold bg-brand-blue text-white self-start">${escapeHtmlOffre(o.badge)}</span>` : ''}
-              <h3 class="font-heading uppercase text-lg font-bold mb-4">${escapeHtmlOffre(o.titre)}</h3>
-              <p class="text-sm text-[color:var(--fg-70)] leading-relaxed mb-5">${escapeHtmlOffre(o.description)}</p>
-              ${renderPoints(o.points, 'text-sm text-[color:var(--fg-70)] flex-1')}
-              <div class="flex items-center gap-4 flex-wrap mt-auto pt-2">
-                ${o.bouton_texte && o.bouton_lien ? `<a href="${o.bouton_lien}" target="_blank" rel="noopener noreferrer" class="inline-block px-6 py-3 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-xs text-white">${escapeHtmlOffre(o.bouton_texte)}</a>` : ''}
-                ${o.description_longue ? `<a href="service-detail.html?id=${o.id}" class="text-xs text-brand-blue hover:underline">En savoir plus →</a>` : ''}
-              </div>
-            </div>
-          `;
-        }
-        if (o.type === 'bientot') {
-          return `
-            <div class="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] rounded-2xl border border-dashed border-[color:var(--border-strong)] p-7 sm:p-8 opacity-70 flex flex-col h-full">
-              ${o.badge ? `<span class="inline-block mb-5 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold bg-[color:var(--card)] text-[color:var(--fg-50)] self-start">${escapeHtmlOffre(o.badge)}</span>` : ''}
-              <h3 class="font-heading uppercase text-lg font-bold mb-4">${escapeHtmlOffre(o.titre)}</h3>
-              <p class="text-sm text-[color:var(--fg-60)] leading-relaxed mb-4 flex-1">${escapeHtmlOffre(o.description)}</p>
-              ${o.description_longue ? `<a href="service-detail.html?id=${o.id}" class="text-xs text-brand-blue hover:underline">En savoir plus →</a>` : ''}
-            </div>
-          `;
-        }
-        // standard
-        return `
-          <div class="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] rounded-2xl border border-[color:var(--border-strong)] p-7 sm:p-8 flex flex-col h-full shadow-sm hover:shadow-md transition-shadow">
-            ${o.badge ? `<span class="inline-block mb-5 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold border border-brand-blue-dark text-[color:var(--accent)] self-start">${escapeHtmlOffre(o.badge)}</span>` : ''}
-            <h3 class="font-heading uppercase text-lg font-bold mb-4">${escapeHtmlOffre(o.titre)}</h3>
-            <p class="text-sm text-[color:var(--fg-70)] leading-relaxed mb-5">${escapeHtmlOffre(o.description)}</p>
-            ${renderPoints(o.points, 'text-sm text-[color:var(--fg-70)] flex-1')}
-            <div class="flex items-center gap-4 flex-wrap mt-auto pt-2">
-              ${o.bouton_texte && o.bouton_lien ? `<a href="${o.bouton_lien}" target="_blank" rel="noopener noreferrer" class="inline-block px-6 py-3 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-xs text-white">${escapeHtmlOffre(o.bouton_texte)}</a>` : ''}
-              ${o.description_longue ? `<a href="service-detail.html?id=${o.id}" class="text-xs text-brand-blue hover:underline">En savoir plus →</a>` : ''}
-            </div>
-          </div>
-        `;
-      }).join('');
+      cachedOffres = data;
+      renderOffres();
     }
 
     loadOffres();
