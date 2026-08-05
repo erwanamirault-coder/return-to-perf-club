@@ -170,6 +170,7 @@
           <button data-type="grille_features" class="add-type-btn px-3 py-2.5 rounded-lg border border-[color:var(--border)] hover:border-brand-blue text-xs font-medium transition-colors">▦ Grille 3 colonnes</button>
           <button data-type="citation" class="add-type-btn px-3 py-2.5 rounded-lg border border-[color:var(--border)] hover:border-brand-blue text-xs font-medium transition-colors">💬 Citation</button>
           <button data-type="cta_service" class="add-type-btn px-3 py-2.5 rounded-lg border border-[color:var(--border)] hover:border-brand-blue text-xs font-medium transition-colors">🎁 Encart CTA</button>
+          <button data-type="faq" class="add-type-btn px-3 py-2.5 rounded-lg border border-[color:var(--border)] hover:border-brand-blue text-xs font-medium transition-colors">❓ FAQ</button>
         </div>
       </div>
 
@@ -207,7 +208,8 @@
       liste_numerotee: '🔢 Liste numérotée',
       grille_features: '▦ Grille 3 colonnes',
       citation: '💬 Citation',
-      cta_service: '🎁 Encart CTA'
+      cta_service: '🎁 Encart CTA',
+      faq: '❓ FAQ'
     };
 
     function escapeHtml(str) {
@@ -319,6 +321,8 @@
           ? { items: [{ titre: '', texte: '' }, { titre: '', texte: '' }, { titre: '', texte: '' }] }
           : type === 'citation'
           ? { soustitre: '' }
+          : type === 'faq'
+          ? { items: [{ question: '', reponse: '' }] }
           : {}
       };
 
@@ -423,6 +427,23 @@
             ${fieldText('Lien bouton', 'cta_lien', b.cta_lien, '')}
           </div>
         `;
+      } else if (b.type === 'faq') {
+        html = `
+          ${fieldText('Titre de la section', 'titre', b.titre, "Ex: Des questions auxquelles je n'ai pas répondu ?")}
+          <div id="faq-items-list" class="flex flex-col gap-1">
+            ${(b.extra.items || []).map((item, i) => `
+              <div class="border-t border-[color:var(--border)] pt-3 mt-1">
+                <div class="flex items-center justify-between mb-2">
+                  <p class="text-xs font-semibold">Question ${i + 1}</p>
+                  <button type="button" data-remove-item="${i}" class="remove-faq-item-btn text-xs text-red-400 hover:text-red-300">Supprimer</button>
+                </div>
+                ${fieldText('Question', `item__${i}__question`, item.question, '')}
+                ${fieldText('Réponse', `item__${i}__reponse`, item.reponse, '', true)}
+              </div>
+            `).join('')}
+          </div>
+          <button type="button" id="add-faq-item-btn" class="text-xs px-3 py-2 rounded-lg border border-dashed border-[color:var(--border-strong)] hover:border-brand-blue transition-colors">+ Ajouter une question</button>
+        `;
       }
 
       container.innerHTML = html;
@@ -452,6 +473,22 @@
       document.querySelectorAll('.clear-image-btn').forEach(el => {
         el.addEventListener('click', () => {
           editingBloc[el.dataset.clearKey] = null;
+          renderEditForm();
+        });
+      });
+
+      const addFaqBtn = document.getElementById('add-faq-item-btn');
+      if (addFaqBtn) {
+        addFaqBtn.addEventListener('click', () => {
+          if (!editingBloc.extra.items) editingBloc.extra.items = [];
+          editingBloc.extra.items.push({ question: '', reponse: '' });
+          renderEditForm();
+        });
+      }
+      document.querySelectorAll('.remove-faq-item-btn').forEach(el => {
+        el.addEventListener('click', () => {
+          const idx = Number(el.dataset.removeItem);
+          editingBloc.extra.items.splice(idx, 1);
           renderEditForm();
         });
       });
