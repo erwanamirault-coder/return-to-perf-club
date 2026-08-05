@@ -308,21 +308,46 @@
     function renderApListeNumerotee(b) {
       const items = (b.extra && b.extra.items) || [];
       return `
-        <section class="px-6 py-14 max-w-2xl mx-auto border-t border-[color:var(--border)]">
+        <section class="px-6 py-14 max-w-4xl mx-auto border-t border-[color:var(--border)]">
           <h2 class="font-heading uppercase text-2xl font-bold mb-8">${escapeHtmlAP(b.titre)}</h2>
-          <div class="flex flex-col gap-6">
-            ${items.map((item, i) => `
-              <div>
-                <div class="flex items-center gap-3 mb-2">
-                  <div class="w-8 h-8 rounded-full bg-brand-blue text-white font-heading font-bold flex items-center justify-center shrink-0">${i + 1}</div>
-                  <h3 class="font-heading uppercase font-bold text-base">${escapeHtmlAP(item.titre)}</h3>
-                </div>
-                <p class="text-sm text-[color:var(--fg-60)] leading-relaxed pl-11">${escapeHtmlAP(item.texte)}</p>
-              </div>
-            `).join('')}
+          <div class="pilier-wrapper grid sm:grid-cols-2 gap-6 sm:gap-10 items-start" data-bloc-id="${b.id}">
+            <div class="flex flex-col">
+              ${items.map((item, i) => `
+                <button type="button" class="pilier-tab text-left py-4 border-l-4 pl-4 transition-colors ${i === 0 ? 'border-brand-blue' : 'border-transparent'}" data-index="${i}" data-citation="${escapeHtmlAP(item.citation || '')}">
+                  <h3 class="pilier-titre font-heading uppercase font-bold text-base mb-1 transition-colors ${i === 0 ? 'text-[color:var(--fg)]' : 'text-[color:var(--fg-40)]'}">${escapeHtmlAP(item.titre)}</h3>
+                  <p class="pilier-desc text-sm text-[color:var(--fg-60)] leading-relaxed ${i === 0 ? '' : 'hidden'}">${escapeHtmlAP(item.texte)}</p>
+                </button>
+                ${i < items.length - 1 ? '<div class="border-t border-[color:var(--border)] ml-4"></div>' : ''}
+              `).join('')}
+            </div>
+            <div class="rounded-2xl bg-[color:var(--card)] p-8 sm:sticky sm:top-24">
+              <p class="pilier-citation font-heading uppercase text-xl sm:text-2xl font-bold leading-snug">${renderHighlightAP((items[0] && items[0].citation) || '')}</p>
+            </div>
           </div>
         </section>
       `;
+    }
+
+    function initPilierTabs() {
+      document.querySelectorAll('.pilier-wrapper').forEach(wrapper => {
+        const tabs = wrapper.querySelectorAll('.pilier-tab');
+        const citationEl = wrapper.querySelector('.pilier-citation');
+        tabs.forEach(tab => {
+          tab.addEventListener('click', () => {
+            tabs.forEach(t => {
+              const isActive = t === tab;
+              t.classList.toggle('border-brand-blue', isActive);
+              t.classList.toggle('border-transparent', !isActive);
+              t.querySelector('.pilier-titre').classList.toggle('text-[color:var(--fg)]', isActive);
+              t.querySelector('.pilier-titre').classList.toggle('text-[color:var(--fg-40)]', !isActive);
+              t.querySelector('.pilier-desc').classList.toggle('hidden', !isActive);
+            });
+            const idx = Number(tab.dataset.index);
+            const citation = tab.dataset.citation || '';
+            if (citationEl) citationEl.innerHTML = renderHighlightAP(citation);
+          });
+        });
+      });
     }
 
     function renderApCitation(b) {
@@ -411,6 +436,7 @@
       document.getElementById('blocs-container-1').innerHTML = firstPart.map(renderApBloc).join('');
       document.getElementById('blocs-container-2').innerHTML = secondPart.map((b, i, arr) => renderApBloc(b, i, arr)).join('');
       renderApFaq(faqBloc);
+      initPilierTabs();
     }
 
     loadApBlocs();
