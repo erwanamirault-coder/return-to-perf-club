@@ -4,9 +4,6 @@
 <script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#0F4CA9">
-<link rel="icon" href="/icons/favicon-32.png" sizes="32x32">
 <title>Mes services — Erwan Amirault</title>
 <meta name="description" content="Bilan offert, accompagnement sur mesure, programme hybride ou séances en présentiel : trouve la formule adaptée à ta situation.">
 
@@ -306,11 +303,54 @@
       return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
+    // Icônes pro (traits fins, cohérentes avec le reste du site) associées
+    // aux emoji que tu tapes déjà dans l'admin. Rien à changer côté admin :
+    // tu continues à taper 🔍, 💬, 🎬, 📱... comme avant, et ici on remplace
+    // juste l'affichage par une icône propre.
+    const POINT_ICONS = {
+      '🔍': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
+      '💬': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.6-.8L3 21l1.8-5.4A8.5 8.5 0 1 1 21 11.5Z"/></svg>',
+      '🎬': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="14" rx="2"/><path d="M7 6 9.5 2h2L9 6ZM13 6l2.5-4h2L15 6Z"/></svg>',
+      '📹': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="14" height="12" rx="2"/><path d="M16.5 10.5 21.5 7v10l-5-3.5Z"/></svg>',
+      '📱': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg>',
+      '✅': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 5-5"/></svg>',
+      '📅': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>',
+      '🏆': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a1 1 0 0 0-1 1v1a3 3 0 0 0 3 3M17 5h3a1 1 0 0 1 1 1v1a3 3 0 0 1-3 3"/></svg>',
+      '📊': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><rect x="6" y="12" width="3" height="8"/><rect x="11" y="7" width="3" height="13"/><rect x="16" y="4" width="3" height="16"/></svg>',
+      '💪': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="10" width="3" height="4"/><rect x="19" y="10" width="3" height="4"/><path d="M5 10.5V15M19 10.5V15M8 8v9a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-2M8 12h5"/></svg>',
+      '🎯': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>',
+      '⏱️': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>',
+      '✨': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></svg>',
+      '🥗': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg>'
+    };
+    const DEFAULT_POINT_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-9"/></svg>';
+
+    function extractPointIcon(line) {
+      const match = line.match(/^(\p{Extended_Pictographic}\uFE0F?)\s*/u);
+      if (match) {
+        const emoji = match[1].replace(/\uFE0F$/, '');
+        return { icon: POINT_ICONS[emoji] || DEFAULT_POINT_ICON, text: line.slice(match[0].length).trim() };
+      }
+      return null; // pas d'emoji en tête = ligne de titre, pas une puce
+    }
+
     function renderPoints(points, sizeClass) {
       if (!points) return '';
       const lines = points.split('\n').map(l => l.trim()).filter(Boolean);
       if (lines.length === 0) return '';
-      return `<div class="flex flex-col gap-2.5 ${sizeClass} mb-6">${lines.map(l => `<p>${escapeHtmlOffre(l)}</p>`).join('')}</div>`;
+      return `<div class="flex flex-col gap-3 ${sizeClass} mb-6">${lines.map((l, i) => {
+        const parsed = extractPointIcon(l);
+        if (!parsed) {
+          // Ligne de titre (ex: "Pour ceux qui veulent :") — sous-titre, sans puce
+          return `<p class="font-semibold text-[color:var(--fg)] ${i === 0 ? '' : 'mt-2'}">${escapeHtmlOffre(l)}</p>`;
+        }
+        return `
+          <div class="flex items-start gap-3">
+            <span class="shrink-0 w-6 h-6 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center mt-0.5">${parsed.icon}</span>
+            <span>${escapeHtmlOffre(parsed.text)}</span>
+          </div>
+        `;
+      }).join('')}</div>`;
     }
 
     function renderCarte(o) {
