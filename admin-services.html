@@ -79,12 +79,13 @@
 
         <div>
           <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Description</label>
-          <textarea id="f-description" rows="4" class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></textarea>
+          <textarea id="f-description" rows="8" placeholder="Le texte d'intro de l'offre (2-4 phrases). Les listes à puces avec ✅ ou 🔍 vont dans le champ 'Points / bénéfices' juste en dessous, pas ici." class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></textarea>
         </div>
 
         <div>
           <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Points / bénéfices — un par ligne</label>
-          <textarea id="f-points" rows="5" placeholder="✅ Premier point&#10;✅ Deuxième point&#10;🔎 Détail inclus" class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></textarea>
+          <textarea id="f-points" rows="10" placeholder="Pour ceux qui veulent :&#10;✅ Premier point&#10;✅ Deuxième point&#10;&#10;Le suivi c'est :&#10;🔍 Un bilan complet&#10;💬 Un suivi 7j/7" class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></textarea>
+          <p class="text-[10px] text-[color:var(--fg-40)] mt-1">Une ligne qui commence par un emoji devient une puce avec icône. Une ligne sans emoji (ex: "Pour ceux qui veulent :") s'affiche comme un sous-titre.</p>
         </div>
 
         <div class="border-t border-[color:var(--border)] pt-3">
