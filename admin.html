@@ -41,14 +41,6 @@
     </a>
     <div class="flex items-center gap-4 text-sm">
       <a href="index.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Accueil</a>
-      <a href="suivi-clients.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Suivi clients</a>
-      <a href="formations.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Formations</a>
-      <a href="generateur-facture.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">🧾 Devis/Factures</a>
-      <a href="admin-bilan.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">🦵 Bilans</a>
-      <a href="admin-services.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">💼 Mes services</a>
-      <a href="admin-banque-exercices.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">🎥 Banque exos</a>
-      <a href="admin-reservations.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">📅 RDV Visio</a>
-      <a href="admin-accueil.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">🏠 Page d'accueil</a>
       <a href="dashboard.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Mon espace</a>
       <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
       <a href="a-propos.html" class="shrink-0">
@@ -58,17 +50,50 @@
   </header>
 
   <main id="main-content" class="px-6 py-10 max-w-3xl mx-auto hidden">
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="font-heading uppercase text-2xl font-bold text-center flex-1">Gérer les séances</h1>
+    <div class="flex items-center justify-between mb-8">
+      <h1 class="font-heading uppercase text-2xl font-bold text-center flex-1">Espace admin</h1>
     </div>
 
-    <div class="flex flex-wrap justify-center gap-3 mb-8">
-      <button id="toggle-instagram-panel" class="text-sm px-4 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] hover:bg-brand-blue/5 transition-colors font-medium">
-        📸 Automatisations Instagram
-      </button>
-      <button id="toggle-formations-panel" class="text-sm px-4 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] hover:bg-brand-blue/5 transition-colors font-medium">
-        🎓 Gestion des formations
-      </button>
+    <!-- ============ CATÉGORIE : SUIVI CLIENTS (priorité, mis en avant) ============ -->
+    <div class="mb-8">
+      <h2 class="font-heading uppercase text-xs font-bold mb-3 text-[color:var(--fg-50)] tracking-widest">📋 Suivi clients</h2>
+      <div class="rounded-xl border-2 border-brand-blue bg-brand-blue/5 p-4">
+        <p class="text-sm text-[color:var(--fg-70)] mb-1">Programmation, records, suivi, messages et nutrition pour chacun de tes clients.</p>
+        <p class="text-xs text-[color:var(--fg-50)]">👇 Sélectionne un client ci-dessous pour commencer.</p>
+      </div>
+    </div>
+
+    <!-- ============ CATÉGORIE : CONTENU DU SITE ============ -->
+    <div class="mb-8">
+      <h2 class="font-heading uppercase text-xs font-bold mb-3 text-[color:var(--fg-50)] tracking-widest">🌐 Contenu du site</h2>
+      <div class="flex flex-wrap gap-2">
+        <a href="admin-accueil.html" class="text-sm px-4 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] hover:bg-brand-blue/5 transition-colors font-medium">🏠 Page d'accueil</a>
+        <a href="admin-services.html" class="text-sm px-4 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] hover:bg-brand-blue/5 transition-colors font-medium">💼 Mes services</a>
+        <a href="admin-banque-exercices.html" class="text-sm px-4 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] hover:bg-brand-blue/5 transition-colors font-medium">🎥 Banque d'exercices</a>
+        <button id="toggle-formations-panel" class="text-sm px-4 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] hover:bg-brand-blue/5 transition-colors font-medium">
+          🎓 Formations
+        </button>
+      </div>
+    </div>
+
+    <!-- ============ CATÉGORIE : VENTES & RÉSERVATIONS ============ -->
+    <div class="mb-8">
+      <h2 class="font-heading uppercase text-xs font-bold mb-3 text-[color:var(--fg-50)] tracking-widest">💰 Ventes &amp; Réservations</h2>
+      <div class="flex flex-wrap gap-2">
+        <a href="admin-reservations.html" class="text-sm px-4 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] hover:bg-brand-blue/5 transition-colors font-medium">📅 RDV Visio</a>
+        <a href="generateur-facture.html" class="text-sm px-4 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] hover:bg-brand-blue/5 transition-colors font-medium">🧾 Devis/Factures</a>
+        <a href="admin-bilan.html" class="text-sm px-4 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] hover:bg-brand-blue/5 transition-colors font-medium">🦵 Bilans</a>
+      </div>
+    </div>
+
+    <!-- ============ CATÉGORIE : AUTOMATISATIONS ============ -->
+    <div class="mb-10">
+      <h2 class="font-heading uppercase text-xs font-bold mb-3 text-[color:var(--fg-50)] tracking-widest">📸 Automatisations</h2>
+      <div class="flex flex-wrap gap-2">
+        <button id="toggle-instagram-panel" class="text-sm px-4 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] hover:bg-brand-blue/5 transition-colors font-medium">
+          📸 Instagram
+        </button>
+      </div>
     </div>
 
     <!-- SECTION INDÉPENDANTE : Automatisations Instagram (pas liée à un client) -->
