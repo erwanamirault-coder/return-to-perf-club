@@ -317,7 +317,9 @@
         type, ordre: blocs.length + 1, actif: true,
         badge: '', titre: '', texte: '', image_url: '',
         cta_texte: '', cta_lien: '', cta2_texte: '', cta2_lien: '',
-        extra: type === 'liste_numerotee' || type === 'grille_features'
+        extra: type === 'liste_numerotee'
+          ? { items: [{ titre: '', texte: '', citation: '' }, { titre: '', texte: '', citation: '' }, { titre: '', texte: '', citation: '' }] }
+          : type === 'grille_features'
           ? { items: [{ titre: '', texte: '' }, { titre: '', texte: '' }, { titre: '', texte: '' }] }
           : type === 'citation'
           ? { soustitre: '' }
@@ -392,11 +394,13 @@
       } else if (b.type === 'liste_numerotee') {
         html = `
           ${fieldText('Titre de la section', 'titre', b.titre, '')}
+          <p class="text-[10px] text-[color:var(--fg-40)] -mt-1">Ces points s'affichent sous forme d'onglets cliquables : au clic sur un point, sa "phrase à mettre en avant" apparaît dans l'encart à droite.</p>
           ${(b.extra.items || []).map((item, i) => `
             <div class="border-t border-[color:var(--border)] pt-3 mt-1">
               <p class="text-xs font-semibold mb-2">Point ${i + 1}</p>
               ${fieldText('Titre', `item__${i}__titre`, item.titre, '')}
-              ${fieldText('Texte', `item__${i}__texte`, item.texte, '', true)}
+              ${fieldText('Texte (description sous le titre)', `item__${i}__texte`, item.texte, '', true)}
+              ${fieldText('Phrase à mettre en avant (utilise {{ }} pour surligner en bleu)', `item__${i}__citation`, item.citation, "Ex: Rien ne remplace {{l'observation directe}} du mouvement.")}
             </div>
           `).join('')}
         `;
