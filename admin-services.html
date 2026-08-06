@@ -91,8 +91,15 @@
         <div class="border-t border-[color:var(--border)] pt-3">
           <p class="text-xs font-semibold text-[color:var(--fg-60)] mb-2 uppercase tracking-wide">Page "En savoir plus"</p>
 
-          <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Photo de fond du bandeau (optionnel, lien direct)</label>
-          <input type="url" id="f-image-url" placeholder="https://..." class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-3">
+          <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Photo de l'offre (vignette sur la carte + fond du bandeau de la page détail)</label>
+          <div class="flex items-center gap-3 mb-3">
+            <img id="f-image-preview" class="w-16 h-16 rounded-lg object-cover border border-[color:var(--border)] hidden" alt="">
+            <div class="flex-1">
+              <input type="file" accept="image/*" id="f-image-upload" class="w-full text-xs">
+              <input type="hidden" id="f-image-url">
+              <p id="f-image-status" class="text-[10px] text-[color:var(--fg-40)] mt-1"></p>
+            </div>
+          </div>
 
           <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Accroche en grand titre (optionnel)</label>
           <textarea id="f-accroche" rows="2" placeholder="Le mouvement commence&#10;{{dans ton cerveau}}." class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-1"></textarea>
@@ -224,6 +231,9 @@
 
     function openEditPanel(offre) {
       document.getElementById('form-error').classList.add('hidden');
+      const imgPreview = document.getElementById('f-image-preview');
+      const imgStatus = document.getElementById('f-image-status');
+      document.getElementById('f-image-upload').value = '';
       if (offre) {
         document.getElementById('f-id').value = offre.id;
         document.getElementById('f-type').value = offre.type;
@@ -232,6 +242,14 @@
         document.getElementById('f-description').value = offre.description || '';
         document.getElementById('f-points').value = offre.points || '';
         document.getElementById('f-image-url').value = offre.image_url || '';
+        if (offre.image_url) {
+          imgPreview.src = offre.image_url;
+          imgPreview.classList.remove('hidden');
+          imgStatus.textContent = '';
+        } else {
+          imgPreview.classList.add('hidden');
+          imgStatus.textContent = 'Aucune photo pour le moment.';
+        }
         document.getElementById('f-accroche').value = offre.accroche || '';
         document.getElementById('f-description-longue').value = offre.description_longue || '';
         document.getElementById('f-bouton-texte').value = offre.bouton_texte || '';
@@ -249,6 +267,8 @@
         document.getElementById('f-description').value = '';
         document.getElementById('f-points').value = '';
         document.getElementById('f-image-url').value = '';
+        imgPreview.classList.add('hidden');
+        imgStatus.textContent = '';
         document.getElementById('f-accroche').value = '';
         document.getElementById('f-description-longue').value = '';
         document.getElementById('f-bouton-texte').value = '';
@@ -263,6 +283,30 @@
 
     document.getElementById('new-offre-btn').addEventListener('click', () => openEditPanel(null));
     document.getElementById('close-panel-btn').addEventListener('click', () => document.getElementById('edit-panel').classList.add('hidden'));
+
+    document.getElementById('f-image-upload').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById('f-image-status');
+      const previewEl = document.getElementById('f-image-preview');
+      statusEl.textContent = 'Envoi en cours...';
+
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `offre-${Date.now()}-${safeFileName}`;
+
+      const { error: uploadError } = await supabaseClient.storage.from('accueil-images').upload(path, file);
+      if (uploadError) {
+        statusEl.textContent = "Erreur d'upload : " + uploadError.message;
+        return;
+      }
+
+      const { data: urlData } = supabaseClient.storage.from('accueil-images').getPublicUrl(path);
+      document.getElementById('f-image-url').value = urlData.publicUrl;
+      previewEl.src = urlData.publicUrl;
+      previewEl.classList.remove('hidden');
+      statusEl.textContent = '✅ Photo prête (elle sera enregistrée avec le reste du formulaire).';
+    });
 
     document.getElementById('offre-form').addEventListener('submit', async (e) => {
       e.preventDefault();
