@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Logo &amp; Photo</title>
+<meta name="robots" content="noindex">
+
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0F4CA9">
+<link rel="icon" href="/icons/favicon-32.png" sizes="32x32">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="supabase-config.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { brand: { blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } } },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)] flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
+    <a href="admin.html" class="text-sm text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">← Retour admin</a>
+    <h1 class="font-heading uppercase text-sm font-bold">Logo &amp; Photo</h1>
+    <span class="w-16"></span>
+  </header>
+
+  <p id="denied" class="hidden text-center py-20 text-[color:var(--fg-50)]">Accès réservé.</p>
+
+  <main id="main-content" class="hidden px-6 py-10 max-w-lg mx-auto flex flex-col gap-8">
+
+    <p class="text-xs text-[color:var(--fg-40)]">
+      Ces deux images sont utilisées partout sur le site (menu, admin). Change-les ici, sans avoir besoin de GitHub — le changement est visible sur toutes tes pages dès l'upload.
+    </p>
+
+    <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-6">
+      <p class="text-xs font-semibold uppercase tracking-widest text-[color:var(--fg-50)] mb-4">Logo (menu de navigation)</p>
+      <div class="flex items-center gap-5 mb-4">
+        <div class="w-16 h-16 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] flex items-center justify-center overflow-hidden">
+          <img id="preview-logo" class="max-w-full max-h-full hidden" alt="Logo actuel">
+          <span id="preview-logo-empty" class="text-[10px] text-[color:var(--fg-30)]">Aucun</span>
+        </div>
+        <input type="file" accept="image/*" id="upload-logo" class="text-xs flex-1">
+      </div>
+      <p id="status-logo" class="text-xs hidden"></p>
+    </div>
+
+    <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-6">
+      <p class="text-xs font-semibold uppercase tracking-widest text-[color:var(--fg-50)] mb-4">Photo de profil (admin)</p>
+      <div class="flex items-center gap-5 mb-4">
+        <div class="w-16 h-16 rounded-full bg-[color:var(--bg)] border border-[color:var(--border)] flex items-center justify-center overflow-hidden">
+          <img id="preview-photo" class="w-full h-full object-cover hidden" alt="Photo actuelle">
+          <span id="preview-photo-empty" class="text-[10px] text-[color:var(--fg-30)]">Aucune</span>
+        </div>
+        <input type="file" accept="image/*" id="upload-photo" class="text-xs flex-1">
+      </div>
+      <p id="status-photo" class="text-xs hidden"></p>
+    </div>
+
+  </main>
+
+  <script>
+    const ADMIN_EMAIL = 'erwan20b@gmail.com';
+
+    function setStatus(el, text, isError) {
+      el.textContent = text;
+      el.className = 'text-xs ' + (isError ? 'text-red-500' : 'text-green-600');
+      el.classList.remove('hidden');
+    }
+
+    async function loadCurrentImages() {
+      const { data } = await supabaseClient.from('site_media').select('*');
+      if (!data) return;
+      const logo = data.find(d => d.cle === 'logo_url');
+      const photo = data.find(d => d.cle === 'photo_profil_url');
+
+      if (logo && logo.url) {
+        document.getElementById('preview-logo').src = logo.url;
+        document.getElementById('preview-logo').classList.remove('hidden');
+        document.getElementById('preview-logo-empty').classList.add('hidden');
+      }
+      if (photo && photo.url) {
+        document.getElementById('preview-photo').src = photo.url;
+        document.getElementById('preview-photo').classList.remove('hidden');
+        document.getElementById('preview-photo-empty').classList.add('hidden');
+      }
+    }
+
+    async function handleUpload(fileInput, cle, previewImg, previewEmpty, statusEl) {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `${cle}-${Date.now()}-${safeFileName}`;
+
+      const { error: uploadError } = await supabaseClient.storage.from('accueil-images').upload(path, file);
+      if (uploadError) { setStatus(statusEl, 'Erreur upload : ' + uploadError.message, true); return; }
+
+      const { data: urlData } = supabaseClient.storage.from('accueil-images').getPublicUrl(path);
+
+      const { error: dbError } = await supabaseClient
+        .from('site_media')
+        .update({ url: urlData.publicUrl, updated_at: new Date().toISOString() })
+        .eq('cle', cle);
+
+      if (dbError) { setStatus(statusEl, 'Erreur enregistrement : ' + dbError.message, true); return; }
+
+      previewImg.src = urlData.publicUrl;
+      previewImg.classList.remove('hidden');
+      previewEmpty.classList.add('hidden');
+      setStatus(statusEl, '✅ Mis à jour sur tout le site.', false);
+    }
+
+    document.getElementById('upload-logo').addEventListener('change', (e) => {
+      handleUpload(e.target, 'logo_url', document.getElementById('preview-logo'), document.getElementById('preview-logo-empty'), document.getElementById('status-logo'));
+    });
+    document.getElementById('upload-photo').addEventListener('change', (e) => {
+      handleUpload(e.target, 'photo_profil_url', document.getElementById('preview-photo'), document.getElementById('preview-photo-empty'), document.getElementById('status-photo'));
+    });
+
+    async function checkAccess() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user || user.email !== ADMIN_EMAIL) {
+        document.getElementById('denied').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('main-content').classList.remove('hidden');
+      await loadCurrentImages();
+    }
+
+    checkAccess();
+  </script>
+
+</body>
+</html>
