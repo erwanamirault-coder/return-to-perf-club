@@ -342,7 +342,6 @@
 
       return `
         <div class="${cardClasses}">
-          ${o.image_url ? `<div class="rounded-xl overflow-hidden mb-5 -mt-1"><img src="${escapeHtmlOffre(o.image_url)}" alt="${escapeHtmlOffre(o.titre)}" class="w-full h-36 object-cover"></div>` : ''}
           ${o.badge ? `<span class="${badgeClasses}">${escapeHtmlOffre(o.badge)}</span>` : ''}
           <h3 class="font-heading uppercase text-lg font-bold mb-4">${escapeHtmlOffre(o.titre)}</h3>
           <p class="text-sm text-[color:var(--fg-70)] leading-relaxed mb-5 ${isBientot ? 'flex-1' : ''}">${escapeHtmlOffre(o.description)}</p>
