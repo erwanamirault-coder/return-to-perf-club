@@ -70,7 +70,29 @@
   }
 })();
 
-// ============ PASTILLE DE NOTIFICATION (nouvelles demandes de RDV visio) ============
+// ============ LOGO & PHOTO CENTRALISÉS (remplaçables depuis admin-media.html) ============
+// Toute balise <img id="site-logo"> ou <img id="site-photo-profil"> présente
+// sur la page reçoit automatiquement l'image actuellement définie dans
+// site_media. Pas besoin de re-coder l'image en dur sur chaque page.
+(async () => {
+  try {
+    if (typeof supabaseClient === 'undefined') return;
+    const logoEl = document.getElementById('site-logo');
+    const photoEl = document.getElementById('site-photo-profil');
+    if (!logoEl && !photoEl) return;
+
+    const { data } = await supabaseClient.from('site_media').select('*');
+    if (!data) return;
+
+    const logo = data.find((d) => d.cle === 'logo_url');
+    const photo = data.find((d) => d.cle === 'photo_profil_url');
+
+    if (logoEl && logo && logo.url) logoEl.src = logo.url;
+    if (photoEl && photo && photo.url) photoEl.src = photo.url;
+  } catch (e) {
+    // Erreur silencieuse : l'image reste vide/absente si problème
+  }
+})();
 // Affiche un petit badge rouge sur le lien "Admin" du menu (desktop + mobile)
 // quand il existe des demandes de RDV visio non traitées. Ne s'affiche que
 // pour l'admin connecté ; ne fait rien si le lien Admin n'est pas dans la page.
