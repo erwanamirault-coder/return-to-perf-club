@@ -36,7 +36,7 @@
 
   <header class="sticky top-0 z-50 bg-[color:var(--bg)] flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
     <a href="index.html" class="flex items-center gap-2">
-      <img id="site-logo" src="" alt="Erwan Amirault" class="h-7 w-auto">
+      <img src="logo.png" alt="Erwan Amirault" class="h-7 w-auto">
       <span class="font-heading uppercase font-bold text-sm tracking-wide">Admin — Erwan Amirault</span>
     </a>
     <div class="flex items-center gap-4 text-sm">
@@ -44,7 +44,7 @@
       <a href="dashboard.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Mon espace</a>
       <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
       <a href="a-propos.html" class="shrink-0">
-        <img id="site-photo-profil" src="" alt="Erwan Amirault" class="w-8 h-8 rounded-full object-cover border border-[color:var(--border-strong)]">
+        <img src="photo-profil.jpg" alt="Erwan Amirault" class="w-8 h-8 rounded-full object-cover border border-[color:var(--border-strong)]">
       </a>
     </div>
   </header>
@@ -228,8 +228,15 @@
           </div>
 
           <div>
-            <label class="block text-xs font-semibold mb-1">URL de la photo</label>
-            <input type="url" id="f-image" placeholder="https://... (laisse vide si tu n'en as pas encore)" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            <label class="block text-xs font-semibold mb-1">Photo de la formation</label>
+            <div class="flex items-center gap-3">
+              <img id="f-image-preview" class="w-16 h-16 rounded-lg object-cover border border-[color:var(--border)] hidden" alt="">
+              <div class="flex-1">
+                <input type="file" accept="image/*" id="f-image-upload" class="w-full text-xs">
+                <input type="hidden" id="f-image">
+                <p id="f-image-status" class="text-[10px] text-[color:var(--fg-50)] mt-1"></p>
+              </div>
+            </div>
           </div>
 
           <div>
@@ -2674,6 +2681,9 @@
     function openFormationForm(formation) {
       formationFormError.classList.add('hidden');
       formationForm.reset();
+      const imgPreview = document.getElementById('f-image-preview');
+      const imgStatus = document.getElementById('f-image-status');
+      document.getElementById('f-image-upload').value = '';
       if (formation) {
         formationFormTitle.textContent = 'Modifier la formation';
         document.getElementById('f-id').value = formation.id;
@@ -2682,6 +2692,14 @@
         document.getElementById('f-niveau').value = formation.niveau || '';
         document.getElementById('f-prix').value = formation.prix;
         document.getElementById('f-image').value = formation.image_url || '';
+        if (formation.image_url) {
+          imgPreview.src = formation.image_url;
+          imgPreview.classList.remove('hidden');
+          imgStatus.textContent = '';
+        } else {
+          imgPreview.classList.add('hidden');
+          imgStatus.textContent = 'Aucune photo pour le moment.';
+        }
         document.getElementById('f-description').value = formation.description;
         document.getElementById('f-programme').value = (formation.programme || []).join('\n');
         document.getElementById('f-stripe-price-id').value = formation.stripe_price_id || '';
@@ -2689,6 +2707,9 @@
       } else {
         formationFormTitle.textContent = 'Nouvelle formation';
         document.getElementById('f-id').value = '';
+        document.getElementById('f-image').value = '';
+        imgPreview.classList.add('hidden');
+        imgStatus.textContent = '';
         document.getElementById('f-actif').checked = true;
       }
       formationFormPanel.classList.remove('hidden');
@@ -2697,6 +2718,30 @@
 
     document.getElementById('new-formation-btn').addEventListener('click', () => openFormationForm(null));
     document.getElementById('cancel-formation-btn').addEventListener('click', () => formationFormPanel.classList.add('hidden'));
+
+    document.getElementById('f-image-upload').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById('f-image-status');
+      const previewEl = document.getElementById('f-image-preview');
+      statusEl.textContent = 'Envoi en cours...';
+
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `formation-${Date.now()}-${safeFileName}`;
+
+      const { error: uploadError } = await supabaseClient.storage.from('accueil-images').upload(path, file);
+      if (uploadError) {
+        statusEl.textContent = "Erreur d'upload : " + uploadError.message;
+        return;
+      }
+
+      const { data: urlData } = supabaseClient.storage.from('accueil-images').getPublicUrl(path);
+      document.getElementById('f-image').value = urlData.publicUrl;
+      previewEl.src = urlData.publicUrl;
+      previewEl.classList.remove('hidden');
+      statusEl.textContent = '✅ Photo prête (elle sera enregistrée avec le reste du formulaire).';
+    });
 
     formationForm.addEventListener('submit', async (e) => {
       e.preventDefault();
