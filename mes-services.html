@@ -211,52 +211,10 @@
   <!-- OFFRES (gérées depuis l'admin) — grille responsive -->
   <section id="offres-container" class="px-6 py-6 max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></section>
 
-  <!-- RÉSULTATS CLIENTS -->
+  <!-- RÉSULTATS CLIENTS (dynamique, alimenté par les témoignages ajoutés dans admin-services.html) -->
   <section class="px-6 py-14 max-w-4xl mx-auto border-t border-[color:var(--border)]">
     <h2 class="font-heading uppercase text-2xl font-bold mb-8 text-center">Résultats clients</h2>
-    <div class="grid sm:grid-cols-2 gap-4">
-
-      <div class="rounded-xl border border-[color:var(--border)] p-4">
-        <div class="flex items-center gap-2.5 mb-2">
-          <span class="w-8 h-8 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center text-xs font-bold shrink-0">QS</span>
-          <p class="text-sm font-semibold">Quentin Soulat</p>
-        </div>
-        <p class="text-xs text-[color:var(--fg-60)] leading-relaxed">
-          "Erwan m'a accompagné pendant ma préparation sportive, en s'adaptant à ma charge d'entraînement, et a su me proposer un programme qui m'a fait passer un cap."
-        </p>
-      </div>
-
-      <div class="rounded-xl border border-[color:var(--border)] p-4">
-        <div class="flex items-center gap-2.5 mb-2">
-          <span class="w-8 h-8 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center text-xs font-bold shrink-0">F</span>
-          <p class="text-sm font-semibold">Frédérique</p>
-        </div>
-        <p class="text-xs text-[color:var(--fg-60)] leading-relaxed">
-          "Erwan m'a concocté un programme pour une tendinopathie, avec un suivi sérieux. Il ne vous laisse pas tomber, reste joignable et toujours dans la bienveillance."
-        </p>
-      </div>
-
-      <div class="rounded-xl border border-[color:var(--border)] p-4">
-        <div class="flex items-center gap-2.5 mb-2">
-          <span class="w-8 h-8 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center text-xs font-bold shrink-0">CM</span>
-          <p class="text-sm font-semibold">Célia Muraccioli</p>
-        </div>
-        <p class="text-xs text-[color:var(--fg-60)] leading-relaxed">
-          "Après une déchirure à l'adducteur, Erwan m'a préparé des exercices sur-mesure. Résultat : plus de gêne, plus de douleur, une nouvelle vision de l'entraînement."
-        </p>
-      </div>
-
-      <div class="rounded-xl border border-[color:var(--border)] p-4">
-        <div class="flex items-center gap-2.5 mb-2">
-          <span class="w-8 h-8 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center text-xs font-bold shrink-0">FM</span>
-          <p class="text-sm font-semibold">Fred M.</p>
-        </div>
-        <p class="text-xs text-[color:var(--fg-60)] leading-relaxed">
-          "Après une rupture des ligaments croisés, préparation pré et post-opératoire. 4 mois après l'opération, ma récupération équivalait à 6 mois."
-        </p>
-      </div>
-
-    </div>
+    <div id="avis-container" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
   </section>
 
   <!-- CTA FINAL -->
@@ -457,7 +415,41 @@
       renderOffres();
     }
 
+    function initiales(nom) {
+      if (!nom) return '?';
+      const parts = nom.trim().split(/\s+/);
+      return parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0].slice(0, 2).toUpperCase();
+    }
+
+    async function loadAvis() {
+      const container = document.getElementById('avis-container');
+      const { data, error } = await supabaseClient
+        .from('temoignages')
+        .select('*')
+        .order('ordre', { ascending: true })
+        .limit(6);
+
+      if (error || !data || data.length === 0) {
+        document.querySelector('#avis-container').closest('section').classList.add('hidden');
+        return;
+      }
+
+      container.innerHTML = data.map(t => `
+        <div class="rounded-xl border border-[color:var(--border-strong)] p-4">
+          <div class="flex items-center gap-2.5 mb-2">
+            <span class="w-8 h-8 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center text-xs font-bold shrink-0">${escapeHtmlOffre(initiales(t.auteur))}</span>
+            <div class="min-w-0">
+              <p class="text-sm font-semibold truncate">${escapeHtmlOffre(t.auteur)}</p>
+              ${t.contexte ? `<span class="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-brand-blue/10 text-brand-blue">${escapeHtmlOffre(t.contexte)}</span>` : ''}
+            </div>
+          </div>
+          <p class="text-xs text-[color:var(--fg-60)] leading-relaxed line-clamp-3">"${escapeHtmlOffre(t.texte)}"</p>
+        </div>
+      `).join('');
+    }
+
     loadOffres();
+    loadAvis();
   </script>
 </body>
 </html>
