@@ -195,17 +195,11 @@
 </script>
 <!-- ============ FIN BANDEAU + MENU ============ -->
 
-  <!-- HERO -->
+  <!-- HERO (géré depuis admin-services.html) -->
   <section class="px-6 py-16 sm:py-20 text-center max-w-2xl mx-auto">
-    <span class="inline-block mb-6 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold border border-brand-blue-dark text-[color:var(--accent)]">
-      Mes services
-    </span>
-    <h1 class="font-heading uppercase text-3xl sm:text-5xl font-bold leading-tight mb-6">
-      Trouve l'accompagnement <span class="text-brand-blue">qui te correspond.</span>
-    </h1>
-    <p class="text-[color:var(--fg-70)] text-base sm:text-lg leading-relaxed">
-      Que tu reviennes d'une blessure, que tu veuilles développer une qualité physique précise, ou que tu ne saches simplement pas par où commencer — il y a une formule adaptée à ta situation.
-    </p>
+    <span id="hero-badge" class="inline-block mb-6 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold border border-brand-blue-dark text-[color:var(--accent)]"></span>
+    <h1 id="hero-titre" class="font-heading uppercase text-3xl sm:text-5xl font-bold leading-tight mb-6"></h1>
+    <p id="hero-texte" class="text-[color:var(--fg-70)] text-base sm:text-lg leading-relaxed"></p>
   </section>
 
   <!-- OFFRES (gérées depuis l'admin) — grille responsive -->
@@ -447,8 +441,23 @@
       `).join('');
     }
 
+    function renderHighlightServices(str) {
+      if (!str) return '';
+      const escaped = String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return escaped.replace(/\{\{(.+?)\}\}/g, '<span class="text-brand-blue">$1</span>');
+    }
+
+    async function loadHero() {
+      const { data } = await supabaseClient.from('page_headers').select('*').eq('cle', 'mes-services').maybeSingle();
+      if (!data) return;
+      document.getElementById('hero-badge').textContent = data.badge || '';
+      document.getElementById('hero-titre').innerHTML = renderHighlightServices(data.titre);
+      document.getElementById('hero-texte').textContent = data.texte || '';
+    }
+
     loadOffres();
     loadAvis();
+    loadHero();
   </script>
 </body>
 </html>
