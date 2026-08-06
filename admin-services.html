@@ -38,6 +38,32 @@
   <p id="denied" class="hidden text-center py-20 text-[color:var(--fg-50)]">Accès réservé.</p>
 
   <div id="main-content" class="hidden px-6 py-10 max-w-2xl mx-auto">
+
+    <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] mb-6 overflow-hidden">
+      <button type="button" id="toggle-hero-btn" class="w-full flex items-center justify-between px-4 py-3 text-left">
+        <span class="text-sm font-semibold">✏️ Titre et texte d'intro de la page</span>
+        <span id="toggle-hero-icon" class="text-[color:var(--fg-40)] transition-transform">▾</span>
+      </button>
+      <div id="hero-form-wrapper" class="hidden px-4 pb-4 flex flex-col gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Badge (petit texte au-dessus du titre)</label>
+          <input type="text" id="h-badge" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Titre (utilise {{ }} pour surligner en bleu)</label>
+          <input type="text" id="h-titre" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-[color:var(--fg-60)] mb-1.5">Texte d'intro</label>
+          <textarea id="h-texte" rows="3" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></textarea>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" id="save-hero-btn" class="px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-xs font-semibold">Enregistrer</button>
+          <p id="hero-save-status" class="text-xs hidden"></p>
+        </div>
+      </div>
+    </div>
+
     <div class="flex items-center justify-between mb-6">
       <p class="text-sm text-[color:var(--fg-50)]">Gère les cartes affichées sur la page "Mes services".</p>
       <button type="button" id="new-offre-btn" class="px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-xs font-heading uppercase tracking-wide font-semibold shrink-0">
@@ -49,7 +75,7 @@
 
   <!-- Panneau d'édition -->
   <div id="edit-panel" class="hidden fixed inset-0 z-50 bg-black/50 flex items-start sm:items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-[color:var(--bg)] rounded-2xl border border-[color:var(--border)] max-w-lg w-full p-6 my-8">
+    <div class="bg-[color:var(--bg)] rounded-2xl border border-[color:var(--border)] max-w-lg w-full p-6 my-8 max-h-[85vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-5">
         <h2 class="font-heading uppercase text-lg font-bold">Modifier l'offre</h2>
         <button type="button" id="close-panel-btn" class="text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">✕</button>
@@ -173,6 +199,40 @@
     }
 
     const typeLabels = { phare: '⭐ Phare', standard: 'Standard', bientot: 'Bientôt dispo' };
+
+    // ---------- Titre / texte d'intro de la page (repliable) ----------
+    document.getElementById('toggle-hero-btn').addEventListener('click', () => {
+      const wrapper = document.getElementById('hero-form-wrapper');
+      const icon = document.getElementById('toggle-hero-icon');
+      const isHidden = wrapper.classList.toggle('hidden');
+      icon.textContent = isHidden ? '▾' : '▴';
+      if (!isHidden && !wrapper.dataset.loaded) {
+        loadHeroForm();
+        wrapper.dataset.loaded = '1';
+      }
+    });
+
+    async function loadHeroForm() {
+      const { data } = await supabaseClient.from('page_headers').select('*').eq('cle', 'mes-services').maybeSingle();
+      if (!data) return;
+      document.getElementById('h-badge').value = data.badge || '';
+      document.getElementById('h-titre').value = data.titre || '';
+      document.getElementById('h-texte').value = data.texte || '';
+    }
+
+    document.getElementById('save-hero-btn').addEventListener('click', async () => {
+      const statusEl = document.getElementById('hero-save-status');
+      const { error } = await supabaseClient.from('page_headers').update({
+        badge: document.getElementById('h-badge').value.trim(),
+        titre: document.getElementById('h-titre').value.trim(),
+        texte: document.getElementById('h-texte').value.trim(),
+        updated_at: new Date().toISOString(),
+      }).eq('cle', 'mes-services');
+
+      statusEl.classList.remove('hidden');
+      statusEl.textContent = error ? 'Erreur : ' + error.message : '✅ Enregistré.';
+      statusEl.className = 'text-xs ' + (error ? 'text-red-500' : 'text-green-600');
+    });
 
     async function loadOffres() {
       const { data, error } = await supabaseClient.from('offres_services').select('*').order('ordre', { ascending: true });
