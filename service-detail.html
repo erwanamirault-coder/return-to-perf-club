@@ -110,11 +110,15 @@
   @media (min-width: 640px) { .temoignages-grid { grid-template-columns: repeat(2, 1fr); } }
   @media (min-width: 1024px) { .temoignages-grid { grid-template-columns: repeat(3, 1fr); } }
   .temoignage-card { border-radius: 0.85rem; border: 1px solid var(--border); background: var(--card); padding: 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; }
-  .temoignage-card .t-head { display: flex; align-items: center; gap: 0.65rem; }
+  .temoignage-card .t-head { display: flex; align-items: flex-start; gap: 0.65rem; }
+  .temoignage-card .t-avatar { margin-top: 0.1rem; }
   .temoignage-card .t-avatar { width: 2rem; height: 2rem; border-radius: 999px; background: rgba(45,122,237,0.1); color: #2D7AED; display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 700; flex-shrink: 0; }
   .temoignage-card p.auteur { font-size: 0.85rem; color: var(--fg); font-weight: 600; margin: 0; line-height: 1.3; }
   .temoignage-card .t-badge { display: inline-block; margin-top: 0.2rem; padding: 0.1rem 0.55rem; border-radius: 999px; font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; background: rgba(45,122,237,0.1); color: #2D7AED; }
   .temoignage-card p.quote { font-size: 0.8rem; color: var(--fg-60); line-height: 1.55; font-style: normal; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .temoignage-card p.quote.expanded { -webkit-line-clamp: unset; overflow: visible; }
+  .temoignage-card .t-toggle { align-self: flex-start; background: none; border: none; padding: 0; margin-top: -0.2rem; font-size: 0.72rem; font-weight: 600; color: #2D7AED; cursor: pointer; }
+  .temoignage-card .t-toggle:hover { text-decoration: underline; }
 
   .faq-list { display: flex; flex-direction: column; gap: 0.85rem; margin: 1.5rem 0; }
   .faq-item { border: 1px solid var(--border); border-radius: 0.9rem; padding: 1.25rem 1.5rem; background: var(--card); }
@@ -205,6 +209,17 @@
       const parts = String(nom).trim().split(/\s+/);
       return parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0].slice(0, 2).toUpperCase();
     }
+
+    // Déplier/réduire un avis au clic (fonctionne pour toutes les cartes,
+    // même celles ajoutées dynamiquement depuis Supabase après coup)
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.t-toggle');
+      if (!btn) return;
+      const quote = btn.previousElementSibling;
+      if (!quote || !quote.classList.contains('quote')) return;
+      const isExpanded = quote.classList.toggle('expanded');
+      btn.textContent = isExpanded ? 'Réduire' : 'Lire la suite';
+    });
 
     function renderInline(str) {
       return escapeHtml(str)
@@ -317,7 +332,7 @@
             if (subLines[0].trim().startsWith('### ')) {
               const auteur = escapeHtml(subLines[0].trim().slice(4).trim());
               const quote = renderInline(subLines.slice(1).join(' ').trim());
-              html += `<div class="temoignage-card"><div class="t-head"><span class="t-avatar">${escapeHtml(initiales(auteur))}</span><div><p class="auteur">${auteur}</p></div></div><p class="quote">"${quote}"</p></div>`;
+              html += `<div class="temoignage-card"><div class="t-head"><span class="t-avatar">${escapeHtml(initiales(auteur))}</span><div><p class="auteur">${auteur}</p></div></div><p class="quote">"${quote}"</p><button type="button" class="t-toggle">Lire la suite</button></div>`;
             }
           });
           html += '</div>';
@@ -475,6 +490,7 @@
             </div>
           </div>
           <p class="quote">"${escapeHtml(t.texte)}"</p>
+          <button type="button" class="t-toggle">Lire la suite</button>
         </div>
       `).join('');
 
