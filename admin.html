@@ -1394,34 +1394,47 @@
     }
 
     // ---------- Séries dynamiques (une ligne = un set) ----------
-    function addSetRow(card, repetitions, charge) {
+    function addSetRow(card, repetitions, charge, repos, rpe) {
       const list = card.querySelector('.ex-sets-list');
       const row = document.createElement('div');
-      row.className = 'set-row flex items-center gap-1.5';
+      row.className = 'set-row rounded-lg border border-[color:var(--border)] p-2';
       row.innerHTML = `
-        <span class="set-num text-[10px] text-[color:var(--fg-40)] w-4 shrink-0 text-center"></span>
-        <input type="text" placeholder="Répétitions" class="set-reps flex-1 px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
-        <input type="text" placeholder="Charge (libre)" class="set-charge flex-1 px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
-        <button type="button" class="rm-set-btn text-red-400 hover:text-red-300 text-xs shrink-0 w-4" title="Supprimer">✕</button>
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="set-num text-[10px] font-semibold text-[color:var(--fg-40)] uppercase tracking-wide"></span>
+          <button type="button" class="rm-set-btn text-red-400 hover:text-red-300 text-xs shrink-0" title="Supprimer cette série">✕</button>
+        </div>
+        <div class="grid grid-cols-2 gap-1.5">
+          <input type="text" placeholder="Répétitions" class="set-reps px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
+          <input type="text" placeholder="Charge (libre)" class="set-charge px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
+          <input type="text" placeholder="Repos" class="set-repos px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
+          <input type="text" placeholder="RPE" class="set-rpe px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
+        </div>
       `;
       row.querySelector('.set-reps').value = repetitions || '';
       row.querySelector('.set-charge').value = (charge !== undefined && charge !== null) ? charge : '';
+      row.querySelector('.set-repos').value = repos || '';
+      row.querySelector('.set-rpe').value = rpe || '';
       row.querySelector('.rm-set-btn').addEventListener('click', () => { row.remove(); renumberSetRows(card); });
       list.appendChild(row);
       renumberSetRows(card);
     }
     function renumberSetRows(card) {
-      card.querySelectorAll('.set-row').forEach((row, i) => { row.querySelector('.set-num').textContent = i + 1; });
+      card.querySelectorAll('.set-row').forEach((row, i) => { row.querySelector('.set-num').textContent = 'Série ' + (i + 1); });
     }
     function clearSetRows(card) { card.querySelector('.ex-sets-list').innerHTML = ''; }
     function getSetsFromCard(card) {
       const isAdvanced = !card.querySelector('.ex-advanced-sets').classList.contains('hidden');
       if (isAdvanced) {
         return Array.from(card.querySelectorAll('.set-row'))
-          .map(row => ({ repetitions: row.querySelector('.set-reps').value.trim(), charge: row.querySelector('.set-charge').value.trim() }))
-          .filter(s => s.repetitions !== '' || s.charge !== '');
+          .map(row => ({
+            repetitions: row.querySelector('.set-reps').value.trim(),
+            charge: row.querySelector('.set-charge').value.trim(),
+            repos: row.querySelector('.set-repos').value.trim(),
+            rpe: row.querySelector('.set-rpe').value.trim()
+          }))
+          .filter(s => s.repetitions !== '' || s.charge !== '' || s.repos !== '' || s.rpe !== '');
       }
-      // Mode simple : on réplique la même série N fois
+      // Mode simple : on réplique la même série N fois (repos/RPE communs, définis plus bas dans le formulaire)
       const n = Number(card.querySelector('.ex-series-simple').value) || 0;
       const reps = card.querySelector('.ex-reps-simple').value.trim();
       const charge = card.querySelector('.ex-charge-simple').value.trim();
@@ -1480,8 +1493,8 @@
         });
       });
     }
-    document.getElementById('records-picker-search')?.addEventListener('input', (e) => renderRecordsPicker(e.target.value.trim().toLowerCase()));
-    document.getElementById('close-records-picker-btn')?.addEventListener('click', () => document.getElementById('records-picker-panel').classList.add('hidden'));
+    // (listener de la recherche déplacé plus bas, avec le reste des panneaux)
+    // (listener du bouton fermer déplacé plus bas, avec le reste des panneaux)
 
     function applyRecordToCard(card, record) {
       const exerciceInput = card.querySelector('.ex-exercice');
@@ -1641,14 +1654,14 @@
 
       clearSetRows(card);
       const sets = (exo.sets && Array.isArray(exo.sets) && exo.sets.length > 0) ? exo.sets : null;
-      const allIdentical = sets && sets.every(s => s.repetitions === sets[0].repetitions && s.charge === sets[0].charge);
+      const allIdentical = sets && sets.every(s => s.repetitions === sets[0].repetitions && s.charge === sets[0].charge && !s.repos && !s.rpe);
 
       if (sets && !allIdentical) {
         // Séries différentes d'une ligne à l'autre → mode avancé
         card.querySelector('.ex-simple-sets').classList.add('hidden');
         card.querySelector('.ex-advanced-sets').classList.remove('hidden');
         card.querySelector('.toggle-advanced-sets-btn').textContent = '↩ Revenir au mode simple';
-        sets.forEach(s => addSetRow(card, s.repetitions, s.charge));
+        sets.forEach(s => addSetRow(card, s.repetitions, s.charge, s.repos, s.rpe));
       } else {
         // Séries identiques (ou ancien format) → mode simple
         card.querySelector('.ex-simple-sets').classList.remove('hidden');
@@ -3577,6 +3590,11 @@
       document.getElementById('bank-picker-panel').classList.add('hidden');
       bankPickerTargetCard = null;
     });
+    document.getElementById('close-records-picker-btn').addEventListener('click', () => {
+      document.getElementById('records-picker-panel').classList.add('hidden');
+      recordsPickerTargetCard = null;
+    });
+    document.getElementById('records-picker-search').addEventListener('input', (e) => renderRecordsPicker(e.target.value.trim().toLowerCase()));
   </script>
 
 </body>
