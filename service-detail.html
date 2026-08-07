@@ -156,7 +156,528 @@
           <path d="M7.7 7.5 10.3 10.5M16.3 7.5 13.7 10.5M7.7 16.5 10.3 13.5M16.3 16.5 13.7 13.5"/>
         </svg>
         <span id="offer-badge" class="hidden inline-block mb-4 px-3 py-1 rounded-full bg-brand-blue/10 text-brand-blue text-[11px] uppercase tracking-widest font-semibold"></span>
-        <h1 id="offer-titre" class="font-heading uppercase text-3xl sm:text-4xl md:text-5xl font-bold leading-snug text-[color:var(--fg)] max-w-3xl mx-auto"></h1>
+        <h1 id="offer-titre" class="font-heading uppercase text-3xl sm:text-4xl md:text-5xl font-bold leading-relaxed text-[color:var(--fg)] max-w-3xl mx-auto"></h1>
+      </div>
+
+      <img id="hero-photo" class="hidden w-full rounded-2xl object-cover mb-14" style="max-height:460px;" alt="">
+
+      <div id="content"></div>
+
+      <div id="cta-zone" class="mt-10 pt-8 border-t border-[color:var(--border)] text-center"></div>
+    </div>
+
+    <div id="not-found" class="hidden text-center py-16">
+      <p class="text-sm text-[color:var(--fg-60)] mb-6">Cette offre n'existe pas ou n'est plus disponible.</p>
+      <a href="mes-services.html" class="inline-block px-6 py-3 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-heading uppercase text-sm font-semibold">
+        Voir mes services
+      </a>
+    </div>
+  </main>
+
+  <footer class="text-center px-6 pb-10">
+    <div class="mt-4 pt-8 border-t border-[color:var(--border)] flex flex-col items-center gap-4">
+      <a href="https://www.instagram.com/erwanamirault?igsh=ZWZjMXUwc3liamlp" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="text-[color:var(--fg-50)] hover:text-brand-blue transition-colors">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="2" y="2" width="20" height="20" rx="5"/>
+          <circle cx="12" cy="12" r="4"/>
+          <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+        </svg>
+      </a>
+      <a href="mailto:erwan.amirault@gmail.com" class="text-sm text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">
+        erwan.amirault@gmail.com
+      </a>
+      <div class="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-[color:var(--fg-40)]">
+        <a href="telecharger-app.html" class="hover:text-[color:var(--fg)] transition-colors">Télécharger l'app</a>
+        <a href="mentions-legales.html" class="hover:text-[color:var(--fg)] transition-colors">Mentions légales</a>
+        <a href="cgv.html" class="hover:text-[color:var(--fg)] transition-colors">CGV</a>
+        <a href="politique-confidentialite.html" class="hover:text-[color:var(--fg)] transition-colors">Politique de confidentialité</a>
+      </div>
+      <p class="text-[10px] text-[color:var(--fg-30)]">© 2026 Return To Perf — Erwan Amirault. Tous droits réservés.</p>
+    </div>
+  </footer>
+
+  <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function initiales(nom) {
+      if (!nom) return '?';
+      const parts = String(nom).trim().split(/\s+/);
+      return parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0].slice(0, 2).toUpperCase();
+    }
+
+    // Déplier/réduire un avis au clic (fonctionne pour toutes les cartes,
+    // même celles ajoutées dynamiquement depuis Supabase après coup)
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.t-toggle');
+      if (!btn) return;
+      const quote = btn.previousElementSibling;
+      if (!quote || !quote.classList.contains('quote')) return;
+      const isExpanded = quote.classList.toggle('expanded');
+      btn.textContent = isExpanded ? 'Réduire' : 'Lire la suite';
+    });
+
+    function renderInline(str) {
+      return escapeHtml(str)
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\{\{(.+?)\}\}/g, '<span class="hl-inline">$1</span>');
+    }
+
+    function renderPlainBlock(text) {
+      const lines = text.split('\n');
+      let html = '';
+      let inList = false;
+      let listType = null;
+
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (trimmed.startsWith(':::')) {
+          if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; listType = null; }
+          const parts = trimmed.slice(3).split('|').map(s => s.trim());
+          const [tagline, btnText, btnLink] = parts;
+          html += `<div class="cta-inline">
+            <p class="cta-inline-tagline">${renderInline(tagline || '')}</p>
+            ${btnText && btnLink ? `<a href="${btnLink}" target="_blank" rel="noopener noreferrer" class="cta-inline-btn">${escapeHtml(btnText)}</a>` : ''}
+          </div>`;
+        } else if (trimmed.startsWith('- ')) {
+          if (!inList || listType !== 'ul') { if (inList) html += listType === 'ul' ? '</ul>' : '</ol>'; html += '<ul>'; inList = true; listType = 'ul'; }
+          html += `<li class="flex gap-2"><span class="text-brand-blue shrink-0">•</span><span>${renderInline(trimmed.slice(2))}</span></li>`;
+        } else if (/^\d+\.\s/.test(trimmed)) {
+          if (!inList || listType !== 'ol') { if (inList) html += listType === 'ul' ? '</ul>' : '</ol>'; html += '<ol>'; inList = true; listType = 'ol'; }
+          html += `<li>${renderInline(trimmed.replace(/^\d+\.\s*/, ''))}</li>`;
+        } else if (trimmed === '') {
+          if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; listType = null; }
+        } else {
+          if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; listType = null; }
+          html += `<p>${renderInline(trimmed)}</p>`;
+        }
+      });
+      if (inList) html += listType === 'ul' ? '</ul>' : '</ol>';
+      return html;
+    }
+
+    function renderMarkdownLite(text) {
+      const sectionBlocks = text.split(/\n(?=## )/);
+      let html = '';
+
+      sectionBlocks.forEach(block => {
+        const lines = block.split('\n');
+        let sectionTitle = '';
+        let body = block;
+
+        if (lines[0].startsWith('## ')) {
+          sectionTitle = lines[0].slice(3).trim();
+          body = lines.slice(1).join('\n');
+          html += `<h2>${escapeHtml(sectionTitle)}</h2>`;
+        }
+
+        const subBlocks = body.split(/\n(?=### )/).filter(b => b.trim() !== '');
+        const hasSubHeadings = subBlocks.some(b => b.trim().startsWith('### '));
+
+        if (!hasSubHeadings) {
+          html += renderPlainBlock(body);
+          return;
+        }
+
+        const hasPipeHeadings = subBlocks.some(function(b) {
+          const line0 = b.split('\n')[0].trim();
+          return line0.startsWith('### ') && line0.includes('|');
+        });
+        const hasImagesInSubBlocks = subBlocks.some(function(b) {
+          const rest = b.split('\n').slice(1).join('\n').trim();
+          return /^!\[/.test(rest);
+        });
+
+        const isFaq = /question/i.test(sectionTitle);
+        const isProfiles = /toi|profil|âge|age/i.test(sectionTitle) && !hasPipeHeadings;
+        const isTemoignages = /avis|témoignage|temoignage/i.test(sectionTitle);
+        const isParcours = hasPipeHeadings && hasImagesInSubBlocks;
+        const isConceptTabs = hasPipeHeadings && !hasImagesInSubBlocks;
+
+        if (isConceptTabs) {
+          const items = [];
+          subBlocks.forEach(sub => {
+            const subLines = sub.split('\n');
+            if (subLines[0].trim().startsWith('### ')) {
+              const headerParts = subLines[0].trim().slice(4).split('|').map(s => s.trim());
+              const title = headerParts[0] || '';
+              const quote = headerParts[1] || '';
+              const desc = renderInline(subLines.slice(1).join(' ').trim());
+              items.push({ title: renderInline(title), quoteRaw: quote, desc });
+            }
+          });
+          const uid = 'ct' + Math.random().toString(36).slice(2, 8);
+          const quoteHtml = (raw) => escapeHtml(raw).replace(/\{\{(.+?)\}\}/g, '<span class="hl">$1</span>');
+          html += `<div class="concept-tabs">
+            <div class="concept-tabs-list">
+              ${items.map((it, i) => `
+                <button type="button" class="concept-tab-item${i === 0 ? ' active' : ''}" data-panel="${uid}" data-quote="${escapeHtml(it.quoteRaw)}">
+                  <h3>${it.title}</h3>
+                  <p>${it.desc}</p>
+                </button>
+              `).join('')}
+            </div>
+            <div class="concept-tabs-panel">
+              <p id="panel-${uid}">${quoteHtml(items[0] ? items[0].quoteRaw : '')}</p>
+            </div>
+          </div>`;
+        } else if (isTemoignages) {
+          html += '<div class="temoignages-grid">';
+          subBlocks.forEach(sub => {
+            const subLines = sub.split('\n');
+            if (subLines[0].trim().startsWith('### ')) {
+              const auteur = escapeHtml(subLines[0].trim().slice(4).trim());
+              const quote = renderInline(subLines.slice(1).join(' ').trim());
+              html += `<div class="temoignage-card"><div class="t-head"><span class="t-avatar">${escapeHtml(initiales(auteur))}</span><div><p class="auteur">${auteur}</p></div></div><p class="quote">"${quote}"</p><button type="button" class="t-toggle">Lire la suite</button></div>`;
+            }
+          });
+          html += '</div>';
+        } else if (isParcours) {
+          html += '<div class="steps-zigzag">';
+          subBlocks.forEach((sub, idx) => {
+            const subLines = sub.split('\n');
+            if (subLines[0].trim().startsWith('### ')) {
+              const headerParts = subLines[0].trim().slice(4).split('|').map(s => s.trim());
+              const label = headerParts[0] || '';
+              const title = headerParts[1] || '';
+              let rest = subLines.slice(1).join('\n').trim();
+              let imgTag = '';
+              const imgMatch = rest.match(/^!\[(.*?)\]\((.*?)\)/);
+              if (imgMatch) {
+                imgTag = `<img src="${imgMatch[2]}" alt="${escapeHtml(imgMatch[1])}">`;
+                rest = rest.slice(imgMatch[0].length).trim();
+              }
+              const desc = renderInline(rest);
+              const reverseClass = idx % 2 === 1 ? ' reverse' : '';
+              html += `<div class="step-row${reverseClass}">
+                <div class="step-phone"><div class="phone-frame">${imgTag}</div></div>
+                <span class="step-dot"></span>
+                <div class="step-text"><p class="step-label">${escapeHtml(label)}</p><h3 class="step-title">${escapeHtml(title)}</h3><p class="step-desc">${desc}</p></div>
+              </div>`;
+            } else {
+              html += renderPlainBlock(sub);
+            }
+          });
+          html += '</div>';
+        } else if (isFaq) {
+          html += '<div class="faq-list">';
+          subBlocks.forEach(sub => {
+            const subLines = sub.split('\n');
+            if (subLines[0].trim().startsWith('### ')) {
+              const q = escapeHtml(subLines[0].trim().slice(4).trim());
+              const a = renderInline(subLines.slice(1).join(' ').trim());
+              html += `<details class="faq-item"><summary>${q}</summary><p>${a}</p></details>`;
+            } else {
+              html += renderPlainBlock(sub);
+            }
+          });
+          html += '</div>';
+        } else if (isProfiles) {
+          html += '<div class="profile-grid">';
+          subBlocks.forEach(sub => {
+            const subLines = sub.split('\n');
+            if (subLines[0].trim().startsWith('### ')) {
+              const t = escapeHtml(subLines[0].trim().slice(4).trim());
+              let rest = subLines.slice(1).join('\n').trim();
+              let imgTag = '';
+              const imgMatch = rest.match(/^!\[(.*?)\]\((.*?)\)/);
+              if (imgMatch) {
+                imgTag = `<img src="${imgMatch[2]}" alt="${escapeHtml(imgMatch[1])}">`;
+                rest = rest.slice(imgMatch[0].length).trim();
+              }
+              const p = renderInline(rest);
+              html += `<div class="profile-card">${imgTag}<div class="profile-card-overlay"></div><div class="profile-card-body"><h3>${t}</h3><div class="profile-card-detail"><p>${p}</p></div></div></div>`;
+            } else {
+              html += renderPlainBlock(sub);
+            }
+          });
+          html += '</div>';
+        } else {
+          subBlocks.forEach(sub => {
+            const subLines = sub.split('\n');
+            if (subLines[0].trim().startsWith('### ')) {
+              html += `<h3 class="font-heading uppercase text-base font-bold mt-4 mb-1.5">${escapeHtml(subLines[0].trim().slice(4).trim())}</h3>`;
+              html += renderPlainBlock(subLines.slice(1).join('\n'));
+            } else {
+              html += renderPlainBlock(sub);
+            }
+          });
+        }
+      });
+
+      return html;
+    }
+
+    async function load() {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+
+      const { data, error } = await supabaseClient.from('offres_services').select('*').eq('id', id).maybeSingle();
+
+      document.getElementById('loading').classList.add('hidden');
+
+      if (error || !data) {
+        document.getElementById('not-found').classList.remove('hidden');
+        return;
+      }
+
+      document.title = data.titre + ' | Erwan Amirault';
+
+      if (data.image_url) {
+        document.getElementById('hero-photo').src = data.image_url;
+        document.getElementById('hero-photo').classList.remove('hidden');
+        document.getElementById('hero-icon').classList.add('hidden');
+      }
+
+      if (data.badge) {
+        document.getElementById('offer-badge').textContent = data.badge;
+        document.getElementById('offer-badge').classList.remove('hidden');
+      }
+
+      // Titre : accroche bicolore ({{mot}} = en bleu) si définie, sinon titre brut
+      if (data.accroche) {
+        const withColor = escapeHtml(data.accroche)
+          .replace(/\n/g, '<br>')
+          .replace(/\{\{(.+?)\}\}/g, '<span class="text-brand-blue" style="color:#2D7AED">$1</span>');
+        document.getElementById('offer-titre').innerHTML = withColor;
+      } else {
+        document.getElementById('offer-titre').textContent = data.titre;
+      }
+
+      if (!data.description_longue) {
+        document.getElementById('content').innerHTML = `<p class="text-[color:var(--fg-50)] italic">Le contenu détaillé de cette offre arrive bientôt.</p>`;
+        document.getElementById('offer-content').classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('content').innerHTML = renderMarkdownLite(data.description_longue);
+
+      await loadTemoignages(data.id);
+
+      if (data.bouton_texte && data.bouton_lien) {
+        const cta = document.getElementById('cta-zone');
+        cta.innerHTML = `<a href="${data.bouton_lien}" target="_blank" rel="noopener noreferrer" class="inline-block w-full text-center px-6 py-4 rounded-xl bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-heading uppercase tracking-wide font-semibold shadow-lg shadow-brand-blue/20">${escapeHtml(data.bouton_texte)}</a>`;
+      }
+
+      document.getElementById('offer-content').classList.remove('hidden');
+    }
+
+    async function loadTemoignages(offreId) {
+      const { data: temoignages } = await supabaseClient.from('temoignages').select('*').eq('offre_id', offreId).eq('actif', true).order('ordre', { ascending: true });
+      if (!temoignages || temoignages.length === 0) return;
+
+      // Cherche le titre de section "Vos avis" (ou contenant "avis"/"témoignage")
+      const headings = document.querySelectorAll('#content h2');
+      let targetHeading = null;
+      headings.forEach(h => {
+        if (/avis|témoignage|temoignage/i.test(h.textContent)) targetHeading = h;
+      });
+      if (!targetHeading) return;
+
+      const grid = document.createElement('div');
+      grid.className = 'temoignages-grid';
+      grid.innerHTML = temoignages.map(t => `
+        <div class="temoignage-card">
+          <div class="t-head">
+            <span class="t-avatar">${escapeHtml(initiales(t.auteur))}</span>
+            <div>
+              <p class="auteur">${escapeHtml(t.auteur)}</p>
+              ${t.contexte ? `<span class="t-badge">${escapeHtml(t.contexte)}</span>` : ''}
+            </div>
+          </div>
+          <p class="quote">"${escapeHtml(t.texte)}"</p>
+          <button type="button" class="t-toggle">Lire la suite</button>
+        </div>
+      `).join('');
+
+      // Retire le paragraphe provisoire ("bientôt disponible") juste après le titre, s'il existe
+      let next = targetHeading.nextElementSibling;
+      if (next && next.tagName === 'P') next.remove();
+
+      targetHeading.insertAdjacentElement('afterend', grid);
+    }
+
+    // Délégation d'événements pour les blocs interactifs "concept-tabs"
+    document.getElementById('content').addEventListener('click', (e) => {
+      const btn = e.target.closest('.concept-tab-item');
+      if (!btn) return;
+      const panelId = 'panel-' + btn.dataset.panel;
+      const panel = document.getElementById(panelId);
+      if (!panel) return;
+
+      btn.parentElement.querySelectorAll('.concept-tab-item').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      panel.innerHTML = escapeHtml(btn.dataset.quote).replace(/\{\{(.+?)\}\}/g, '<span class="hl">$1</span>');
+    });
+
+    load();
+  </script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0F4CA9">
+<link rel="icon" href="/icons/favicon-32.png" sizes="32x32">
+<title>Return To Perf</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700;800&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: { blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+
+  #content h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; font-weight: 700; font-size: 1.9rem; margin-top: 9rem; margin-bottom: 2.25rem; letter-spacing: .01em; }
+  #content > h2:first-child { margin-top: 0; }
+  #content strong { font-weight: 600; color: var(--fg); }
+  #content .hl-inline { color: #2D7AED; font-weight: 700; }
+  #content ul { list-style: none; padding-left: 0; margin: 1rem 0; display: flex; flex-direction: column; gap: 0.65rem; }
+  #content ol { list-style: none; padding-left: 0; margin: 1.5rem 0; display: flex; flex-direction: column; gap: 1rem; counter-reset: step; }
+  #content ol li { counter-increment: step; position: relative; padding: 1.25rem 1.25rem 1.25rem 3.75rem; border-radius: 0.75rem; background: var(--card); border: 1px solid var(--border); font-size: 1.08rem; }
+  #content ol li::before { content: counter(step); position: absolute; left: 1.25rem; top: 1.3rem; width: 1.6rem; height: 1.6rem; border-radius: 999px; background: #2D7AED; color: white; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; }
+  #content p { margin-bottom: 1.4rem; line-height: 1.8; color: var(--fg-70); max-width: 60rem; font-size: 1.12rem; }
+  #content > h3 { font-size: 1.3rem !important; margin-top: 3rem !important; }
+
+  .profile-grid { display: grid; grid-template-columns: 1fr; gap: 1.75rem; margin: 2.5rem 0; }
+  @media (min-width: 640px) { .profile-grid { grid-template-columns: repeat(3, 1fr); } }
+  .profile-card { position: relative; border-radius: 1.25rem; overflow: hidden; aspect-ratio: 3/4; }
+  @media (min-width: 1024px) { .profile-card { aspect-ratio: 3/5; } }
+  .profile-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .45s ease; }
+  .profile-card:hover img { transform: scale(1.08); }
+  .profile-card-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,.35) 55%, rgba(0,0,0,.05) 100%); }
+  .profile-card-body { position: absolute; left: 0; right: 0; bottom: 0; padding: 1.5rem; }
+  #content .profile-card-body h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; font-weight: 700; font-size: 1.3rem; margin-bottom: 0; color: #ffffff !important; max-width: none; }
+  .profile-card-detail { max-height: 0; opacity: 0; overflow: hidden; transition: max-height .35s ease, opacity .3s ease, margin-top .35s ease; }
+  .profile-card:hover .profile-card-detail { max-height: 8rem; opacity: 1; margin-top: 0.65rem; }
+  #content .profile-card-detail p,
+  #content .profile-card-detail p * { color: #ffffff !important; font-size: 0.92rem; margin-bottom: 0; line-height: 1.55; max-width: none; }
+
+  .cta-inline { border-top: 1px solid var(--border); padding-top: 2.5rem; margin-top: 2.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
+  .cta-inline-tagline { font-family: 'Oswald', sans-serif; text-transform: uppercase; font-weight: 700; font-size: 1.4rem; color: var(--fg); margin: 0; line-height: 1.3; max-width: 28rem; }
+  .cta-inline-btn { display: inline-block; padding: 1rem 2rem; border-radius: 999px; background: #2D7AED; color: white; font-family: 'Oswald', sans-serif; text-transform: uppercase; font-weight: 600; font-size: 0.85rem; white-space: nowrap; transition: background .15s ease; }
+  .cta-inline-btn:hover { background: #0F4CA9; }
+
+  .steps-zigzag { position: relative; margin: 2.5rem 0 1rem; }
+  .steps-zigzag::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--border); transform: translateX(-50%); display: none; }
+  @media (min-width: 768px) { .steps-zigzag::before { display: block; } }
+
+  .step-row { display: grid; grid-template-columns: 1fr; gap: 1.75rem; align-items: center; margin-bottom: 4.5rem; position: relative; justify-items: center; }
+  @media (min-width: 768px) { .step-row { grid-template-columns: 1fr 1fr; gap: 5.5rem; } }
+  .step-row:last-child { margin-bottom: 0; }
+
+  .step-dot { display: none; }
+  @media (min-width: 768px) { .step-dot { display: block; position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 11px; height: 11px; border-radius: 999px; background: #2D7AED; border: 3px solid var(--bg); z-index: 2; } }
+
+  .step-phone { grid-row: 1; grid-column: 1; justify-self: center; }
+  .step-text { grid-row: 1; grid-column: 1; max-width: 26rem; text-align: center; }
+  @media (min-width: 768px) {
+    .step-row:not(.reverse) .step-phone { grid-column: 1; justify-self: end; }
+    .step-row:not(.reverse) .step-text { grid-column: 2; justify-self: start; text-align: left; }
+    .step-row.reverse .step-phone { grid-column: 2; justify-self: start; }
+    .step-row.reverse .step-text { grid-column: 1; justify-self: end; text-align: right; }
+  }
+
+  .phone-frame { width: 200px; aspect-ratio: 9/18; border-radius: 1.75rem; border: 7px solid #111; background: #000; overflow: hidden; position: relative; box-shadow: 0 16px 32px rgba(0,0,0,.15); }
+  .phone-frame::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 38%; height: 1rem; background: #111; border-radius: 0 0 0.9rem 0.9rem; z-index: 2; }
+  .phone-frame img { width: 100%; height: 100%; object-fit: cover; }
+
+  .step-label { color: #2D7AED; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: .06em; font-size: .88rem; font-weight: 700; margin-bottom: .6rem; }
+  .step-title { font-family: 'Oswald', sans-serif; text-transform: uppercase; font-weight: 800; font-size: 1.9rem; margin-bottom: .9rem; color: var(--fg); line-height: 1.15; }
+  #content .step-desc { color: var(--fg-60); font-size: 1.05rem; line-height: 1.7; max-width: none; margin-bottom: 0; }
+
+  .concept-tabs { display: grid; grid-template-columns: 1fr; gap: 2rem; margin: 2rem 0; }
+  @media (min-width: 768px) { .concept-tabs { grid-template-columns: 1fr 1fr; align-items: stretch; } }
+  .concept-tabs-list { display: flex; flex-direction: column; }
+  .concept-tab-item { text-align: left; width: 100%; padding: 1.5rem 0 1.5rem 1.5rem; border-left: 3px solid var(--border); border-bottom: 1px solid var(--border); background: none; cursor: pointer; transition: border-color .2s ease, opacity .2s ease; font-family: 'Poppins', sans-serif; opacity: 0.5; }
+  .concept-tab-item.active { opacity: 1; }
+  .concept-tab-item:hover { opacity: 0.8; }
+  .concept-tab-item.active:hover { opacity: 1; }
+  .concept-tab-item:first-child { padding-top: 0; }
+  .concept-tab-item:last-child { border-bottom: none; }
+  .concept-tab-item.active { border-left-color: #2D7AED; }
+  .concept-tab-item h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; font-weight: 700; font-size: 1.3rem; color: var(--fg-40); margin-bottom: .6rem; transition: color .2s ease; }
+  .concept-tab-item.active h3 { color: var(--fg); }
+  .concept-tab-item p { font-size: 1rem; color: var(--fg-50); margin: 0; line-height: 1.55; }
+  .concept-tabs-panel { border-radius: 1.25rem; background: var(--card); border: 1px solid var(--border); padding: 2rem 1.75rem; display: flex; align-items: center; min-height: 180px; }
+  #content .concept-tabs-panel p { font-family: 'Oswald', sans-serif !important; text-transform: uppercase; font-weight: 800; font-size: 1.4rem; line-height: 1.3; color: var(--fg); margin: 0; max-width: none; }
+  .concept-tabs-panel .hl { color: #2D7AED; }
+
+  .temoignages-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin: 1.5rem 0; }
+  @media (min-width: 640px) { .temoignages-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1024px) { .temoignages-grid { grid-template-columns: repeat(3, 1fr); } }
+  .temoignage-card { border-radius: 0.85rem; border: 1px solid var(--border); background: var(--card); padding: 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+  .temoignage-card .t-head { display: flex; align-items: flex-start; gap: 0.65rem; }
+  .temoignage-card .t-avatar { margin-top: 0.1rem; }
+  .temoignage-card .t-avatar { width: 2rem; height: 2rem; border-radius: 999px; background: rgba(45,122,237,0.1); color: #2D7AED; display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 700; flex-shrink: 0; }
+  .temoignage-card p.auteur { font-size: 0.85rem; color: var(--fg); font-weight: 600; margin: 0; line-height: 1.3; }
+  .temoignage-card .t-badge { display: inline-block; margin-top: 0.2rem; padding: 0.1rem 0.55rem; border-radius: 999px; font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; background: rgba(45,122,237,0.1); color: #2D7AED; }
+  .temoignage-card p.quote { font-size: 0.8rem; color: var(--fg-60); line-height: 1.55; font-style: normal; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .temoignage-card p.quote.expanded { -webkit-line-clamp: unset; overflow: visible; }
+  .temoignage-card .t-toggle { align-self: flex-start; background: none; border: none; padding: 0; margin-top: -0.2rem; font-size: 0.72rem; font-weight: 600; color: #2D7AED; cursor: pointer; }
+  .temoignage-card .t-toggle:hover { text-decoration: underline; }
+
+  .faq-list { display: flex; flex-direction: column; gap: 0.85rem; margin: 1.5rem 0; }
+  .faq-item { border: 1px solid var(--border); border-radius: 0.9rem; padding: 1.25rem 1.5rem; background: var(--card); }
+  .faq-item summary { cursor: pointer; font-weight: 600; font-size: 1.08rem; color: var(--fg); list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary::after { content: '+'; font-size: 1.4rem; color: #2D7AED; margin-left: 1rem; transition: transform .2s ease; }
+  .faq-item[open] summary::after { transform: rotate(45deg); }
+  .faq-item p { margin-top: 0.9rem; margin-bottom: 0; font-size: 1rem; max-width: none; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)] flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
+    <a href="index.html" class="flex items-center gap-2">
+      <img src="logo.png" alt="Erwan Amirault" class="h-7 w-auto">
+      <span class="font-heading uppercase font-bold text-sm tracking-wide">Erwan Amirault</span>
+    </a>
+    <div class="flex items-center gap-4 text-sm">
+      <a href="mes-services.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">← Mes services</a>
+      <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+    </div>
+  </header>
+
+  <main class="px-6 sm:px-10 py-14 max-w-2xl lg:max-w-5xl xl:max-w-6xl mx-auto">
+    <div id="loading" class="text-center text-sm text-[color:var(--fg-50)]">Chargement...</div>
+
+    <div id="offer-content" class="hidden">
+      <div class="mb-10 text-center">
+        <svg id="hero-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2D7AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-4 mx-auto">
+          <circle cx="6" cy="6" r="2.2"/>
+          <circle cx="18" cy="6" r="2.2"/>
+          <circle cx="12" cy="12" r="2.2"/>
+          <circle cx="6" cy="18" r="2.2"/>
+          <circle cx="18" cy="18" r="2.2"/>
+          <path d="M7.7 7.5 10.3 10.5M16.3 7.5 13.7 10.5M7.7 16.5 10.3 13.5M16.3 16.5 13.7 13.5"/>
+        </svg>
+        <span id="offer-badge" class="hidden inline-block mb-4 px-3 py-1 rounded-full bg-brand-blue/10 text-brand-blue text-[11px] uppercase tracking-widest font-semibold"></span>
+        <h1 id="offer-titre" class="font-heading uppercase text-3xl sm:text-4xl md:text-5xl font-bold leading-relaxed text-[color:var(--fg)] max-w-3xl mx-auto"></h1>
       </div>
 
       <img id="hero-photo" class="hidden w-full rounded-2xl object-cover mb-14" style="max-height:460px;" alt="">
