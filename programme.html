@@ -41,6 +41,7 @@
 
   <header class="sticky top-0 z-50 bg-[color:var(--bg)] flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
     <a href="index.html" class="flex items-center gap-2">
+      <img src="logo.png" alt="Erwan Amirault" class="h-7 w-auto">
       <span class="font-heading uppercase font-bold text-sm tracking-wide">Erwan Amirault</span>
     </a>
     <div class="flex items-center gap-4 text-sm">
@@ -92,7 +93,10 @@
     let notesParDate = {};
     let retoursMap = {};
     let rpeClientMap = {};
+    let douleurClientMap = {};
     let wellnessMap = {};
+    let wodsParDate = {};
+    let bilanSeanceMap = {};
     let currentUserEmail = null;
     let currentWeekStart = getMonday(new Date());
     let selectedDate = null;
@@ -187,6 +191,192 @@
       });
     }
 
+    function findPreviousOccurrence(exerciceName, beforeDateKey) {
+      const nameNorm = (exerciceName || '').trim().toLowerCase();
+      if (!nameNorm) return null;
+
+      let best = null;
+      Object.keys(seancesParDate).forEach(dateKey => {
+        if (dateKey >= beforeDateKey) return;
+        (seancesParDate[dateKey] || []).forEach(exo => {
+          if ((exo.exercice || '').trim().toLowerCase() !== nameNorm) return;
+          if (!best || dateKey > best._dateKey) best = { ...exo, _dateKey: dateKey };
+        });
+      });
+      return best;
+    }
+
+    function summarizeExo(exo) {
+      if (exo.sets && Array.isArray(exo.sets) && exo.sets.length) {
+        return exo.sets.map((s, i) => `S${i + 1}: ${s.repetitions || '—'}${s.charge ? ` @ ${s.charge}` : ''}`).join(' · ');
+      }
+      return `${exo.series || '—'}x${exo.repetitions || '—'}${(exo.charge !== null && exo.charge !== undefined) ? ` @ ${exo.charge}kg` : ''}`;
+    }
+
+    function renderWodBlock(wod) {
+      if (!wod || (!wod.type_wod && !wod.format && !wod.duree_minutes && (!wod.mouvements || wod.mouvements.length === 0) && !wod.notes)) {
+        return ''; // rien de rempli = pas de bloc affiché
+      }
+      const typeLabels = { AMRAP: 'AMRAP', EMOM: 'EMOM', FOR_TIME: 'For Time', CHIPPER: 'Chipper', TABATA: 'Tabata', AUTRE: 'WOD' };
+      return `
+        <div class="rounded-xl border-2 border-orange-400/60 bg-orange-500/5 p-4 mb-4">
+          <div class="flex items-center gap-2 flex-wrap mb-2">
+            <span class="px-2.5 py-1 rounded-full bg-orange-500 text-white text-[11px] font-bold uppercase tracking-wide">🏋️ ${escapeHtml(typeLabels[wod.type_wod] || 'WOD')}</span>
+            ${wod.format ? `<span class="text-sm font-semibold">${escapeHtml(wod.format)}</span>` : ''}
+            ${wod.duree_minutes ? `<span class="text-xs text-[color:var(--fg-50)]">${escapeHtml(wod.duree_minutes)} min</span>` : ''}
+          </div>
+          ${(wod.mouvements && wod.mouvements.length) ? `
+            <div class="flex flex-col gap-1 mb-2">
+              ${wod.mouvements.map(m => `
+                <div class="flex items-center justify-between text-sm border-b border-orange-400/20 py-1 last:border-0">
+                  <span class="font-medium">${escapeHtml(m.nom)}</span>
+                  <span class="text-[color:var(--fg-60)] text-xs">${[m.repetitions, m.charge].filter(Boolean).map(escapeHtml).join(' · ')}</span>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+          ${wod.notes ? `<p class="text-sm text-[color:var(--fg-70)] leading-relaxed">${escapeHtml(wod.notes)}</p>` : ''}
+        </div>
+      `;
+    }
+
+    function renderBilanSeanceBlock(dateKey) {
+      const b = bilanSeanceMap[dateKey] || {};
+      return `
+        <div class="rounded-xl border border-[color:var(--border)] mb-4 overflow-hidden">
+          <button type="button" id="toggle-bilan-btn" class="w-full flex items-center justify-between px-4 py-3 text-left">
+            <span class="text-xs font-semibold">🏁 Fin de séance ${bilanSeanceMap[dateKey] ? '✓' : ''}</span>
+            <span id="bilan-toggle-icon" class="text-[color:var(--fg-40)] transition-transform">▾</span>
+          </button>
+          <div id="bilan-form-wrapper" class="hidden px-4 pb-4 flex flex-col gap-3">
+            <div>
+              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold mb-1">Durée réelle (minutes)</label>
+              <input type="number" id="bilan-duree" value="${b.duree_minutes || ''}" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            </div>
+            <div>
+              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold mb-1">Ressenti global (1 = épuisé, 10 = en pleine forme)</label>
+              <select id="bilan-ressenti" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+                <option value="">—</option>
+                ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${String(b.ressenti_global) === String(n) ? 'selected' : ''}>${n}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold mb-1">Douleur pendant la séance ?</label>
+              <div class="flex items-center gap-4 mb-2 text-sm">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="bilan-douleur" id="bilan-douleur-oui" value="oui" ${b.douleur === true ? 'checked' : ''}> Oui
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="bilan-douleur" id="bilan-douleur-non" value="non" ${b.douleur === false || b.douleur === null || b.douleur === undefined ? 'checked' : ''}> Non
+                </label>
+              </div>
+              <input type="text" id="bilan-douleur-zone" placeholder="Quelle zone ?" value="${escapeHtml(b.douleur_zone || '')}" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue ${b.douleur === true ? '' : 'hidden'}">
+            </div>
+            <div>
+              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold mb-1">Commentaire (optionnel)</label>
+              <textarea id="bilan-commentaire" rows="2" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">${escapeHtml(b.commentaire || '')}</textarea>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" id="save-bilan-btn" class="text-xs px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">Enregistrer</button>
+              <span id="bilan-save-confirm" class="hidden text-xs text-[color:var(--accent)]">Enregistré ✓</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function exoCardContent(e) {
+      const prev = findPreviousOccurrence(e.exercice, selectedDate);
+      return `
+        <div class="font-heading uppercase font-bold mb-2">
+          ${safeVideoUrl(e.lien_video)
+            ? `<a href="${safeVideoUrl(e.lien_video)}" target="_blank" rel="noopener noreferrer" class="text-[color:var(--accent)] underline underline-offset-4">${escapeHtml(e.exercice)}</a>`
+            : escapeHtml(e.exercice)}
+        </div>
+        <div class="flex flex-wrap gap-2 mb-2 text-xs">
+          ${(e.sets && Array.isArray(e.sets) && e.sets.length)
+            ? e.sets.map((s, i) => `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">S${i + 1} : ${escapeHtml(s.repetitions || '—')}${s.charge ? ` @ ${escapeHtml(s.charge)}` : ''}</span>`).join('')
+            : `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${e.series} séries</span><span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${e.repetitions} reps</span>${(e.charge !== null && e.charge !== undefined) ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${escapeHtml(e.charge)} kg</span>` : ''}`
+          }
+          ${e.temps_repos ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">Repos ${escapeHtml(e.temps_repos)}</span>` : ''}
+          ${e.rpe ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">RPE cible ${escapeHtml(e.rpe)}</span>` : ''}
+          ${e.tempo ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">Tempo ${escapeHtml(e.tempo)}</span>` : ''}
+        </div>
+        ${prev ? `<p class="text-[11px] text-[color:var(--fg-40)] mb-3">📊 Dernière fois : ${escapeHtml(summarizeExo(prev))}</p>` : ''}
+        ${e.description ? `<p class="text-sm text-[color:var(--fg-70)] leading-relaxed mb-4">${escapeHtml(e.description)}</p>` : ''}
+
+        <div class="border-t border-[color:var(--border)] pt-3">
+          <div class="grid grid-cols-2 gap-2 mb-3">
+            <div>
+              <label class="block text-[10px] uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-1">Difficulté (RPE)</label>
+              <select data-programme-id="${e.id}" class="rpe-client-input w-full px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+                <option value="">—</option>
+                ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${String(rpeClientMap[e.id]) === String(n) ? 'selected' : ''}>${n}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-1">Douleur</label>
+              <select data-programme-id="${e.id}" class="douleur-client-input w-full px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+                <option value="">—</option>
+                ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${String(douleurClientMap[e.id]) === String(n) ? 'selected' : ''}>${n}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <label class="block text-xs uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-2">Mon retour sur cet exercice</label>
+          <textarea data-programme-id="${e.id}" class="retour-input w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" rows="2" placeholder="Ressenti, facilité...">${escapeHtml(retoursMap[e.id] || '')}</textarea>
+          <button data-programme-id="${e.id}" class="save-retour-btn mt-2 text-xs px-3 py-1.5 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">
+            Enregistrer mon retour
+          </button>
+          <span class="save-confirm hidden text-xs text-[color:var(--accent)] ml-2">Enregistré ✓</span>
+        </div>
+      `;
+    }
+
+    function renderExoGroup(list) {
+      let html = '';
+      let i = 0;
+      while (i < list.length) {
+        const e = list[i];
+        if (e.groupe_superset) {
+          const label = e.groupe_superset;
+          const groupItems = [];
+          while (i < list.length && list[i].groupe_superset === label) {
+            groupItems.push(list[i]);
+            i++;
+          }
+          html += `
+            <div class="rounded-xl border-2 border-brand-blue/40 p-3">
+              <p class="text-[10px] uppercase tracking-widest text-brand-blue font-bold mb-2">⚡ Superset ${escapeHtml(label)}</p>
+              <div class="flex flex-col gap-4">
+                ${groupItems.map(item => `<div class="rounded-lg bg-[color:var(--card)]/60 p-3">${exoCardContent(item)}</div>`).join('')}
+              </div>
+            </div>
+          `;
+        } else {
+          html += `<div class="rounded-xl border border-[color:var(--border)] p-4">${exoCardContent(e)}</div>`;
+          i++;
+        }
+      }
+      return html;
+    }
+
+    function renderExosSection(exos) {
+      const echauffement = exos.filter(e => e.categorie === 'echauffement');
+      const seanceEx = exos.filter(e => e.categorie !== 'echauffement');
+      const isMixed = echauffement.length > 0 && seanceEx.length > 0;
+
+      let html = '';
+      if (echauffement.length) {
+        if (isMixed) html += `<p class="text-[10px] uppercase tracking-widest text-orange-500 font-bold mb-1">🔥 Échauffement</p>`;
+        html += `<div class="flex flex-col gap-4 mb-4">${renderExoGroup(echauffement)}</div>`;
+      }
+      if (seanceEx.length) {
+        if (isMixed) html += `<p class="text-[10px] uppercase tracking-widest text-brand-blue font-bold mb-1">🏋️ Séance</p>`;
+        html += `<div class="flex flex-col gap-4">${renderExoGroup(seanceEx)}</div>`;
+      }
+      return html;
+    }
+
     function renderDayDetail() {
       if (!selectedDate) {
         dayDetail.innerHTML = `<p class="text-center text-sm text-[color:var(--fg-40)]">Sélectionne un jour pour voir la séance.</p>`;
@@ -261,41 +451,13 @@
           </div>
         ` : ''}
 
-        <div class="flex flex-col gap-4">
-          ${exos.map(e => `
-            <div class="rounded-xl border border-[color:var(--border)] p-4">
-              <div class="font-heading uppercase font-bold mb-2">
-                ${safeVideoUrl(e.lien_video)
-                  ? `<a href="${safeVideoUrl(e.lien_video)}" target="_blank" rel="noopener noreferrer" class="text-[color:var(--accent)] underline underline-offset-4">${escapeHtml(e.exercice)}</a>`
-                  : escapeHtml(e.exercice)}
-              </div>
-              <div class="flex flex-wrap gap-2 mb-3 text-xs">
-                <span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${e.series} séries</span>
-                <span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${e.repetitions} reps</span>
-                ${(e.charge !== null && e.charge !== undefined) ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${escapeHtml(e.charge)} kg</span>` : ''}
-                ${e.temps_repos ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">Repos ${e.temps_repos}</span>` : ''}
-                ${e.rpe ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">RPE cible ${e.rpe}</span>` : ''}
-                ${e.tempo ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">Tempo ${e.tempo}</span>` : ''}
-              </div>
-              ${e.description ? `<p class="text-sm text-[color:var(--fg-70)] leading-relaxed mb-4">${escapeHtml(e.description)}</p>` : ''}
+        ${renderWodBlock(wodsParDate[selectedDate])}
 
-              <div class="border-t border-[color:var(--border)] pt-3">
-                <label class="block text-xs uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-2">Ma difficulté ressentie (RPE)</label>
-                <select data-programme-id="${e.id}" class="rpe-client-input w-20 px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-3">
-                  <option value="">—</option>
-                  ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${String(rpeClientMap[e.id]) === String(n) ? 'selected' : ''}>${n}</option>`).join('')}
-                </select>
-
-                <label class="block text-xs uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-2">Mon retour sur cet exercice</label>
-                <textarea data-programme-id="${e.id}" class="retour-input w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" rows="2" placeholder="Ressenti, douleur, facilité...">${escapeHtml(retoursMap[e.id] || '')}</textarea>
-                <button data-programme-id="${e.id}" class="save-retour-btn mt-2 text-xs px-3 py-1.5 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">
-                  Enregistrer mon retour
-                </button>
-                <span class="save-confirm hidden text-xs text-[color:var(--accent)] ml-2">Enregistré ✓</span>
-              </div>
-            </div>
-          `).join('')}
+        <div class="flex flex-col gap-4 mb-4">
+          ${renderExosSection(exos)}
         </div>
+
+        ${renderBilanSeanceBlock(selectedDate)}
       `;
 
       document.getElementById('save-wellness-btn')?.addEventListener('click', saveWellness);
@@ -303,6 +465,69 @@
       document.querySelectorAll('.save-retour-btn').forEach(btn => {
         btn.addEventListener('click', () => saveRetour(btn));
       });
+
+      // Bloc fin de séance
+      document.getElementById('toggle-bilan-btn')?.addEventListener('click', () => {
+        const wrapper = document.getElementById('bilan-form-wrapper');
+        const icon = document.getElementById('bilan-toggle-icon');
+        const isHidden = wrapper.classList.toggle('hidden');
+        icon.textContent = isHidden ? '▾' : '▴';
+      });
+      document.getElementById('bilan-douleur-oui')?.addEventListener('change', () => {
+        document.getElementById('bilan-douleur-zone').classList.remove('hidden');
+      });
+      document.getElementById('bilan-douleur-non')?.addEventListener('change', () => {
+        document.getElementById('bilan-douleur-zone').classList.add('hidden');
+      });
+      document.getElementById('save-bilan-btn')?.addEventListener('click', saveBilanSeance);
+    }
+
+    async function saveBilanSeance() {
+      const btn = document.getElementById('save-bilan-btn');
+      const confirmSpan = document.getElementById('bilan-save-confirm');
+      const duree = document.getElementById('bilan-duree').value;
+      const ressenti = document.getElementById('bilan-ressenti').value;
+      const douleurOui = document.getElementById('bilan-douleur-oui').checked;
+      const douleurZone = document.getElementById('bilan-douleur-zone').value.trim();
+      const commentaire = document.getElementById('bilan-commentaire').value.trim();
+
+      const [y, m, d] = selectedDate.split('-').map(Number);
+      const jourNoms = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
+      const jsDate = new Date(y, m - 1, d);
+      const jour = jourNoms[jsDate.getDay()];
+      const monday = getMonday(jsDate);
+
+      btn.disabled = true;
+      btn.textContent = 'Enregistrement...';
+
+      const { error } = await supabaseClient
+        .from('bilan_seance')
+        .upsert({
+          client_email: currentUserEmail,
+          semaine_debut: formatDateKey(monday),
+          jour: jour,
+          duree_minutes: duree ? Number(duree) : null,
+          ressenti_global: ressenti ? Number(ressenti) : null,
+          douleur: douleurOui,
+          douleur_zone: douleurOui ? (douleurZone || null) : null,
+          commentaire: commentaire || null,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'client_email,semaine_debut,jour' });
+
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer';
+
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      bilanSeanceMap[selectedDate] = {
+        duree_minutes: duree ? Number(duree) : null,
+        ressenti_global: ressenti ? Number(ressenti) : null,
+        douleur: douleurOui,
+        douleur_zone: douleurOui ? douleurZone : null,
+        commentaire: commentaire
+      };
+      confirmSpan.classList.remove('hidden');
+      setTimeout(() => confirmSpan.classList.add('hidden'), 2500);
     }
 
     async function saveWellness() {
@@ -354,8 +579,10 @@
       const programmeId = btn.dataset.programmeId;
       const textarea = document.querySelector(`.retour-input[data-programme-id="${programmeId}"]`);
       const rpeSelect = document.querySelector(`.rpe-client-input[data-programme-id="${programmeId}"]`);
+      const douleurSelect = document.querySelector(`.douleur-client-input[data-programme-id="${programmeId}"]`);
       const commentaire = textarea.value.trim();
       const rpeClient = rpeSelect && rpeSelect.value !== '' ? Number(rpeSelect.value) : null;
+      const douleurNiveau = douleurSelect && douleurSelect.value !== '' ? Number(douleurSelect.value) : null;
       const confirmSpan = btn.nextElementSibling;
 
       btn.disabled = true;
@@ -368,6 +595,7 @@
           client_email: currentUserEmail,
           commentaire: commentaire,
           rpe_client: rpeClient,
+          douleur_niveau: douleurNiveau,
           updated_at: new Date().toISOString()
         }, { onConflict: 'programme_id,client_email' });
 
@@ -378,6 +606,7 @@
 
       retoursMap[programmeId] = commentaire;
       rpeClientMap[programmeId] = rpeClient;
+      douleurClientMap[programmeId] = douleurNiveau;
       confirmSpan.classList.remove('hidden');
       setTimeout(() => confirmSpan.classList.add('hidden'), 2000);
     }
@@ -462,9 +691,35 @@
 
       retoursMap = {};
       rpeClientMap = {};
+      douleurClientMap = {};
       (retours || []).forEach(r => {
         retoursMap[r.programme_id] = r.commentaire;
         rpeClientMap[r.programme_id] = r.rpe_client;
+        douleurClientMap[r.programme_id] = r.douleur_niveau;
+      });
+
+      const { data: wods } = await supabaseClient
+        .from('wod_seance')
+        .select('*')
+        .eq('client_email', currentUserEmail);
+
+      wodsParDate = {};
+      (wods || []).forEach(w => {
+        const key = calculerDate(w.semaine_debut, w.jour);
+        if (!key) return;
+        wodsParDate[key] = w;
+      });
+
+      const { data: bilans } = await supabaseClient
+        .from('bilan_seance')
+        .select('*')
+        .eq('client_email', currentUserEmail);
+
+      bilanSeanceMap = {};
+      (bilans || []).forEach(b => {
+        const key = calculerDate(b.semaine_debut, b.jour);
+        if (!key) return;
+        bilanSeanceMap[key] = b;
       });
 
       const { data: wellnessRows } = await supabaseClient
