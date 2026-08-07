@@ -1164,19 +1164,26 @@
               </label>
             </div>
 
-            <div class="grid grid-cols-3 gap-2 mb-2">
-              <div class="col-span-2 flex gap-1.5">
-                <input type="text" placeholder="Exercice" class="ex-exercice flex-1 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-                <button type="button" class="open-records-picker-btn shrink-0 px-3 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] text-xs font-semibold hover:bg-brand-blue/5 transition-colors" title="Choisir un exercice depuis les records du client, avec calcul auto du %1RM">📊</button>
-              </div>
-              <input type="text" placeholder="Superset (ex: A1)" title="Renseigne la même lettre/numéro sur plusieurs exercices pour les lier en superset (ex: A1, A2)" class="ex-superset px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            <div class="flex flex-col sm:flex-row gap-1.5 mb-2">
+              <input type="text" placeholder="Exercice" class="ex-exercice flex-1 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <button type="button" class="open-bank-picker-btn shrink-0 px-3 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] text-xs font-semibold hover:bg-brand-blue/5 transition-colors">🎥 Choisir dans ma banque</button>
+            </div>
+            <p class="text-[10px] text-[color:var(--fg-40)] mb-3">💡 "Choisir dans ma banque" remplit automatiquement le nom de l'exercice et son lien vidéo.</p>
+
+            <div class="mb-3">
+              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold mb-1">🔗 Superset (optionnel)</label>
+              <input type="text" placeholder="ex: A1" class="ex-superset w-full sm:w-40 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <p class="text-[10px] text-[color:var(--fg-40)] mt-1">Donne la même lettre/numéro (ex: A1) à 2 exercices pour les enchaîner ensemble, sans repos entre les deux.</p>
             </div>
 
             <div class="mb-3">
-              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold mb-1">Séries (une ligne = un set — répétitions + charge)</label>
+              <div class="flex items-center justify-between mb-1 flex-wrap gap-1">
+                <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold">Séries (une ligne = un set — répétitions + charge)</label>
+                <button type="button" class="open-records-picker-btn text-[10px] text-brand-blue hover:underline shrink-0">📊 Calculer depuis un record (%1RM)</button>
+              </div>
               <div class="ex-sets-list flex flex-col gap-1.5 mb-1.5"></div>
               <button type="button" class="add-set-row-btn text-xs text-brand-blue hover:underline">+ Ajouter une série</button>
-              <p class="text-[10px] text-[color:var(--fg-40)] mt-1">Charge en texte libre ("Poids du corps", "Élastique rouge"...). Une ligne laissée vide ne sera pas visible côté client. Utilise 📊 ci-dessus pour calculer une charge en % d'1RM.</p>
+              <p class="text-[10px] text-[color:var(--fg-40)] mt-1">Charge en texte libre ("Poids du corps", "Élastique rouge"...). Une ligne laissée vide ne sera pas visible côté client.</p>
             </div>
 
             <div class="grid grid-cols-3 gap-2 mb-2">
@@ -1185,9 +1192,8 @@
               <input type="text" placeholder="Tempo" class="ex-tempo px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
             </div>
 
-            <div class="flex gap-1.5 mb-2">
-              <input type="text" placeholder="Lien vidéo (accessible pour échauffement comme séance)" class="ex-video flex-1 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <button type="button" class="open-bank-picker-btn shrink-0 px-3 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] text-xs font-semibold hover:bg-brand-blue/5 transition-colors">🎥 Banque</button>
+            <div class="mb-2">
+              <input type="text" placeholder="Lien vidéo (rempli automatiquement si tu as utilisé la banque ci-dessus)" class="ex-video w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
             </div>
 
             <div class="mb-2">
@@ -3535,7 +3541,7 @@
 
           const exerciceInput = bankPickerTargetCard.querySelector('.ex-exercice');
           const videoInput = bankPickerTargetCard.querySelector('.ex-video');
-          if (exerciceInput && !exerciceInput.value.trim()) exerciceInput.value = ex.nom;
+          if (exerciceInput) exerciceInput.value = ex.nom;
           if (videoInput) videoInput.value = ex.lien_video;
 
           document.getElementById('bank-picker-panel').classList.add('hidden');
