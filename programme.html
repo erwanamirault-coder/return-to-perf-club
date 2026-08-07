@@ -287,21 +287,42 @@
 
     function exoCardContent(e) {
       const prev = findPreviousOccurrence(e.exercice, selectedDate);
+      const hasDetailedSets = e.sets && Array.isArray(e.sets) && e.sets.length > 0;
+      const hasVaryingDetails = hasDetailedSets && e.sets.some(s => s.repos || s.rpe);
+
       return `
         <div class="font-heading uppercase font-bold mb-2">
           ${safeVideoUrl(e.lien_video)
             ? `<a href="${safeVideoUrl(e.lien_video)}" target="_blank" rel="noopener noreferrer" class="text-[color:var(--accent)] underline underline-offset-4">${escapeHtml(e.exercice)}</a>`
             : escapeHtml(e.exercice)}
         </div>
-        <div class="flex flex-wrap gap-2 mb-2 text-xs">
-          ${(e.sets && Array.isArray(e.sets) && e.sets.length)
-            ? e.sets.map((s, i) => `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">S${i + 1} : ${escapeHtml(s.repetitions || '—')}${s.charge ? ` @ ${escapeHtml(s.charge)}` : ''}</span>`).join('')
-            : `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${e.series} séries</span><span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${e.repetitions} reps</span>${(e.charge !== null && e.charge !== undefined) ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${escapeHtml(e.charge)} kg</span>` : ''}`
-          }
-          ${e.temps_repos ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">Repos ${escapeHtml(e.temps_repos)}</span>` : ''}
-          ${e.rpe ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">RPE cible ${escapeHtml(e.rpe)}</span>` : ''}
-          ${e.tempo ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">Tempo ${escapeHtml(e.tempo)}</span>` : ''}
-        </div>
+
+        ${hasDetailedSets ? `
+          <div class="flex flex-col gap-1 mb-2">
+            ${e.sets.map((s, i) => `
+              <div class="flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg bg-[color:var(--card)]">
+                <span class="font-semibold text-[color:var(--accent)] shrink-0 w-12">Série ${i + 1}</span>
+                <span class="text-[color:var(--fg-70)]">${escapeHtml(s.repetitions || '—')}${s.charge ? ` @ ${escapeHtml(s.charge)}` : ''}</span>
+                ${hasVaryingDetails ? `<span class="text-[color:var(--fg-40)] ml-auto text-right">${[s.repos ? `Repos ${escapeHtml(s.repos)}` : '', s.rpe ? `RPE ${escapeHtml(s.rpe)}` : ''].filter(Boolean).join(' · ')}</span>` : ''}
+              </div>
+            `).join('')}
+          </div>
+          <div class="flex flex-wrap gap-2 mb-2 text-xs">
+            ${(!hasVaryingDetails && e.temps_repos) ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">Repos ${escapeHtml(e.temps_repos)}</span>` : ''}
+            ${(!hasVaryingDetails && e.rpe) ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">RPE cible ${escapeHtml(e.rpe)}</span>` : ''}
+            ${e.tempo ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">Tempo ${escapeHtml(e.tempo)}</span>` : ''}
+          </div>
+        ` : `
+          <div class="flex flex-wrap gap-2 mb-2 text-xs">
+            <span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${e.series} séries</span>
+            <span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${e.repetitions} reps</span>
+            ${(e.charge !== null && e.charge !== undefined) ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">${escapeHtml(e.charge)} kg</span>` : ''}
+            ${e.temps_repos ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">Repos ${escapeHtml(e.temps_repos)}</span>` : ''}
+            ${e.rpe ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">RPE cible ${escapeHtml(e.rpe)}</span>` : ''}
+            ${e.tempo ? `<span class="px-2.5 py-1 rounded-full bg-[color:var(--card)] text-[color:var(--fg-70)]">Tempo ${escapeHtml(e.tempo)}</span>` : ''}
+          </div>
+        `}
+
         ${prev ? `<p class="text-[11px] text-[color:var(--fg-40)] mb-3">📊 Dernière fois : ${escapeHtml(summarizeExo(prev))}</p>` : ''}
         ${e.description ? `<p class="text-sm text-[color:var(--fg-70)] leading-relaxed mb-4">${escapeHtml(e.description)}</p>` : ''}
 
@@ -311,20 +332,16 @@
             💬 Mon retour${(rpeClientMap[e.id] !== null && rpeClientMap[e.id] !== undefined) || (douleurClientMap[e.id] !== null && douleurClientMap[e.id] !== undefined) || retoursMap[e.id] ? ' ✓' : ''}
           </button>
           <div class="retour-form-wrapper hidden mt-2.5">
-            <div class="grid grid-cols-2 gap-2 mb-2">
-              <div>
-                <label class="block text-[10px] uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-1">Difficulté (RPE)</label>
-                <select data-programme-id="${e.id}" class="rpe-client-input w-full px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
-                  <option value="">—</option>
-                  ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${String(rpeClientMap[e.id]) === String(n) ? 'selected' : ''}>${n}</option>`).join('')}
-                </select>
+            <div class="mb-2.5">
+              <label class="block text-[10px] uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-1.5">Difficulté (RPE)</label>
+              <div class="flex flex-wrap gap-1 rpe-btn-group" data-programme-id="${e.id}">
+                ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<button type="button" data-value="${n}" class="rpe-btn w-7 h-7 rounded-md text-xs font-semibold border transition-colors ${String(rpeClientMap[e.id]) === String(n) ? 'bg-brand-blue text-white border-brand-blue' : 'bg-[color:var(--card)] border-[color:var(--border)] text-[color:var(--fg-60)] hover:border-brand-blue'}">${n}</button>`).join('')}
               </div>
-              <div>
-                <label class="block text-[10px] uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-1">Douleur</label>
-                <select data-programme-id="${e.id}" class="douleur-client-input w-full px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
-                  <option value="">—</option>
-                  ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${String(douleurClientMap[e.id]) === String(n) ? 'selected' : ''}>${n}</option>`).join('')}
-                </select>
+            </div>
+            <div class="mb-2.5">
+              <label class="block text-[10px] uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-1.5">Douleur</label>
+              <div class="flex flex-wrap gap-1 douleur-btn-group" data-programme-id="${e.id}">
+                ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<button type="button" data-value="${n}" class="douleur-btn w-7 h-7 rounded-md text-xs font-semibold border transition-colors ${String(douleurClientMap[e.id]) === String(n) ? 'bg-red-500 text-white border-red-500' : 'bg-[color:var(--card)] border-[color:var(--border)] text-[color:var(--fg-60)] hover:border-red-400'}">${n}</button>`).join('')}
               </div>
             </div>
             <textarea data-programme-id="${e.id}" class="retour-input w-full px-2.5 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue" rows="2" placeholder="Ressenti, facilité...">${escapeHtml(retoursMap[e.id] || '')}</textarea>
@@ -480,6 +497,29 @@
         });
       });
 
+      document.querySelectorAll('.rpe-btn-group, .douleur-btn-group').forEach(group => {
+        const isRpe = group.classList.contains('rpe-btn-group');
+        const selectedClasses = isRpe ? ['bg-brand-blue', 'border-brand-blue'] : ['bg-red-500', 'border-red-500'];
+        const idleClasses = ['bg-[color:var(--card)]', 'border-[color:var(--border)]', 'text-[color:var(--fg-60)]'];
+
+        group.querySelectorAll('button').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const isSelected = selectedClasses.every(c => btn.classList.contains(c));
+            group.querySelectorAll('button').forEach(b => {
+              b.classList.remove(...selectedClasses, 'text-white');
+              b.classList.add(...idleClasses);
+            });
+            if (!isSelected) {
+              btn.classList.remove(...idleClasses);
+              btn.classList.add(...selectedClasses, 'text-white');
+              group.dataset.selected = btn.dataset.value;
+            } else {
+              delete group.dataset.selected;
+            }
+          });
+        });
+      });
+
       // Bloc fin de séance
       document.getElementById('toggle-bilan-btn')?.addEventListener('click', () => {
         const wrapper = document.getElementById('bilan-form-wrapper');
@@ -592,11 +632,11 @@
     async function saveRetour(btn) {
       const programmeId = btn.dataset.programmeId;
       const textarea = document.querySelector(`.retour-input[data-programme-id="${programmeId}"]`);
-      const rpeSelect = document.querySelector(`.rpe-client-input[data-programme-id="${programmeId}"]`);
-      const douleurSelect = document.querySelector(`.douleur-client-input[data-programme-id="${programmeId}"]`);
+      const rpeGroup = document.querySelector(`.rpe-btn-group[data-programme-id="${programmeId}"]`);
+      const douleurGroup = document.querySelector(`.douleur-btn-group[data-programme-id="${programmeId}"]`);
       const commentaire = textarea.value.trim();
-      const rpeClient = rpeSelect && rpeSelect.value !== '' ? Number(rpeSelect.value) : null;
-      const douleurNiveau = douleurSelect && douleurSelect.value !== '' ? Number(douleurSelect.value) : null;
+      const rpeClient = rpeGroup && rpeGroup.dataset.selected !== undefined ? Number(rpeGroup.dataset.selected) : null;
+      const douleurNiveau = douleurGroup && douleurGroup.dataset.selected !== undefined ? Number(douleurGroup.dataset.selected) : null;
       const confirmSpan = btn.nextElementSibling;
 
       btn.disabled = true;
