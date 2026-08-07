@@ -1740,7 +1740,9 @@
                   ${escapeHtml(exo.exercice)}
                 </span>
                 <div class="flex items-center gap-2.5 shrink-0">
-                  <span class="link-superset-btn text-[color:var(--accent)] hover:text-brand-blue text-xs whitespace-nowrap" data-id="${exo.id}" title="Enchaîner un autre exercice juste après celui-ci, sans repos">🔗 Lier</span>
+                  ${exo.groupe_superset
+                    ? `<span class="unlink-superset-btn text-[color:var(--fg-50)] hover:text-red-400 text-xs whitespace-nowrap" data-id="${exo.id}" title="Retirer cet exercice du superset">🔓 Délier</span>`
+                    : `<span class="link-superset-btn text-[color:var(--accent)] hover:text-brand-blue text-xs whitespace-nowrap" data-id="${exo.id}" title="Enchaîner un autre exercice juste après celui-ci, sans repos">🔗 Lier</span>`}
                   <span class="duplicate-btn text-[color:var(--accent)] hover:text-brand-blue text-xs whitespace-nowrap" data-id="${exo.id}">⧉ Dupliquer</span>
                   <span class="delete-btn text-red-400 hover:text-red-300 text-xs" data-id="${exo.id}">Supprimer</span>
                 </div>
@@ -1765,9 +1767,14 @@
         row.querySelector('.move-up-btn').addEventListener('click', (e) => { e.stopPropagation(); moveExercise(exo.jour, exo.id, 'up'); });
         row.querySelector('.move-down-btn').addEventListener('click', (e) => { e.stopPropagation(); moveExercise(exo.jour, exo.id, 'down'); });
         row.querySelector('.edit-row-btn').addEventListener('click', () => editExercise(exo, card));
-        row.querySelector('.link-superset-btn').addEventListener('click', (e) => {
+        row.querySelector('.link-superset-btn')?.addEventListener('click', (e) => {
           e.stopPropagation();
           startLinking(card, exo);
+        });
+        row.querySelector('.unlink-superset-btn')?.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await supabaseClient.from('programmes').update({ groupe_superset: null }).eq('id', exo.id);
+          loadExistingForWeek();
         });
         row.querySelector('.delete-btn').addEventListener('click', async (e) => {
           e.stopPropagation();
