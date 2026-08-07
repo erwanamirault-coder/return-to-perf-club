@@ -4,7 +4,7 @@
 <script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin — Gérer les séances</title>
+<title>Admin — Erwan Amirault</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,20 +50,13 @@
   </header>
 
   <main id="main-content" class="px-6 py-10 max-w-3xl mx-auto hidden">
-    <div class="flex items-center justify-between mb-8">
-      <h1 class="font-heading uppercase text-2xl font-bold text-center flex-1">Espace admin</h1>
-    </div>
 
-    <!-- ============ CATÉGORIE : SUIVI CLIENTS (priorité, mis en avant) ============ -->
-    <div class="mb-8">
+    <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 mb-8">
       <h2 class="font-heading uppercase text-xs font-bold mb-3 text-[color:var(--fg-50)] tracking-widest">📋 Suivi clients</h2>
-      <div class="rounded-xl border-2 border-brand-blue bg-brand-blue/5 p-4">
-        <p class="text-sm text-[color:var(--fg-70)] mb-1">Programmation, records, suivi, messages et nutrition pour chacun de tes clients.</p>
-        <p class="text-xs text-[color:var(--fg-50)]">👇 Sélectionne un client ci-dessous pour commencer.</p>
-      </div>
+      <p class="text-sm text-[color:var(--fg-70)] mb-1">Programmation, records, suivi, messages et nutrition pour chacun de tes clients.</p>
+      <p class="text-xs text-[color:var(--fg-50)]">👇 Sélectionne un client ci-dessous pour commencer.</p>
     </div>
 
-    <!-- ============ CATÉGORIE : CONTENU DU SITE ============ -->
     <div class="mb-8">
       <h2 class="font-heading uppercase text-xs font-bold mb-3 text-[color:var(--fg-50)] tracking-widest">🌐 Contenu du site</h2>
       <div class="flex flex-wrap gap-2">
@@ -77,7 +70,6 @@
       </div>
     </div>
 
-    <!-- ============ CATÉGORIE : VENTES & RÉSERVATIONS ============ -->
     <div class="mb-8">
       <h2 class="font-heading uppercase text-xs font-bold mb-3 text-[color:var(--fg-50)] tracking-widest">💰 Ventes &amp; Réservations</h2>
       <div class="flex flex-wrap gap-2">
@@ -87,7 +79,6 @@
       </div>
     </div>
 
-    <!-- ============ CATÉGORIE : AUTOMATISATIONS ============ -->
     <div class="mb-10">
       <h2 class="font-heading uppercase text-xs font-bold mb-3 text-[color:var(--fg-50)] tracking-widest">📸 Automatisations</h2>
       <div class="flex flex-wrap gap-2">
@@ -783,9 +774,6 @@
       const sets = getSetsFromCard(card);
       const categorie = card.querySelector('.ex-categorie:checked')?.value || 'seance';
       const groupeSuperset = card.querySelector('.ex-superset').value.trim() || null;
-
-      // Compatibilité avec l'ancien système (tonnage/Statistiques) : on dérive
-      // series/repetitions/charge de la 1ère série renseignée.
       const firstSet = sets[0] || {};
       const firstChargeNum = firstSet.charge ? parseFloat(firstSet.charge) : NaN;
 
@@ -1166,54 +1154,31 @@
               </label>
             </div>
 
-            <div class="flex flex-col sm:flex-row gap-1.5 mb-2">
-              <input type="text" placeholder="Exercice" class="ex-exercice flex-1 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <button type="button" class="open-bank-picker-btn shrink-0 px-3 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] text-xs font-semibold hover:bg-brand-blue/5 transition-colors">🎥 Choisir dans ma banque</button>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
+              <input type="text" placeholder="Exercice" class="ex-exercice px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="Superset (ex: A1)" title="Même lettre/numéro sur 2 exercices pour les enchaîner sans repos" class="ex-superset px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="Repos" class="ex-repos px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="RPE" class="ex-rpe px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="Tempo" class="ex-tempo px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <div class="flex gap-1.5 sm:col-span-3">
+                <input type="text" placeholder="Lien vidéo" class="ex-video flex-1 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+                <button type="button" class="open-bank-picker-btn shrink-0 px-3 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] text-xs font-semibold hover:bg-brand-blue/5 transition-colors">🎥 Banque</button>
+              </div>
+              <textarea placeholder="Explication de l'exercice (consignes, points d'attention...)" rows="2" class="ex-description px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-4"></textarea>
             </div>
-            <p class="text-[10px] text-[color:var(--fg-40)] mb-3">💡 "Choisir dans ma banque" remplit automatiquement le nom de l'exercice et son lien vidéo.</p>
 
-            <div class="mb-3">
-              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold mb-1">🔗 Superset (optionnel)</label>
-              <input type="text" placeholder="ex: A1" class="ex-superset w-full sm:w-40 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <p class="text-[10px] text-[color:var(--fg-40)] mt-1">Donne la même lettre/numéro (ex: A1) à 2 exercices pour les enchaîner ensemble, sans repos entre les deux.</p>
-            </div>
-
-            <div class="mb-3">
+            <div class="mb-2">
               <div class="flex items-center justify-between mb-1 flex-wrap gap-1">
                 <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold">Séries (une ligne = un set — répétitions + charge)</label>
                 <button type="button" class="open-records-picker-btn text-[10px] text-brand-blue hover:underline shrink-0">📊 Calculer depuis un record (%1RM)</button>
               </div>
               <div class="ex-sets-list flex flex-col gap-1.5 mb-1.5"></div>
               <button type="button" class="add-set-row-btn text-xs text-brand-blue hover:underline">+ Ajouter une série</button>
-              <p class="text-[10px] text-[color:var(--fg-40)] mt-1">Charge en texte libre ("Poids du corps", "Élastique rouge"...). Une ligne laissée vide ne sera pas visible côté client.</p>
             </div>
-
-            <div class="grid grid-cols-3 gap-2 mb-2">
-              <input type="text" placeholder="Repos" class="ex-repos px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="text" placeholder="RPE cible" class="ex-rpe px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="text" placeholder="Tempo" class="ex-tempo px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-            </div>
-
-            <div class="mb-2">
-              <input type="text" placeholder="Lien vidéo (rempli automatiquement si tu as utilisé la banque ci-dessus)" class="ex-video w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-            </div>
-
-            <div class="mb-2">
-              <textarea placeholder="Explication de l'exercice (consignes, points d'attention...)" rows="2" class="ex-description w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></textarea>
-            </div>
-            <div class="flex items-center gap-3 flex-wrap">
-              <button class="save-exercise-btn text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium" data-editing-id="" data-editing-ordre="">
-                + Ajouter cet exercice
-              </button>
-              <button class="cancel-edit-btn hidden text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
-                Annuler la modification
-              </button>
-              <span class="save-confirm hidden text-xs text-[color:var(--accent)] font-medium">Enregistré ✓</span>
-              <span class="autosave-status text-[10px] text-[color:var(--fg-40)]"></span>
-            </div>
+            <p class="text-[10px] text-[color:var(--fg-40)] mb-2">💡 Charge en texte libre ("Poids du corps", "Élastique rouge"...). Une ligne laissée vide ne sera pas visible côté client. Sert aussi au calcul du tonnage (Statistiques).</p>
 
             <!-- Bloc WOD optionnel (CrossFit) — non visible côté client si pas rempli -->
-            <div class="mt-4 pt-4 border-t border-[color:var(--border)]">
+            <div class="mb-3 pb-3 border-b border-[color:var(--border)]">
               <button type="button" class="toggle-wod-btn w-full flex items-center justify-between text-left">
                 <span class="text-xs font-semibold flex items-center gap-1.5"><span class="text-orange-500"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="9" width="3" height="6"/><rect x="20" y="9" width="3" height="6"/><path d="M4 10.5V13.5M20 10.5V13.5M7 8v8a1.5 1.5 0 0 0 1.5 1.5h1A1.5 1.5 0 0 0 11 16V8a1.5 1.5 0 0 0-1.5-1.5h-1A1.5 1.5 0 0 0 7 8ZM13 8v8a1.5 1.5 0 0 0 1.5 1.5h1a1.5 1.5 0 0 0 1.5-1.5V8a1.5 1.5 0 0 0-1.5-1.5h-1A1.5 1.5 0 0 0 13 8Z"/><path d="M11 12h2"/></svg></span>WOD du jour (optionnel)</span>
                 <span class="wod-toggle-icon text-[color:var(--fg-40)] transition-transform">▾</span>
@@ -1232,21 +1197,29 @@
                   <input type="text" placeholder="Format (ex: 20 min, 10 rounds/2min)" class="wod-format px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
                 </div>
                 <input type="number" placeholder="Durée (minutes)" class="wod-duree px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-
                 <div>
                   <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold mb-1">Mouvements</label>
                   <div class="wod-mouvements-list flex flex-col gap-1.5 mb-1.5"></div>
                   <button type="button" class="add-wod-mvt-btn text-xs text-brand-blue hover:underline">+ Ajouter un mouvement</button>
                 </div>
-
                 <textarea placeholder="Notes / consignes du WOD" rows="2" class="wod-notes px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></textarea>
-
                 <div class="flex items-center gap-2">
                   <button type="button" class="save-wod-btn text-xs px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">Enregistrer le WOD</button>
                   <button type="button" class="delete-wod-btn hidden text-xs text-red-400 hover:text-red-300">Supprimer le WOD</button>
                   <span class="wod-save-status text-xs hidden"></span>
                 </div>
               </div>
+            </div>
+
+            <div class="flex items-center gap-3 flex-wrap">
+              <button class="save-exercise-btn text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium" data-editing-id="" data-editing-ordre="">
+                + Ajouter cet exercice
+              </button>
+              <button class="cancel-edit-btn hidden text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
+                Annuler la modification
+              </button>
+              <span class="save-confirm hidden text-xs text-[color:var(--accent)] font-medium">Enregistré ✓</span>
+              <span class="autosave-status text-[10px] text-[color:var(--fg-40)]"></span>
             </div>
           </div>
         `;
@@ -1262,7 +1235,7 @@
 
       document.querySelectorAll('.toggle-wod-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          const wrapper = btn.closest('.mt-4').querySelector('.wod-form-wrapper');
+          const wrapper = btn.closest('.mb-3').querySelector('.wod-form-wrapper');
           const icon = btn.querySelector('.wod-toggle-icon');
           const isHidden = wrapper.classList.toggle('hidden');
           icon.textContent = isHidden ? '▾' : '▴';
@@ -1314,7 +1287,23 @@
       setTimeout(() => confirmSpan.classList.add('hidden'), 2500);
     }
 
-    // ---------- Séries dynamiques (une ligne = un set : répétitions + charge) ----------
+    function resetForm(card) {
+      card.querySelectorAll('.ex-exercice, .ex-repos, .ex-rpe, .ex-tempo, .ex-video, .ex-description, .ex-superset').forEach(input => input.value = '');
+      const seanceRadio = card.querySelector('.ex-categorie[value="seance"]');
+      if (seanceRadio) seanceRadio.checked = true;
+      clearSetRows(card);
+      addSetRow(card);
+      const btn = card.querySelector('.save-exercise-btn');
+      btn.dataset.editingId = '';
+      btn.dataset.editingOrdre = '';
+      btn.textContent = '+ Ajouter cet exercice';
+      card.querySelector('.cancel-edit-btn').classList.add('hidden');
+      clearDraftLocal(card.dataset.jour);
+      pendingUnsyncedByJour[card.dataset.jour] = false;
+      updateAutosaveStatus(card, 'idle');
+    }
+
+    // ---------- Séries dynamiques (une ligne = un set) ----------
     function addSetRow(card, repetitions, charge) {
       const list = card.querySelector('.ex-sets-list');
       const row = document.createElement('div');
@@ -1323,38 +1312,25 @@
         <span class="set-num text-[10px] text-[color:var(--fg-40)] w-4 shrink-0 text-center"></span>
         <input type="text" placeholder="Répétitions" class="set-reps flex-1 px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
         <input type="text" placeholder="Charge (libre)" class="set-charge flex-1 px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
-        <button type="button" class="rm-set-btn text-red-400 hover:text-red-300 text-xs shrink-0 w-4" title="Supprimer cette série">✕</button>
+        <button type="button" class="rm-set-btn text-red-400 hover:text-red-300 text-xs shrink-0 w-4" title="Supprimer">✕</button>
       `;
       row.querySelector('.set-reps').value = repetitions || '';
       row.querySelector('.set-charge').value = (charge !== undefined && charge !== null) ? charge : '';
-      row.querySelector('.rm-set-btn').addEventListener('click', () => {
-        row.remove();
-        renumberSetRows(card);
-      });
+      row.querySelector('.rm-set-btn').addEventListener('click', () => { row.remove(); renumberSetRows(card); });
       list.appendChild(row);
       renumberSetRows(card);
     }
-
     function renumberSetRows(card) {
-      card.querySelectorAll('.set-row').forEach((row, i) => {
-        row.querySelector('.set-num').textContent = i + 1;
-      });
+      card.querySelectorAll('.set-row').forEach((row, i) => { row.querySelector('.set-num').textContent = i + 1; });
     }
-
-    function clearSetRows(card) {
-      card.querySelector('.ex-sets-list').innerHTML = '';
-    }
-
+    function clearSetRows(card) { card.querySelector('.ex-sets-list').innerHTML = ''; }
     function getSetsFromCard(card) {
-      const rows = Array.from(card.querySelectorAll('.set-row'));
-      return rows
-        .map(row => ({
-          repetitions: row.querySelector('.set-reps').value.trim(),
-          charge: row.querySelector('.set-charge').value.trim()
-        }))
-        .filter(s => s.repetitions !== '' || s.charge !== ''); // lignes vides ignorées
+      return Array.from(card.querySelectorAll('.set-row'))
+        .map(row => ({ repetitions: row.querySelector('.set-reps').value.trim(), charge: row.querySelector('.set-charge').value.trim() }))
+        .filter(s => s.repetitions !== '' || s.charge !== '');
     }
 
+    // ---------- Sélecteur de records (%1RM) ----------
     let recordsPickerTargetCard = null;
     let recordsPickerCache = [];
 
@@ -1363,42 +1339,26 @@
       recordsPickerTargetCard = card;
       document.getElementById('records-picker-panel').classList.remove('hidden');
       document.getElementById('records-picker-search').value = '';
-
-      const { data } = await supabaseClient
-        .from('records').select('*')
-        .eq('client_email', selectedClientEmail)
-        .order('categorie', { ascending: true })
-        .order('exercice', { ascending: true });
-
+      const { data } = await supabaseClient.from('records').select('*').eq('client_email', selectedClientEmail).order('categorie', { ascending: true }).order('exercice', { ascending: true });
       recordsPickerCache = data || [];
       renderRecordsPicker('');
     }
 
     function renderRecordsPicker(term) {
       const list = document.getElementById('records-picker-list');
-      const filtered = term
-        ? recordsPickerCache.filter(r => r.exercice.toLowerCase().includes(term) || (r.categorie || '').toLowerCase().includes(term))
-        : recordsPickerCache;
-
+      const filtered = term ? recordsPickerCache.filter(r => r.exercice.toLowerCase().includes(term) || (r.categorie || '').toLowerCase().includes(term)) : recordsPickerCache;
       if (filtered.length === 0) {
-        list.innerHTML = `<p class="text-xs text-[color:var(--fg-50)]">Aucun record pour ce client. <a href="#" class="text-brand-blue hover:underline" onclick="document.getElementById('records-picker-panel').classList.add('hidden'); return false;">Ajoute-en un dans l'onglet "Mes Records"</a>, ou tape la charge directement à la main.</p>`;
+        list.innerHTML = `<p class="text-xs text-[color:var(--fg-50)]">Aucun record pour ce client. Ajoute-en un dans l'onglet "Mes Records", ou tape la charge directement à la main.</p>`;
         return;
       }
-
-      // Un seul record affiché par exercice (le plus récent)
       const parExercice = {};
-      filtered.forEach(r => {
-        if (!parExercice[r.exercice] || r.date_record > parExercice[r.exercice].date_record) parExercice[r.exercice] = r;
-      });
-
-      const byCategorie = {};
-      const order = [];
+      filtered.forEach(r => { if (!parExercice[r.exercice] || r.date_record > parExercice[r.exercice].date_record) parExercice[r.exercice] = r; });
+      const byCategorie = {}; const order = [];
       Object.values(parExercice).forEach(r => {
         const cat = r.categorie || 'Autre';
         if (!byCategorie[cat]) { byCategorie[cat] = []; order.push(cat); }
         byCategorie[cat].push(r);
       });
-
       list.innerHTML = order.map(cat => `
         <div>
           <p class="text-[11px] uppercase tracking-widest font-semibold text-brand-blue mb-1.5">${escapeHtml(cat)}</p>
@@ -1412,7 +1372,6 @@
           </div>
         </div>
       `).join('');
-
       list.querySelectorAll('.pick-record-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const record = recordsPickerCache.find(r => String(r.id) === btn.dataset.id);
@@ -1422,26 +1381,19 @@
         });
       });
     }
-
     document.getElementById('records-picker-search')?.addEventListener('input', (e) => renderRecordsPicker(e.target.value.trim().toLowerCase()));
     document.getElementById('close-records-picker-btn')?.addEventListener('click', () => document.getElementById('records-picker-panel').classList.add('hidden'));
 
     function applyRecordToCard(card, record) {
       const exerciceInput = card.querySelector('.ex-exercice');
-      if (exerciceInput) exerciceInput.value = record.exercice;
-
-      // Estimation du 1RM (formule d'Epley) si le record n'est pas déjà un vrai 1RM
+      if (exerciceInput && !exerciceInput.value.trim()) exerciceInput.value = record.exercice;
       const rm = Number(record.repetitions_max) || 1;
       const estimation1RM = rm > 1 ? record.valeur * (1 + rm / 30) : record.valeur;
-
-      const pourcentageInput = prompt(`"${record.exercice}" — record : ${record.valeur}${record.unite || 'kg'} (${rm}RM, le ${record.date_record}).\n1RM estimé : ${estimation1RM.toFixed(1)}${record.unite || 'kg'}.\n\nQuel pourcentage veux-tu appliquer ? (ex: 75, ou laisse vide pour juste renseigner l'exercice sans calculer de charge)`, '75');
+      const pourcentageInput = prompt(`"${record.exercice}" — record : ${record.valeur}${record.unite || 'kg'} (${rm}RM, le ${record.date_record}).\n1RM estimé : ${estimation1RM.toFixed(1)}${record.unite || 'kg'}.\n\nQuel pourcentage veux-tu appliquer ? (ex: 75)`, '75');
       if (!pourcentageInput) return;
-
       const pourcentage = parseFloat(pourcentageInput);
-      if (isNaN(pourcentage)) { alert('Pourcentage invalide — exercice renseigné, mais charge non calculée.'); return; }
-
-      const chargeCalculee = Math.round(estimation1RM * (pourcentage / 100) * 2) / 2; // arrondi au 0.5 le plus proche
-
+      if (isNaN(pourcentage)) { alert('Pourcentage invalide.'); return; }
+      const chargeCalculee = Math.round(estimation1RM * (pourcentage / 100) * 2) / 2;
       let firstRow = card.querySelector('.set-row');
       if (!firstRow) { addSetRow(card); firstRow = card.querySelector('.set-row'); }
       firstRow.querySelector('.set-charge').value = `${chargeCalculee}${record.unite || 'kg'} (${pourcentage}% 1RM)`;
@@ -1464,55 +1416,34 @@
       row.querySelector('.rm-wod-mvt-btn').addEventListener('click', () => row.remove());
       list.appendChild(row);
     }
-
     function getWodMouvementsFromCard(card) {
       return Array.from(card.querySelectorAll('.wod-mvt-row'))
-        .map(row => ({
-          nom: row.querySelector('.wod-mvt-nom').value.trim(),
-          repetitions: row.querySelector('.wod-mvt-reps').value.trim(),
-          charge: row.querySelector('.wod-mvt-charge').value.trim()
-        }))
+        .map(row => ({ nom: row.querySelector('.wod-mvt-nom').value.trim(), repetitions: row.querySelector('.wod-mvt-reps').value.trim(), charge: row.querySelector('.wod-mvt-charge').value.trim() }))
         .filter(m => m.nom !== '');
     }
-
     async function saveWod(card) {
       if (!selectedClientEmail || !currentMonday) { alert("Sélectionne un client d'abord."); return; }
       const jour = card.dataset.jour;
       const btn = card.querySelector('.save-wod-btn');
       const statusEl = card.querySelector('.wod-save-status');
-
       const mouvements = getWodMouvementsFromCard(card);
       const typeWod = card.querySelector('.wod-type').value;
       const format = card.querySelector('.wod-format').value.trim();
       const dureeVal = card.querySelector('.wod-duree').value;
       const notes = card.querySelector('.wod-notes').value.trim();
-
-      // Rien de rempli du tout : on ne crée pas de ligne vide
       if (!typeWod && !format && !dureeVal && mouvements.length === 0 && !notes) {
         statusEl.textContent = 'Rien à enregistrer (bloc vide).';
         statusEl.className = 'text-xs text-[color:var(--fg-40)]';
         statusEl.classList.remove('hidden');
         return;
       }
-
-      btn.disabled = true;
-      btn.textContent = 'Enregistrement...';
-
+      btn.disabled = true; btn.textContent = 'Enregistrement...';
       const { error } = await supabaseClient.from('wod_seance').upsert({
-        client_email: selectedClientEmail,
-        semaine_debut: formatDateKey(currentMonday),
-        jour: jour,
-        type_wod: typeWod || null,
-        format: format || null,
-        duree_minutes: dureeVal ? Number(dureeVal) : null,
-        mouvements: mouvements.length ? mouvements : null,
-        notes: notes || null,
-        updated_at: new Date().toISOString()
+        client_email: selectedClientEmail, semaine_debut: formatDateKey(currentMonday), jour: jour,
+        type_wod: typeWod || null, format: format || null, duree_minutes: dureeVal ? Number(dureeVal) : null,
+        mouvements: mouvements.length ? mouvements : null, notes: notes || null, updated_at: new Date().toISOString()
       }, { onConflict: 'client_email,semaine_debut,jour' });
-
-      btn.disabled = false;
-      btn.textContent = 'Enregistrer le WOD';
-
+      btn.disabled = false; btn.textContent = 'Enregistrer le WOD';
       if (error) {
         statusEl.textContent = 'Erreur : ' + error.message;
         statusEl.className = 'text-xs text-red-500';
@@ -1523,17 +1454,11 @@
       }
       statusEl.classList.remove('hidden');
     }
-
     async function deleteWod(card) {
       if (!selectedClientEmail || !currentMonday) return;
       if (!confirm('Supprimer le WOD de ce jour ?')) return;
       const jour = card.dataset.jour;
-
-      await supabaseClient.from('wod_seance').delete()
-        .eq('client_email', selectedClientEmail)
-        .eq('semaine_debut', formatDateKey(currentMonday))
-        .eq('jour', jour);
-
+      await supabaseClient.from('wod_seance').delete().eq('client_email', selectedClientEmail).eq('semaine_debut', formatDateKey(currentMonday)).eq('jour', jour);
       card.querySelector('.wod-type').value = '';
       card.querySelector('.wod-format').value = '';
       card.querySelector('.wod-duree').value = '';
@@ -1546,13 +1471,9 @@
       statusEl.className = 'text-xs text-[color:var(--fg-40)]';
       statusEl.classList.remove('hidden');
     }
-
     async function loadWodsForWeek() {
       if (!selectedClientEmail || !currentMonday) return;
-      const { data: wods } = await supabaseClient
-        .from('wod_seance').select('*')
-        .eq('client_email', selectedClientEmail).eq('semaine_debut', formatDateKey(currentMonday));
-
+      const { data: wods } = await supabaseClient.from('wod_seance').select('*').eq('client_email', selectedClientEmail).eq('semaine_debut', formatDateKey(currentMonday));
       (wods || []).forEach(w => {
         const card = document.querySelector(`[data-jour="${w.jour}"]`);
         if (!card) return;
@@ -1567,28 +1488,10 @@
           addWodMvtRow(card);
         }
         card.querySelector('.delete-wod-btn').classList.remove('hidden');
-
-        // Ouvre automatiquement le bloc s'il contient déjà des infos
         const wrapper = card.querySelector('.wod-form-wrapper');
         wrapper.classList.remove('hidden');
         card.querySelector('.wod-toggle-icon').textContent = '▴';
       });
-    }
-
-    function resetForm(card) {
-      card.querySelectorAll('.ex-exercice, .ex-repos, .ex-rpe, .ex-tempo, .ex-video, .ex-description, .ex-superset').forEach(input => input.value = '');
-      const seanceRadio = card.querySelector('.ex-categorie[value="seance"]');
-      if (seanceRadio) seanceRadio.checked = true;
-      clearSetRows(card);
-      addSetRow(card);
-      const btn = card.querySelector('.save-exercise-btn');
-      btn.dataset.editingId = '';
-      btn.dataset.editingOrdre = '';
-      btn.textContent = '+ Ajouter cet exercice';
-      card.querySelector('.cancel-edit-btn').classList.add('hidden');
-      clearDraftLocal(card.dataset.jour);
-      pendingUnsyncedByJour[card.dataset.jour] = false;
-      updateAutosaveStatus(card, 'idle');
     }
 
     async function saveExercise(btn) {
@@ -1636,11 +1539,8 @@
       if (exo.sets && Array.isArray(exo.sets) && exo.sets.length > 0) {
         exo.sets.forEach(s => addSetRow(card, s.repetitions, s.charge));
       } else {
-        // Ancien format (avant les séries groupées) : on reconstruit une ligne par série
         const n = Number(exo.series) || 1;
-        for (let i = 0; i < n; i++) {
-          addSetRow(card, exo.repetitions || '', (exo.charge !== null && exo.charge !== undefined) ? exo.charge : '');
-        }
+        for (let i = 0; i < n; i++) addSetRow(card, exo.repetitions || '', (exo.charge !== null && exo.charge !== undefined) ? exo.charge : '');
       }
 
       const btn = card.querySelector('.save-exercise-btn');
@@ -3130,32 +3030,25 @@
       formationFormPanel.scrollIntoView({ behavior: 'smooth' });
     }
 
-    document.getElementById('new-formation-btn').addEventListener('click', () => openFormationForm(null));
-    document.getElementById('cancel-formation-btn').addEventListener('click', () => formationFormPanel.classList.add('hidden'));
-
     document.getElementById('f-image-upload').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-
       const statusEl = document.getElementById('f-image-status');
       const previewEl = document.getElementById('f-image-preview');
       statusEl.textContent = 'Envoi en cours...';
-
       const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
       const path = `formation-${Date.now()}-${safeFileName}`;
-
       const { error: uploadError } = await supabaseClient.storage.from('accueil-images').upload(path, file);
-      if (uploadError) {
-        statusEl.textContent = "Erreur d'upload : " + uploadError.message;
-        return;
-      }
-
+      if (uploadError) { statusEl.textContent = "Erreur d'upload : " + uploadError.message; return; }
       const { data: urlData } = supabaseClient.storage.from('accueil-images').getPublicUrl(path);
       document.getElementById('f-image').value = urlData.publicUrl;
       previewEl.src = urlData.publicUrl;
       previewEl.classList.remove('hidden');
       statusEl.textContent = '✅ Photo prête (elle sera enregistrée avec le reste du formulaire).';
     });
+
+    document.getElementById('new-formation-btn').addEventListener('click', () => openFormationForm(null));
+    document.getElementById('cancel-formation-btn').addEventListener('click', () => formationFormPanel.classList.add('hidden'));
 
     formationForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -3485,7 +3378,7 @@
         <h2 class="font-heading uppercase text-lg font-bold">📊 Choisir depuis les records</h2>
         <button type="button" id="close-records-picker-btn" class="text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">✕</button>
       </div>
-      <p class="text-xs text-[color:var(--fg-50)] mb-3">Sélectionne un exercice : son nom sera renseigné automatiquement, et tu pourras calculer la charge en % de son record.</p>
+      <p class="text-xs text-[color:var(--fg-50)] mb-3">Sélectionne un exercice : son nom sera renseigné automatiquement (si le champ est vide), et tu pourras calculer la charge en % de son record.</p>
       <input type="text" id="records-picker-search" placeholder="Rechercher un exercice..." class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-4">
       <div id="records-picker-list" class="flex-1 overflow-y-auto flex flex-col gap-4"></div>
     </div>
@@ -3543,7 +3436,7 @@
 
           const exerciceInput = bankPickerTargetCard.querySelector('.ex-exercice');
           const videoInput = bankPickerTargetCard.querySelector('.ex-video');
-          if (exerciceInput) exerciceInput.value = ex.nom;
+          if (exerciceInput && !exerciceInput.value.trim()) exerciceInput.value = ex.nom;
           if (videoInput) videoInput.value = ex.lien_video;
 
           document.getElementById('bank-picker-panel').classList.add('hidden');
