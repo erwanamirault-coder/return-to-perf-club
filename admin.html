@@ -1165,29 +1165,33 @@
             </div>
 
             <div class="grid grid-cols-3 gap-2 mb-2">
-              <input type="text" placeholder="Exercice" class="ex-exercice sm:col-span-2 col-span-2 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <div class="col-span-2 flex gap-1.5">
+                <input type="text" placeholder="Exercice" class="ex-exercice flex-1 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+                <button type="button" class="open-records-picker-btn shrink-0 px-3 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] text-xs font-semibold hover:bg-brand-blue/5 transition-colors" title="Choisir un exercice depuis les records du client, avec calcul auto du %1RM">📊</button>
+              </div>
               <input type="text" placeholder="Superset (ex: A1)" title="Renseigne la même lettre/numéro sur plusieurs exercices pour les lier en superset (ex: A1, A2)" class="ex-superset px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
             </div>
 
-            <div class="mb-2">
-              <div class="flex items-center justify-between mb-1">
-                <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold">Séries (une ligne = un set — répétitions + charge)</label>
-                <button type="button" class="calc-1rm-btn text-[10px] text-brand-blue hover:underline shrink-0">🧮 % d'1RM</button>
-              </div>
+            <div class="mb-3">
+              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold mb-1">Séries (une ligne = un set — répétitions + charge)</label>
               <div class="ex-sets-list flex flex-col gap-1.5 mb-1.5"></div>
               <button type="button" class="add-set-row-btn text-xs text-brand-blue hover:underline">+ Ajouter une série</button>
-              <p class="text-[10px] text-[color:var(--fg-40)] mt-1">Charge en texte libre ("Poids du corps", "Élastique rouge"...). Une ligne laissée vide ne sera pas visible côté client.</p>
+              <p class="text-[10px] text-[color:var(--fg-40)] mt-1">Charge en texte libre ("Poids du corps", "Élastique rouge"...). Une ligne laissée vide ne sera pas visible côté client. Utilise 📊 ci-dessus pour calculer une charge en % d'1RM.</p>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
+            <div class="grid grid-cols-3 gap-2 mb-2">
               <input type="text" placeholder="Repos" class="ex-repos px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
               <input type="text" placeholder="RPE cible" class="ex-rpe px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
               <input type="text" placeholder="Tempo" class="ex-tempo px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <div class="flex gap-1.5">
-                <input type="text" placeholder="Lien vidéo" class="ex-video flex-1 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-                <button type="button" class="open-bank-picker-btn shrink-0 px-3 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] text-xs font-semibold hover:bg-brand-blue/5 transition-colors">🎥</button>
-              </div>
-              <textarea placeholder="Explication de l'exercice (consignes, points d'attention...)" rows="2" class="ex-description px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-4"></textarea>
+            </div>
+
+            <div class="flex gap-1.5 mb-2">
+              <input type="text" placeholder="Lien vidéo (accessible pour échauffement comme séance)" class="ex-video flex-1 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <button type="button" class="open-bank-picker-btn shrink-0 px-3 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] text-xs font-semibold hover:bg-brand-blue/5 transition-colors">🎥 Banque</button>
+            </div>
+
+            <div class="mb-2">
+              <textarea placeholder="Explication de l'exercice (consignes, points d'attention...)" rows="2" class="ex-description w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></textarea>
             </div>
             <div class="flex items-center gap-3 flex-wrap">
               <button class="save-exercise-btn text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium" data-editing-id="" data-editing-ordre="">
@@ -1245,7 +1249,7 @@
       document.querySelectorAll('.save-comment-btn').forEach(btn => btn.addEventListener('click', () => saveComment(btn)));
       document.querySelectorAll('.open-bank-picker-btn').forEach(btn => btn.addEventListener('click', () => openBankPicker(btn.closest('[data-jour]'))));
       document.querySelectorAll('.add-set-row-btn').forEach(btn => btn.addEventListener('click', () => addSetRow(btn.closest('[data-jour]'))));
-      document.querySelectorAll('.calc-1rm-btn').forEach(btn => btn.addEventListener('click', () => calc1RM(btn.closest('[data-jour]'))));
+      document.querySelectorAll('.open-records-picker-btn').forEach(btn => btn.addEventListener('click', () => openRecordsPicker(btn.closest('[data-jour]'))));
       document.querySelectorAll('[data-jour]').forEach(card => addSetRow(card)); // 1ère ligne de série vide par défaut
 
       document.querySelectorAll('.toggle-wod-btn').forEach(btn => {
@@ -1343,32 +1347,90 @@
         .filter(s => s.repetitions !== '' || s.charge !== ''); // lignes vides ignorées
     }
 
-    async function calc1RM(card) {
+    let recordsPickerTargetCard = null;
+    let recordsPickerCache = [];
+
+    async function openRecordsPicker(card) {
       if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
-      const exercice = card.querySelector('.ex-exercice').value.trim();
-      if (!exercice) { alert("Renseigne d'abord le nom de l'exercice."); return; }
+      recordsPickerTargetCard = card;
+      document.getElementById('records-picker-panel').classList.remove('hidden');
+      document.getElementById('records-picker-search').value = '';
 
       const { data } = await supabaseClient
         .from('records').select('*')
         .eq('client_email', selectedClientEmail)
-        .ilike('exercice', exercice)
-        .order('date_record', { ascending: false });
+        .order('categorie', { ascending: true })
+        .order('exercice', { ascending: true });
 
-      if (!data || data.length === 0) {
-        alert(`Aucun record trouvé pour "${exercice}" chez ce client. Ajoute d'abord un record dans l'onglet "Mes Records", ou tape la charge directement.`);
+      recordsPickerCache = data || [];
+      renderRecordsPicker('');
+    }
+
+    function renderRecordsPicker(term) {
+      const list = document.getElementById('records-picker-list');
+      const filtered = term
+        ? recordsPickerCache.filter(r => r.exercice.toLowerCase().includes(term) || (r.categorie || '').toLowerCase().includes(term))
+        : recordsPickerCache;
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<p class="text-xs text-[color:var(--fg-50)]">Aucun record pour ce client. <a href="#" class="text-brand-blue hover:underline" onclick="document.getElementById('records-picker-panel').classList.add('hidden'); return false;">Ajoute-en un dans l'onglet "Mes Records"</a>, ou tape la charge directement à la main.</p>`;
         return;
       }
 
-      const record = data[0];
+      // Un seul record affiché par exercice (le plus récent)
+      const parExercice = {};
+      filtered.forEach(r => {
+        if (!parExercice[r.exercice] || r.date_record > parExercice[r.exercice].date_record) parExercice[r.exercice] = r;
+      });
+
+      const byCategorie = {};
+      const order = [];
+      Object.values(parExercice).forEach(r => {
+        const cat = r.categorie || 'Autre';
+        if (!byCategorie[cat]) { byCategorie[cat] = []; order.push(cat); }
+        byCategorie[cat].push(r);
+      });
+
+      list.innerHTML = order.map(cat => `
+        <div>
+          <p class="text-[11px] uppercase tracking-widest font-semibold text-brand-blue mb-1.5">${escapeHtml(cat)}</p>
+          <div class="flex flex-col gap-1">
+            ${byCategorie[cat].map(r => `
+              <button type="button" data-id="${r.id}" class="pick-record-btn text-left text-sm px-2.5 py-2 rounded-lg hover:bg-[color:var(--card)] transition-colors flex items-center justify-between">
+                <span>${escapeHtml(r.exercice)}</span>
+                <span class="text-xs text-[color:var(--fg-40)]">${escapeHtml(r.valeur)}${escapeHtml(r.unite || 'kg')}${r.repetitions_max > 1 ? ` (${escapeHtml(r.repetitions_max)}RM)` : ''}</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.pick-record-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const record = recordsPickerCache.find(r => String(r.id) === btn.dataset.id);
+          if (!record || !recordsPickerTargetCard) return;
+          document.getElementById('records-picker-panel').classList.add('hidden');
+          applyRecordToCard(recordsPickerTargetCard, record);
+        });
+      });
+    }
+
+    document.getElementById('records-picker-search')?.addEventListener('input', (e) => renderRecordsPicker(e.target.value.trim().toLowerCase()));
+    document.getElementById('close-records-picker-btn')?.addEventListener('click', () => document.getElementById('records-picker-panel').classList.add('hidden'));
+
+    function applyRecordToCard(card, record) {
+      const exerciceInput = card.querySelector('.ex-exercice');
+      if (exerciceInput) exerciceInput.value = record.exercice;
+
       // Estimation du 1RM (formule d'Epley) si le record n'est pas déjà un vrai 1RM
       const rm = Number(record.repetitions_max) || 1;
       const estimation1RM = rm > 1 ? record.valeur * (1 + rm / 30) : record.valeur;
 
-      const pourcentageInput = prompt(`Record trouvé : ${record.valeur}${record.unite || 'kg'} (${rm}RM, le ${record.date_record}).\n1RM estimé : ${estimation1RM.toFixed(1)}${record.unite || 'kg'}.\n\nQuel pourcentage veux-tu appliquer ? (ex: 75)`, '75');
+      const pourcentageInput = prompt(`"${record.exercice}" — record : ${record.valeur}${record.unite || 'kg'} (${rm}RM, le ${record.date_record}).\n1RM estimé : ${estimation1RM.toFixed(1)}${record.unite || 'kg'}.\n\nQuel pourcentage veux-tu appliquer ? (ex: 75, ou laisse vide pour juste renseigner l'exercice sans calculer de charge)`, '75');
       if (!pourcentageInput) return;
 
       const pourcentage = parseFloat(pourcentageInput);
-      if (isNaN(pourcentage)) { alert('Pourcentage invalide.'); return; }
+      if (isNaN(pourcentage)) { alert('Pourcentage invalide — exercice renseigné, mais charge non calculée.'); return; }
 
       const chargeCalculee = Math.round(estimation1RM * (pourcentage / 100) * 2) / 2; // arrondi au 0.5 le plus proche
 
@@ -3405,6 +3467,19 @@
       <input type="text" id="bank-picker-search" placeholder="Rechercher un exercice..." class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-4">
       <div id="bank-picker-list" class="flex-1 overflow-y-auto flex flex-col gap-4"></div>
       <a href="admin-banque-exercices.html" target="_blank" class="text-xs text-brand-blue hover:underline mt-4">Gérer la banque d'exercices →</a>
+    </div>
+  </div>
+
+  <!-- Panneau : sélection depuis les records du client (avec calcul %1RM) -->
+  <div id="records-picker-panel" class="hidden fixed inset-0 z-50 bg-black/50 flex items-start sm:items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-[color:var(--bg)] rounded-2xl border border-[color:var(--border)] max-w-lg w-full p-6 my-8 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-heading uppercase text-lg font-bold">📊 Choisir depuis les records</h2>
+        <button type="button" id="close-records-picker-btn" class="text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">✕</button>
+      </div>
+      <p class="text-xs text-[color:var(--fg-50)] mb-3">Sélectionne un exercice : son nom sera renseigné automatiquement, et tu pourras calculer la charge en % de son record.</p>
+      <input type="text" id="records-picker-search" placeholder="Rechercher un exercice..." class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-4">
+      <div id="records-picker-list" class="flex-1 overflow-y-auto flex flex-col gap-4"></div>
     </div>
   </div>
 
