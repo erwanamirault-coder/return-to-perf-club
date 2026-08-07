@@ -728,9 +728,9 @@
       const btn = card.querySelector('.save-exercise-btn');
       return {
         exercice: card.querySelector('.ex-exercice').value,
-        series: card.querySelector('.ex-series').value,
-        repetitions: card.querySelector('.ex-repetitions').value,
-        charge: card.querySelector('.ex-charge').value,
+        seriesSimple: card.querySelector('.ex-series-simple').value,
+        repsSimple: card.querySelector('.ex-reps-simple').value,
+        chargeSimple: card.querySelector('.ex-charge-simple').value,
         repos: card.querySelector('.ex-repos').value,
         rpe: card.querySelector('.ex-rpe').value,
         tempo: card.querySelector('.ex-tempo').value,
@@ -773,7 +773,7 @@
 
       const sets = getSetsFromCard(card);
       const categorie = card.querySelector('.ex-categorie:checked')?.value || 'seance';
-      const groupeSuperset = card.querySelector('.ex-superset').value.trim() || null;
+      const groupeSuperset = card.dataset.linkingGroup || null;
       const firstSet = sets[0] || {};
       const firstChargeNum = firstSet.charge ? parseFloat(firstSet.charge) : NaN;
 
@@ -829,9 +829,9 @@
 
     function restoreDraft(card, jour, draft) {
       card.querySelector('.ex-exercice').value = draft.exercice || '';
-      card.querySelector('.ex-series').value = draft.series || '';
-      card.querySelector('.ex-repetitions').value = draft.repetitions || '';
-      card.querySelector('.ex-charge').value = draft.charge || '';
+      card.querySelector('.ex-series-simple').value = draft.seriesSimple || '';
+      card.querySelector('.ex-reps-simple').value = draft.repsSimple || '';
+      card.querySelector('.ex-charge-simple').value = draft.chargeSimple || '';
       card.querySelector('.ex-repos').value = draft.repos || '';
       card.querySelector('.ex-rpe').value = draft.rpe || '';
       card.querySelector('.ex-tempo').value = draft.tempo || '';
@@ -898,7 +898,7 @@
     daysContainer.addEventListener('input', (e) => {
       const card = e.target.closest('[data-jour]');
       if (!card) return;
-      if (!e.target.matches('.ex-exercice, .ex-series, .ex-repetitions, .ex-charge, .ex-repos, .ex-rpe, .ex-tempo, .ex-video, .ex-description')) return;
+      if (!e.target.matches('.ex-exercice, .ex-series-simple, .ex-reps-simple, .ex-charge-simple, .set-reps, .set-charge, .ex-repos, .ex-rpe, .ex-tempo, .ex-video, .ex-description')) return;
 
       const jour = card.dataset.jour;
       saveDraftLocal(card, jour);
@@ -1141,7 +1141,14 @@
             <p class="text-[10px] text-[color:var(--fg-40)] mb-1.5">💡 Glisse la poignée ⠿ pour réordonner les exercices de ce jour.</p>
             <div class="existing-list flex flex-col gap-2 mb-3"></div>
 
-            <div class="flex items-center gap-4 mb-2 text-xs">
+            <!-- Bandeau affiché uniquement quand on est en train de lier un superset -->
+            <div class="linking-banner hidden mb-3 px-3 py-2.5 rounded-lg bg-brand-blue/10 border border-brand-blue-dark flex items-center justify-between gap-2">
+              <span class="text-xs text-[color:var(--accent)]">🔗 Cet exercice sera enchaîné (superset) avec <strong class="linking-label"></strong></span>
+              <button type="button" class="cancel-linking-btn text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] underline underline-offset-2 shrink-0">Annuler</button>
+            </div>
+
+            <!-- 1. Catégorie -->
+            <div class="flex items-center gap-4 mb-3 text-xs">
               <label class="flex items-center gap-1.5 cursor-pointer">
                 <input type="radio" name="cat-${jour}" class="ex-categorie" value="echauffement">
                 <span class="text-orange-500"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1.2 3-2.5 4.2-2.5 8a2.5 2.5 0 0 0 5 0c0-.8-.5-1.6-.8-2.4 1.8 1 3.3 3 3.3 5.4a5 5 0 0 1-10 0c0-5.5 4-6.5 5-11Z"/></svg></span>
@@ -1154,30 +1161,56 @@
               </label>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
-              <input type="text" placeholder="Exercice" class="ex-exercice px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="text" placeholder="Superset (ex: A1)" title="Même lettre/numéro sur 2 exercices pour les enchaîner sans repos" class="ex-superset px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="text" placeholder="Repos" class="ex-repos px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="text" placeholder="RPE" class="ex-rpe px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="text" placeholder="Tempo" class="ex-tempo px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <div class="flex gap-1.5 sm:col-span-3">
-                <input type="text" placeholder="Lien vidéo" class="ex-video flex-1 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-                <button type="button" class="open-bank-picker-btn shrink-0 px-3 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] text-xs font-semibold hover:bg-brand-blue/5 transition-colors">🎥 Banque</button>
-              </div>
-              <textarea placeholder="Explication de l'exercice (consignes, points d'attention...)" rows="2" class="ex-description px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-4"></textarea>
+            <!-- 2. Nom de l'exercice + banque -->
+            <div class="flex flex-col sm:flex-row gap-1.5 mb-2">
+              <input type="text" placeholder="Nom de l'exercice" class="ex-exercice flex-1 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <button type="button" class="open-bank-picker-btn shrink-0 px-3 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] text-xs font-semibold hover:bg-brand-blue/5 transition-colors">🎥 Choisir dans ma banque</button>
             </div>
+            <p class="text-[10px] text-[color:var(--fg-40)] mb-3">💡 Remplit automatiquement le nom et le lien vidéo.</p>
 
-            <div class="mb-2">
-              <div class="flex items-center justify-between mb-1 flex-wrap gap-1">
-                <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold">Séries (une ligne = un set — répétitions + charge)</label>
+            <!-- 3. Séries : mode simple par défaut, mode détaillé en option -->
+            <div class="mb-3">
+              <div class="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+                <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold">Séries</label>
                 <button type="button" class="open-records-picker-btn text-[10px] text-brand-blue hover:underline shrink-0">📊 Calculer depuis un record (%1RM)</button>
               </div>
-              <div class="ex-sets-list flex flex-col gap-1.5 mb-1.5"></div>
-              <button type="button" class="add-set-row-btn text-xs text-brand-blue hover:underline">+ Ajouter une série</button>
-            </div>
-            <p class="text-[10px] text-[color:var(--fg-40)] mb-2">💡 Charge en texte libre ("Poids du corps", "Élastique rouge"...). Une ligne laissée vide ne sera pas visible côté client. Sert aussi au calcul du tonnage (Statistiques).</p>
 
-            <!-- Bloc WOD optionnel (CrossFit) — non visible côté client si pas rempli -->
+              <div class="ex-simple-sets grid grid-cols-3 gap-2">
+                <input type="number" placeholder="Séries" class="ex-series-simple px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+                <input type="text" placeholder="Répétitions" class="ex-reps-simple px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+                <input type="text" placeholder="Charge" class="ex-charge-simple px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              </div>
+
+              <div class="ex-advanced-sets hidden mt-1.5">
+                <div class="ex-sets-list flex flex-col gap-1.5 mb-1.5"></div>
+                <button type="button" class="add-set-row-btn text-xs text-brand-blue hover:underline">+ Ajouter une série</button>
+                <p class="text-[10px] text-[color:var(--fg-40)] mt-1">Charge en texte libre ("Poids du corps", "Élastique rouge"...). Une ligne vide ne sera pas visible côté client.</p>
+              </div>
+
+              <button type="button" class="toggle-advanced-sets-btn text-[10px] text-brand-blue hover:underline mt-1.5">+ Charge différente à chaque série</button>
+            </div>
+
+            <!-- 4. Repos / RPE -->
+            <div class="grid grid-cols-2 gap-2 mb-2">
+              <input type="text" placeholder="Temps de repos" class="ex-repos px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="RPE" class="ex-rpe px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            </div>
+
+            <!-- 5. Tempo + vidéo (repli, modifiable à la main si besoin) -->
+            <div class="grid grid-cols-2 gap-2 mb-2">
+              <input type="text" placeholder="Tempo" class="ex-tempo px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="Lien vidéo" class="ex-video px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            </div>
+
+            <!-- 6. Commentaire libre -->
+            <div class="mb-3">
+              <textarea placeholder="Explication de l'exercice — consignes, points d'attention..." rows="2" class="ex-description w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></textarea>
+            </div>
+
+            <!-- Champ caché : group superset créé via le bouton "🔗 Lier" sur un exercice existant -->
+            <input type="hidden" class="ex-superset">
+
+            <!-- 7. WOD du jour -->
             <div class="mb-3 pb-3 border-b border-[color:var(--border)]">
               <button type="button" class="toggle-wod-btn w-full flex items-center justify-between text-left">
                 <span class="text-xs font-semibold flex items-center gap-1.5"><span class="text-orange-500"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="9" width="3" height="6"/><rect x="20" y="9" width="3" height="6"/><path d="M4 10.5V13.5M20 10.5V13.5M7 8v8a1.5 1.5 0 0 0 1.5 1.5h1A1.5 1.5 0 0 0 11 16V8a1.5 1.5 0 0 0-1.5-1.5h-1A1.5 1.5 0 0 0 7 8ZM13 8v8a1.5 1.5 0 0 0 1.5 1.5h1a1.5 1.5 0 0 0 1.5-1.5V8a1.5 1.5 0 0 0-1.5-1.5h-1A1.5 1.5 0 0 0 13 8Z"/><path d="M11 12h2"/></svg></span>WOD du jour (optionnel)</span>
@@ -1232,6 +1265,8 @@
       document.querySelectorAll('.add-set-row-btn').forEach(btn => btn.addEventListener('click', () => addSetRow(btn.closest('[data-jour]'))));
       document.querySelectorAll('.open-records-picker-btn').forEach(btn => btn.addEventListener('click', () => openRecordsPicker(btn.closest('[data-jour]'))));
       document.querySelectorAll('[data-jour]').forEach(card => addSetRow(card)); // 1ère ligne de série vide par défaut
+      document.querySelectorAll('.toggle-advanced-sets-btn').forEach(btn => btn.addEventListener('click', () => toggleAdvancedSets(btn.closest('[data-jour]'))));
+      document.querySelectorAll('.cancel-linking-btn').forEach(btn => btn.addEventListener('click', () => cancelLinking(btn.closest('[data-jour]'))));
 
       document.querySelectorAll('.toggle-wod-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1287,12 +1322,67 @@
       setTimeout(() => confirmSpan.classList.add('hidden'), 2500);
     }
 
-    function resetForm(card) {
-      card.querySelectorAll('.ex-exercice, .ex-repos, .ex-rpe, .ex-tempo, .ex-video, .ex-description, .ex-superset').forEach(input => input.value = '');
+    // ---------- Mode simple / avancé pour les séries ----------
+    function toggleAdvancedSets(card) {
+      const simple = card.querySelector('.ex-simple-sets');
+      const advanced = card.querySelector('.ex-advanced-sets');
+      const btn = card.querySelector('.toggle-advanced-sets-btn');
+      const goingAdvanced = advanced.classList.contains('hidden');
+
+      if (goingAdvanced) {
+        // On bascule vers le mode détaillé : si le mode simple avait des valeurs, on les reprend comme 1ère ligne
+        const s = Number(card.querySelector('.ex-series-simple').value) || 1;
+        const reps = card.querySelector('.ex-reps-simple').value.trim();
+        const charge = card.querySelector('.ex-charge-simple').value.trim();
+        clearSetRows(card);
+        for (let i = 0; i < Math.max(s, 1); i++) addSetRow(card, reps, charge);
+        simple.classList.add('hidden');
+        advanced.classList.remove('hidden');
+        btn.textContent = '↩ Revenir au mode simple';
+      } else {
+        simple.classList.remove('hidden');
+        advanced.classList.add('hidden');
+        btn.textContent = '+ Charge différente à chaque série';
+      }
+    }
+
+    // ---------- Liaison superset (bouton "🔗 Lier" sur un exercice déjà enregistré) ----------
+    async function startLinking(card, exo) {
+      let groupCode = exo.groupe_superset;
+      if (!groupCode) {
+        groupCode = `ss-${exo.id.slice(0, 8)}-${Date.now()}`;
+        const { error } = await supabaseClient.from('programmes').update({ groupe_superset: groupCode }).eq('id', exo.id);
+        if (error) { alert('Erreur : ' + error.message); return; }
+        exo.groupe_superset = groupCode;
+        await loadExistingForWeek();
+      }
+      card.dataset.linkingGroup = groupCode;
+      const banner = card.querySelector('.linking-banner');
+      banner.querySelector('.linking-label').textContent = exo.exercice;
+      banner.classList.remove('hidden');
+      resetForm(card, { keepLinking: true });
+      card.querySelector('.ex-exercice').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      card.querySelector('.ex-exercice').focus();
+    }
+
+    function cancelLinking(card) {
+      delete card.dataset.linkingGroup;
+      card.querySelector('.linking-banner').classList.add('hidden');
+    }
+
+    function resetForm(card, opts = {}) {
+      card.querySelectorAll('.ex-exercice, .ex-repos, .ex-rpe, .ex-tempo, .ex-video, .ex-description, .ex-series-simple, .ex-reps-simple, .ex-charge-simple').forEach(input => input.value = '');
       const seanceRadio = card.querySelector('.ex-categorie[value="seance"]');
       if (seanceRadio) seanceRadio.checked = true;
       clearSetRows(card);
       addSetRow(card);
+      card.querySelector('.ex-advanced-sets').classList.add('hidden');
+      card.querySelector('.ex-simple-sets').classList.remove('hidden');
+      card.querySelector('.toggle-advanced-sets-btn').textContent = '+ Charge différente à chaque série';
+      if (!opts.keepLinking) {
+        delete card.dataset.linkingGroup;
+        card.querySelector('.linking-banner').classList.add('hidden');
+      }
       const btn = card.querySelector('.save-exercise-btn');
       btn.dataset.editingId = '';
       btn.dataset.editingOrdre = '';
@@ -1325,9 +1415,18 @@
     }
     function clearSetRows(card) { card.querySelector('.ex-sets-list').innerHTML = ''; }
     function getSetsFromCard(card) {
-      return Array.from(card.querySelectorAll('.set-row'))
-        .map(row => ({ repetitions: row.querySelector('.set-reps').value.trim(), charge: row.querySelector('.set-charge').value.trim() }))
-        .filter(s => s.repetitions !== '' || s.charge !== '');
+      const isAdvanced = !card.querySelector('.ex-advanced-sets').classList.contains('hidden');
+      if (isAdvanced) {
+        return Array.from(card.querySelectorAll('.set-row'))
+          .map(row => ({ repetitions: row.querySelector('.set-reps').value.trim(), charge: row.querySelector('.set-charge').value.trim() }))
+          .filter(s => s.repetitions !== '' || s.charge !== '');
+      }
+      // Mode simple : on réplique la même série N fois
+      const n = Number(card.querySelector('.ex-series-simple').value) || 0;
+      const reps = card.querySelector('.ex-reps-simple').value.trim();
+      const charge = card.querySelector('.ex-charge-simple').value.trim();
+      if (n <= 0 || (reps === '' && charge === '')) return [];
+      return Array.from({ length: n }, () => ({ repetitions: reps, charge: charge }));
     }
 
     // ---------- Sélecteur de records (%1RM) ----------
@@ -1530,17 +1629,38 @@
       card.querySelector('.ex-tempo').value = exo.tempo || '';
       card.querySelector('.ex-video').value = exo.lien_video || '';
       card.querySelector('.ex-description').value = exo.description || '';
-      card.querySelector('.ex-superset').value = exo.groupe_superset || '';
+
+      // Conserve le superset existant de cet exercice (sans afficher le bandeau,
+      // réservé à la création d'un nouvel exercice lié)
+      card.dataset.linkingGroup = exo.groupe_superset || '';
+      if (!exo.groupe_superset) delete card.dataset.linkingGroup;
+      card.querySelector('.linking-banner').classList.add('hidden');
 
       const catRadio = card.querySelector(`.ex-categorie[value="${exo.categorie === 'echauffement' ? 'echauffement' : 'seance'}"]`);
       if (catRadio) catRadio.checked = true;
 
       clearSetRows(card);
-      if (exo.sets && Array.isArray(exo.sets) && exo.sets.length > 0) {
-        exo.sets.forEach(s => addSetRow(card, s.repetitions, s.charge));
+      const sets = (exo.sets && Array.isArray(exo.sets) && exo.sets.length > 0) ? exo.sets : null;
+      const allIdentical = sets && sets.every(s => s.repetitions === sets[0].repetitions && s.charge === sets[0].charge);
+
+      if (sets && !allIdentical) {
+        // Séries différentes d'une ligne à l'autre → mode avancé
+        card.querySelector('.ex-simple-sets').classList.add('hidden');
+        card.querySelector('.ex-advanced-sets').classList.remove('hidden');
+        card.querySelector('.toggle-advanced-sets-btn').textContent = '↩ Revenir au mode simple';
+        sets.forEach(s => addSetRow(card, s.repetitions, s.charge));
       } else {
-        const n = Number(exo.series) || 1;
-        for (let i = 0; i < n; i++) addSetRow(card, exo.repetitions || '', (exo.charge !== null && exo.charge !== undefined) ? exo.charge : '');
+        // Séries identiques (ou ancien format) → mode simple
+        card.querySelector('.ex-simple-sets').classList.remove('hidden');
+        card.querySelector('.ex-advanced-sets').classList.add('hidden');
+        card.querySelector('.toggle-advanced-sets-btn').textContent = '+ Charge différente à chaque série';
+        addSetRow(card);
+        const n = sets ? sets.length : (Number(exo.series) || 1);
+        const reps = sets ? sets[0].repetitions : (exo.repetitions || '');
+        const charge = sets ? sets[0].charge : ((exo.charge !== null && exo.charge !== undefined) ? exo.charge : '');
+        card.querySelector('.ex-series-simple').value = n;
+        card.querySelector('.ex-reps-simple').value = reps;
+        card.querySelector('.ex-charge-simple').value = charge;
       }
 
       const btn = card.querySelector('.save-exercise-btn');
@@ -1603,10 +1723,11 @@
               <div class="flex items-center justify-between gap-2">
                 <span class="font-medium flex items-center gap-1.5 flex-wrap">
                   ${exo.categorie === 'echauffement' ? '<span class="px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-orange-500/15 text-orange-500 inline-flex items-center gap-1"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1.2 3-2.5 4.2-2.5 8a2.5 2.5 0 0 0 5 0c0-.8-.5-1.6-.8-2.4 1.8 1 3.3 3 3.3 5.4a5 5 0 0 1-10 0c0-5.5 4-6.5 5-11Z"/></svg>Échauffement</span>' : ''}
-                  ${exo.groupe_superset ? `<span class="px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-brand-blue/15 text-brand-blue">${escapeHtml(exo.groupe_superset)}</span>` : ''}
+                  ${exo.groupe_superset ? `<span class="px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-brand-blue/15 text-brand-blue">🔗 Superset</span>` : ''}
                   ${escapeHtml(exo.exercice)}
                 </span>
                 <div class="flex items-center gap-2.5 shrink-0">
+                  <span class="link-superset-btn text-[color:var(--accent)] hover:text-brand-blue text-xs whitespace-nowrap" data-id="${exo.id}" title="Enchaîner un autre exercice juste après celui-ci, sans repos">🔗 Lier</span>
                   <span class="duplicate-btn text-[color:var(--accent)] hover:text-brand-blue text-xs whitespace-nowrap" data-id="${exo.id}">⧉ Dupliquer</span>
                   <span class="delete-btn text-red-400 hover:text-red-300 text-xs" data-id="${exo.id}">Supprimer</span>
                 </div>
@@ -1631,6 +1752,10 @@
         row.querySelector('.move-up-btn').addEventListener('click', (e) => { e.stopPropagation(); moveExercise(exo.jour, exo.id, 'up'); });
         row.querySelector('.move-down-btn').addEventListener('click', (e) => { e.stopPropagation(); moveExercise(exo.jour, exo.id, 'down'); });
         row.querySelector('.edit-row-btn').addEventListener('click', () => editExercise(exo, card));
+        row.querySelector('.link-superset-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          startLinking(card, exo);
+        });
         row.querySelector('.delete-btn').addEventListener('click', async (e) => {
           e.stopPropagation();
           await supabaseClient.from('programmes').delete().eq('id', exo.id);
