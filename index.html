@@ -259,7 +259,7 @@
         <span class="reveal inline-block mb-6 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold border border-brand-blue-dark text-[color:var(--accent)]" style="transition-delay:${delay}s">
           ${escapeHtml(bloc.badge)}
         </span>
-        <h1 class="reveal font-heading uppercase text-3xl sm:text-4xl md:text-5xl font-bold leading-snug mb-6 max-w-2xl" style="transition-delay:${delay + 0.1}s">
+        <h1 class="reveal font-heading uppercase text-3xl sm:text-4xl md:text-5xl font-bold leading-relaxed mb-6 max-w-2xl" style="transition-delay:${delay + 0.1}s">
           ${renderHighlight(bloc.titre)}
         </h1>
         <p class="reveal text-[color:var(--fg-70)] text-base sm:text-lg leading-relaxed mb-12 max-w-md" style="transition-delay:${delay + 0.2}s">
@@ -311,7 +311,7 @@
       return `
         <div class="reveal w-full max-w-xl p-8 sm:p-10 rounded-2xl bg-[color:var(--card)] border-2 border-brand-blue" style="transition-delay:${delay}s">
           ${bloc.badge ? `<span class="inline-block mb-4 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold bg-brand-blue text-white">${escapeHtml(bloc.badge)}</span>` : ''}
-          <h2 class="font-heading uppercase text-2xl sm:text-3xl font-bold leading-snug mb-4">${renderHighlight(bloc.titre)}</h2>
+          <h2 class="font-heading uppercase text-2xl sm:text-3xl font-bold leading-relaxed mb-4">${renderHighlight(bloc.titre)}</h2>
           <p class="text-[color:var(--fg-70)] text-base leading-relaxed mb-6 max-w-md mx-auto">${escapeHtml(bloc.texte)}</p>
           ${(feature1 || feature2) ? `
             <div class="flex items-center justify-center gap-6 mb-8 text-sm font-medium text-[color:var(--accent)]">
