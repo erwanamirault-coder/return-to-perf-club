@@ -305,29 +305,34 @@
         ${prev ? `<p class="text-[11px] text-[color:var(--fg-40)] mb-3">📊 Dernière fois : ${escapeHtml(summarizeExo(prev))}</p>` : ''}
         ${e.description ? `<p class="text-sm text-[color:var(--fg-70)] leading-relaxed mb-4">${escapeHtml(e.description)}</p>` : ''}
 
-        <div class="border-t border-[color:var(--border)] pt-3">
-          <div class="grid grid-cols-2 gap-2 mb-3">
-            <div>
-              <label class="block text-[10px] uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-1">Difficulté (RPE)</label>
-              <select data-programme-id="${e.id}" class="rpe-client-input w-full px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-                <option value="">—</option>
-                ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${String(rpeClientMap[e.id]) === String(n) ? 'selected' : ''}>${n}</option>`).join('')}
-              </select>
-            </div>
-            <div>
-              <label class="block text-[10px] uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-1">Douleur</label>
-              <select data-programme-id="${e.id}" class="douleur-client-input w-full px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-                <option value="">—</option>
-                ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${String(douleurClientMap[e.id]) === String(n) ? 'selected' : ''}>${n}</option>`).join('')}
-              </select>
-            </div>
-          </div>
-          <label class="block text-xs uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-2">Mon retour sur cet exercice</label>
-          <textarea data-programme-id="${e.id}" class="retour-input w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" rows="2" placeholder="Ressenti, facilité...">${escapeHtml(retoursMap[e.id] || '')}</textarea>
-          <button data-programme-id="${e.id}" class="save-retour-btn mt-2 text-xs px-3 py-1.5 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">
-            Enregistrer mon retour
+        <div class="border-t border-[color:var(--border)] pt-2.5">
+          <button type="button" class="toggle-retour-btn flex items-center gap-1.5 text-xs text-[color:var(--fg-50)] hover:text-[color:var(--accent)] transition-colors">
+            <svg class="retour-toggle-icon transition-transform" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            💬 Mon retour${(rpeClientMap[e.id] !== null && rpeClientMap[e.id] !== undefined) || (douleurClientMap[e.id] !== null && douleurClientMap[e.id] !== undefined) || retoursMap[e.id] ? ' ✓' : ''}
           </button>
-          <span class="save-confirm hidden text-xs text-[color:var(--accent)] ml-2">Enregistré ✓</span>
+          <div class="retour-form-wrapper hidden mt-2.5">
+            <div class="grid grid-cols-2 gap-2 mb-2">
+              <div>
+                <label class="block text-[10px] uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-1">Difficulté (RPE)</label>
+                <select data-programme-id="${e.id}" class="rpe-client-input w-full px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
+                  <option value="">—</option>
+                  ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${String(rpeClientMap[e.id]) === String(n) ? 'selected' : ''}>${n}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-1">Douleur</label>
+                <select data-programme-id="${e.id}" class="douleur-client-input w-full px-2 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
+                  <option value="">—</option>
+                  ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${String(douleurClientMap[e.id]) === String(n) ? 'selected' : ''}>${n}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+            <textarea data-programme-id="${e.id}" class="retour-input w-full px-2.5 py-1.5 rounded-md bg-[color:var(--card)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue" rows="2" placeholder="Ressenti, facilité...">${escapeHtml(retoursMap[e.id] || '')}</textarea>
+            <button data-programme-id="${e.id}" class="save-retour-btn mt-2 text-xs px-3 py-1.5 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">
+              Enregistrer mon retour
+            </button>
+            <span class="save-confirm hidden text-xs text-[color:var(--accent)] ml-2">Enregistré ✓</span>
+          </div>
         </div>
       `;
     }
@@ -464,6 +469,15 @@
 
       document.querySelectorAll('.save-retour-btn').forEach(btn => {
         btn.addEventListener('click', () => saveRetour(btn));
+      });
+
+      document.querySelectorAll('.toggle-retour-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const wrapper = btn.nextElementSibling;
+          const icon = btn.querySelector('.retour-toggle-icon');
+          const isHidden = wrapper.classList.toggle('hidden');
+          icon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(90deg)';
+        });
       });
 
       // Bloc fin de séance
