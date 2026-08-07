@@ -669,6 +669,19 @@
       return match ? parseFloat(match[0]) : null;
     }
     function tonnageOf(exo) {
+      if (exo.sets && Array.isArray(exo.sets) && exo.sets.length > 0) {
+        let total = 0;
+        let hasValid = false;
+        exo.sets.forEach(s => {
+          const charge = parseFloat(s.charge);
+          const reps = parseFirstNumber(s.repetitions);
+          if (!isNaN(charge) && reps !== null && !isNaN(reps)) {
+            total += charge * reps;
+            hasValid = true;
+          }
+        });
+        return hasValid ? total : null;
+      }
       const charge = (exo.charge !== null && exo.charge !== undefined) ? parseFloat(exo.charge) : null;
       const reps = parseFirstNumber(exo.repetitions);
       const series = parseFloat(exo.series) || 0;
@@ -765,8 +778,16 @@
       if (!exercice) return null;
 
       const btn = card.querySelector('.save-exercise-btn');
-      const chargeValue = card.querySelector('.ex-charge').value.trim();
       const editingId = btn.dataset.editingId;
+
+      const sets = getSetsFromCard(card);
+      const categorie = card.querySelector('.ex-categorie:checked')?.value || 'seance';
+      const groupeSuperset = card.querySelector('.ex-superset').value.trim() || null;
+
+      // Compatibilité avec l'ancien système (tonnage/Statistiques) : on dérive
+      // series/repetitions/charge de la 1ère série renseignée.
+      const firstSet = sets[0] || {};
+      const firstChargeNum = firstSet.charge ? parseFloat(firstSet.charge) : NaN;
 
       let ordre;
       if (editingId && btn.dataset.editingOrdre !== '') {
@@ -779,9 +800,13 @@
 
       const payload = {
         client_email: selectedClientEmail, jour: jour, semaine_debut: formatDateKey(currentMonday),
-        exercice: exercice, series: Number(card.querySelector('.ex-series').value) || 0,
-        repetitions: card.querySelector('.ex-repetitions').value.trim(),
-        charge: chargeValue === '' ? null : parseFloat(chargeValue),
+        exercice: exercice,
+        categorie: categorie,
+        groupe_superset: groupeSuperset,
+        sets: sets.length ? sets : null,
+        series: sets.length || 0,
+        repetitions: firstSet.repetitions || '',
+        charge: isNaN(firstChargeNum) ? null : firstChargeNum,
         temps_repos: card.querySelector('.ex-repos').value.trim(),
         rpe: card.querySelector('.ex-rpe').value.trim(),
         tempo: card.querySelector('.ex-tempo').value.trim(),
@@ -1085,6 +1110,7 @@
         client_email: e.client_email, jour: e.jour, semaine_debut: nextMondayKey,
         exercice: e.exercice, series: e.series, repetitions: e.repetitions,
         temps_repos: e.temps_repos, rpe: e.rpe, tempo: e.tempo, charge: e.charge,
+        categorie: e.categorie || 'seance', groupe_superset: e.groupe_superset || null, sets: e.sets || null,
         lien_video: e.lien_video, description: e.description, ordre: e.ordre
       }));
 
@@ -1126,21 +1152,43 @@
 
             <p class="text-[10px] text-[color:var(--fg-40)] mb-1.5">💡 Glisse la poignée ⠿ pour réordonner les exercices de ce jour.</p>
             <div class="existing-list flex flex-col gap-2 mb-3"></div>
+
+            <div class="flex items-center gap-4 mb-2 text-xs">
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="cat-${jour}" class="ex-categorie" value="echauffement">
+                🔥 Échauffement
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="cat-${jour}" class="ex-categorie" value="seance" checked>
+                🏋️ Séance
+              </label>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 mb-2">
+              <input type="text" placeholder="Exercice" class="ex-exercice sm:col-span-2 col-span-2 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="Superset (ex: A1)" title="Renseigne la même lettre/numéro sur plusieurs exercices pour les lier en superset (ex: A1, A2)" class="ex-superset px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            </div>
+
+            <div class="mb-2">
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold">Séries (une ligne = un set — répétitions + charge)</label>
+                <button type="button" class="calc-1rm-btn text-[10px] text-brand-blue hover:underline shrink-0">🧮 % d'1RM</button>
+              </div>
+              <div class="ex-sets-list flex flex-col gap-1.5 mb-1.5"></div>
+              <button type="button" class="add-set-row-btn text-xs text-brand-blue hover:underline">+ Ajouter une série</button>
+              <p class="text-[10px] text-[color:var(--fg-40)] mt-1">Charge en texte libre ("Poids du corps", "Élastique rouge"...). Une ligne laissée vide ne sera pas visible côté client.</p>
+            </div>
+
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
-              <input type="text" placeholder="Exercice" class="ex-exercice px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="number" placeholder="Séries" class="ex-series px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="text" placeholder="Répétitions" class="ex-repetitions px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="number" step="0.5" placeholder="Charge (kg)" class="ex-charge px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
               <input type="text" placeholder="Repos" class="ex-repos px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="text" placeholder="RPE" class="ex-rpe px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <input type="text" placeholder="RPE cible" class="ex-rpe px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
               <input type="text" placeholder="Tempo" class="ex-tempo px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <div class="flex gap-1.5 sm:col-span-2">
+              <div class="flex gap-1.5">
                 <input type="text" placeholder="Lien vidéo" class="ex-video flex-1 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-                <button type="button" class="open-bank-picker-btn shrink-0 px-3 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] text-xs font-semibold hover:bg-brand-blue/5 transition-colors">🎥 Banque</button>
+                <button type="button" class="open-bank-picker-btn shrink-0 px-3 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] text-xs font-semibold hover:bg-brand-blue/5 transition-colors">🎥</button>
               </div>
               <textarea placeholder="Explication de l'exercice (consignes, points d'attention...)" rows="2" class="ex-description px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-4"></textarea>
             </div>
-            <p class="text-[10px] text-[color:var(--fg-40)] mb-2">💡 La charge sert au calcul du tonnage (Statistiques). Laisse vide si non applicable (cardio, gym au poids du corps...).</p>
             <div class="flex items-center gap-3 flex-wrap">
               <button class="save-exercise-btn text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium" data-editing-id="" data-editing-ordre="">
                 + Ajouter cet exercice
@@ -1151,6 +1199,43 @@
               <span class="save-confirm hidden text-xs text-[color:var(--accent)] font-medium">Enregistré ✓</span>
               <span class="autosave-status text-[10px] text-[color:var(--fg-40)]"></span>
             </div>
+
+            <!-- Bloc WOD optionnel (CrossFit) — non visible côté client si pas rempli -->
+            <div class="mt-4 pt-4 border-t border-[color:var(--border)]">
+              <button type="button" class="toggle-wod-btn w-full flex items-center justify-between text-left">
+                <span class="text-xs font-semibold">🏋️ WOD du jour (optionnel)</span>
+                <span class="wod-toggle-icon text-[color:var(--fg-40)] transition-transform">▾</span>
+              </button>
+              <div class="wod-form-wrapper hidden mt-3 flex flex-col gap-2">
+                <div class="grid grid-cols-2 gap-2">
+                  <select class="wod-type px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+                    <option value="">— Type de WOD —</option>
+                    <option value="AMRAP">AMRAP</option>
+                    <option value="EMOM">EMOM</option>
+                    <option value="FOR_TIME">For Time</option>
+                    <option value="CHIPPER">Chipper</option>
+                    <option value="TABATA">Tabata</option>
+                    <option value="AUTRE">Autre</option>
+                  </select>
+                  <input type="text" placeholder="Format (ex: 20 min, 10 rounds/2min)" class="wod-format px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+                </div>
+                <input type="number" placeholder="Durée (minutes)" class="wod-duree px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+
+                <div>
+                  <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold mb-1">Mouvements</label>
+                  <div class="wod-mouvements-list flex flex-col gap-1.5 mb-1.5"></div>
+                  <button type="button" class="add-wod-mvt-btn text-xs text-brand-blue hover:underline">+ Ajouter un mouvement</button>
+                </div>
+
+                <textarea placeholder="Notes / consignes du WOD" rows="2" class="wod-notes px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></textarea>
+
+                <div class="flex items-center gap-2">
+                  <button type="button" class="save-wod-btn text-xs px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">Enregistrer le WOD</button>
+                  <button type="button" class="delete-wod-btn hidden text-xs text-red-400 hover:text-red-300">Supprimer le WOD</button>
+                  <span class="wod-save-status text-xs hidden"></span>
+                </div>
+              </div>
+            </div>
           </div>
         `;
       }).join('');
@@ -1159,6 +1244,22 @@
       document.querySelectorAll('.cancel-edit-btn').forEach(btn => btn.addEventListener('click', () => resetForm(btn.closest('[data-jour]'))));
       document.querySelectorAll('.save-comment-btn').forEach(btn => btn.addEventListener('click', () => saveComment(btn)));
       document.querySelectorAll('.open-bank-picker-btn').forEach(btn => btn.addEventListener('click', () => openBankPicker(btn.closest('[data-jour]'))));
+      document.querySelectorAll('.add-set-row-btn').forEach(btn => btn.addEventListener('click', () => addSetRow(btn.closest('[data-jour]'))));
+      document.querySelectorAll('.calc-1rm-btn').forEach(btn => btn.addEventListener('click', () => calc1RM(btn.closest('[data-jour]'))));
+      document.querySelectorAll('[data-jour]').forEach(card => addSetRow(card)); // 1ère ligne de série vide par défaut
+
+      document.querySelectorAll('.toggle-wod-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const wrapper = btn.closest('.mt-4').querySelector('.wod-form-wrapper');
+          const icon = btn.querySelector('.wod-toggle-icon');
+          const isHidden = wrapper.classList.toggle('hidden');
+          icon.textContent = isHidden ? '▾' : '▴';
+        });
+      });
+      document.querySelectorAll('.add-wod-mvt-btn').forEach(btn => btn.addEventListener('click', () => addWodMvtRow(btn.closest('[data-jour]'))));
+      document.querySelectorAll('.save-wod-btn').forEach(btn => btn.addEventListener('click', () => saveWod(btn.closest('[data-jour]'))));
+      document.querySelectorAll('.delete-wod-btn').forEach(btn => btn.addEventListener('click', () => deleteWod(btn.closest('[data-jour]'))));
+      document.querySelectorAll('[data-jour]').forEach(card => addWodMvtRow(card)); // 1ère ligne de mouvement vide par défaut
 
       // Bannière de restauration de brouillon local (si la page a été quittée par erreur)
       document.querySelectorAll('[data-jour]').forEach(card => {
@@ -1201,8 +1302,215 @@
       setTimeout(() => confirmSpan.classList.add('hidden'), 2500);
     }
 
+    // ---------- Séries dynamiques (une ligne = un set : répétitions + charge) ----------
+    function addSetRow(card, repetitions, charge) {
+      const list = card.querySelector('.ex-sets-list');
+      const row = document.createElement('div');
+      row.className = 'set-row flex items-center gap-1.5';
+      row.innerHTML = `
+        <span class="set-num text-[10px] text-[color:var(--fg-40)] w-4 shrink-0 text-center"></span>
+        <input type="text" placeholder="Répétitions" class="set-reps flex-1 px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
+        <input type="text" placeholder="Charge (libre)" class="set-charge flex-1 px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
+        <button type="button" class="rm-set-btn text-red-400 hover:text-red-300 text-xs shrink-0 w-4" title="Supprimer cette série">✕</button>
+      `;
+      row.querySelector('.set-reps').value = repetitions || '';
+      row.querySelector('.set-charge').value = (charge !== undefined && charge !== null) ? charge : '';
+      row.querySelector('.rm-set-btn').addEventListener('click', () => {
+        row.remove();
+        renumberSetRows(card);
+      });
+      list.appendChild(row);
+      renumberSetRows(card);
+    }
+
+    function renumberSetRows(card) {
+      card.querySelectorAll('.set-row').forEach((row, i) => {
+        row.querySelector('.set-num').textContent = i + 1;
+      });
+    }
+
+    function clearSetRows(card) {
+      card.querySelector('.ex-sets-list').innerHTML = '';
+    }
+
+    function getSetsFromCard(card) {
+      const rows = Array.from(card.querySelectorAll('.set-row'));
+      return rows
+        .map(row => ({
+          repetitions: row.querySelector('.set-reps').value.trim(),
+          charge: row.querySelector('.set-charge').value.trim()
+        }))
+        .filter(s => s.repetitions !== '' || s.charge !== ''); // lignes vides ignorées
+    }
+
+    async function calc1RM(card) {
+      if (!selectedClientEmail) { alert("Sélectionne un client d'abord."); return; }
+      const exercice = card.querySelector('.ex-exercice').value.trim();
+      if (!exercice) { alert("Renseigne d'abord le nom de l'exercice."); return; }
+
+      const { data } = await supabaseClient
+        .from('records').select('*')
+        .eq('client_email', selectedClientEmail)
+        .ilike('exercice', exercice)
+        .order('date_record', { ascending: false });
+
+      if (!data || data.length === 0) {
+        alert(`Aucun record trouvé pour "${exercice}" chez ce client. Ajoute d'abord un record dans l'onglet "Mes Records", ou tape la charge directement.`);
+        return;
+      }
+
+      const record = data[0];
+      // Estimation du 1RM (formule d'Epley) si le record n'est pas déjà un vrai 1RM
+      const rm = Number(record.repetitions_max) || 1;
+      const estimation1RM = rm > 1 ? record.valeur * (1 + rm / 30) : record.valeur;
+
+      const pourcentageInput = prompt(`Record trouvé : ${record.valeur}${record.unite || 'kg'} (${rm}RM, le ${record.date_record}).\n1RM estimé : ${estimation1RM.toFixed(1)}${record.unite || 'kg'}.\n\nQuel pourcentage veux-tu appliquer ? (ex: 75)`, '75');
+      if (!pourcentageInput) return;
+
+      const pourcentage = parseFloat(pourcentageInput);
+      if (isNaN(pourcentage)) { alert('Pourcentage invalide.'); return; }
+
+      const chargeCalculee = Math.round(estimation1RM * (pourcentage / 100) * 2) / 2; // arrondi au 0.5 le plus proche
+
+      let firstRow = card.querySelector('.set-row');
+      if (!firstRow) { addSetRow(card); firstRow = card.querySelector('.set-row'); }
+      firstRow.querySelector('.set-charge').value = `${chargeCalculee}${record.unite || 'kg'} (${pourcentage}% 1RM)`;
+    }
+
+    // ---------- Bloc WOD (CrossFit) ----------
+    function addWodMvtRow(card, nom, charge, repetitions) {
+      const list = card.querySelector('.wod-mouvements-list');
+      const row = document.createElement('div');
+      row.className = 'wod-mvt-row flex items-center gap-1.5';
+      row.innerHTML = `
+        <input type="text" placeholder="Mouvement" class="wod-mvt-nom flex-1 px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
+        <input type="text" placeholder="Répétitions" class="wod-mvt-reps w-24 px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
+        <input type="text" placeholder="Charge" class="wod-mvt-charge w-24 px-2 py-1.5 rounded-md bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
+        <button type="button" class="rm-wod-mvt-btn text-red-400 hover:text-red-300 text-xs shrink-0 w-4" title="Supprimer">✕</button>
+      `;
+      row.querySelector('.wod-mvt-nom').value = nom || '';
+      row.querySelector('.wod-mvt-reps').value = repetitions || '';
+      row.querySelector('.wod-mvt-charge').value = charge || '';
+      row.querySelector('.rm-wod-mvt-btn').addEventListener('click', () => row.remove());
+      list.appendChild(row);
+    }
+
+    function getWodMouvementsFromCard(card) {
+      return Array.from(card.querySelectorAll('.wod-mvt-row'))
+        .map(row => ({
+          nom: row.querySelector('.wod-mvt-nom').value.trim(),
+          repetitions: row.querySelector('.wod-mvt-reps').value.trim(),
+          charge: row.querySelector('.wod-mvt-charge').value.trim()
+        }))
+        .filter(m => m.nom !== '');
+    }
+
+    async function saveWod(card) {
+      if (!selectedClientEmail || !currentMonday) { alert("Sélectionne un client d'abord."); return; }
+      const jour = card.dataset.jour;
+      const btn = card.querySelector('.save-wod-btn');
+      const statusEl = card.querySelector('.wod-save-status');
+
+      const mouvements = getWodMouvementsFromCard(card);
+      const typeWod = card.querySelector('.wod-type').value;
+      const format = card.querySelector('.wod-format').value.trim();
+      const dureeVal = card.querySelector('.wod-duree').value;
+      const notes = card.querySelector('.wod-notes').value.trim();
+
+      // Rien de rempli du tout : on ne crée pas de ligne vide
+      if (!typeWod && !format && !dureeVal && mouvements.length === 0 && !notes) {
+        statusEl.textContent = 'Rien à enregistrer (bloc vide).';
+        statusEl.className = 'text-xs text-[color:var(--fg-40)]';
+        statusEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Enregistrement...';
+
+      const { error } = await supabaseClient.from('wod_seance').upsert({
+        client_email: selectedClientEmail,
+        semaine_debut: formatDateKey(currentMonday),
+        jour: jour,
+        type_wod: typeWod || null,
+        format: format || null,
+        duree_minutes: dureeVal ? Number(dureeVal) : null,
+        mouvements: mouvements.length ? mouvements : null,
+        notes: notes || null,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'client_email,semaine_debut,jour' });
+
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer le WOD';
+
+      if (error) {
+        statusEl.textContent = 'Erreur : ' + error.message;
+        statusEl.className = 'text-xs text-red-500';
+      } else {
+        statusEl.textContent = '✅ WOD enregistré.';
+        statusEl.className = 'text-xs text-green-600';
+        card.querySelector('.delete-wod-btn').classList.remove('hidden');
+      }
+      statusEl.classList.remove('hidden');
+    }
+
+    async function deleteWod(card) {
+      if (!selectedClientEmail || !currentMonday) return;
+      if (!confirm('Supprimer le WOD de ce jour ?')) return;
+      const jour = card.dataset.jour;
+
+      await supabaseClient.from('wod_seance').delete()
+        .eq('client_email', selectedClientEmail)
+        .eq('semaine_debut', formatDateKey(currentMonday))
+        .eq('jour', jour);
+
+      card.querySelector('.wod-type').value = '';
+      card.querySelector('.wod-format').value = '';
+      card.querySelector('.wod-duree').value = '';
+      card.querySelector('.wod-notes').value = '';
+      card.querySelector('.wod-mouvements-list').innerHTML = '';
+      addWodMvtRow(card);
+      card.querySelector('.delete-wod-btn').classList.add('hidden');
+      const statusEl = card.querySelector('.wod-save-status');
+      statusEl.textContent = 'WOD supprimé.';
+      statusEl.className = 'text-xs text-[color:var(--fg-40)]';
+      statusEl.classList.remove('hidden');
+    }
+
+    async function loadWodsForWeek() {
+      if (!selectedClientEmail || !currentMonday) return;
+      const { data: wods } = await supabaseClient
+        .from('wod_seance').select('*')
+        .eq('client_email', selectedClientEmail).eq('semaine_debut', formatDateKey(currentMonday));
+
+      (wods || []).forEach(w => {
+        const card = document.querySelector(`[data-jour="${w.jour}"]`);
+        if (!card) return;
+        card.querySelector('.wod-type').value = w.type_wod || '';
+        card.querySelector('.wod-format').value = w.format || '';
+        card.querySelector('.wod-duree').value = w.duree_minutes || '';
+        card.querySelector('.wod-notes').value = w.notes || '';
+        card.querySelector('.wod-mouvements-list').innerHTML = '';
+        if (w.mouvements && Array.isArray(w.mouvements) && w.mouvements.length) {
+          w.mouvements.forEach(m => addWodMvtRow(card, m.nom, m.charge, m.repetitions));
+        } else {
+          addWodMvtRow(card);
+        }
+        card.querySelector('.delete-wod-btn').classList.remove('hidden');
+
+        // Ouvre automatiquement le bloc s'il contient déjà des infos
+        const wrapper = card.querySelector('.wod-form-wrapper');
+        wrapper.classList.remove('hidden');
+        card.querySelector('.wod-toggle-icon').textContent = '▴';
+      });
+    }
+
     function resetForm(card) {
-      card.querySelectorAll('.ex-exercice, .ex-series, .ex-repetitions, .ex-charge, .ex-repos, .ex-rpe, .ex-tempo, .ex-video, .ex-description').forEach(input => input.value = '');
+      card.querySelectorAll('.ex-exercice, .ex-repos, .ex-rpe, .ex-tempo, .ex-video, .ex-description, .ex-superset').forEach(input => input.value = '');
+      const seanceRadio = card.querySelector('.ex-categorie[value="seance"]');
+      if (seanceRadio) seanceRadio.checked = true;
+      clearSetRows(card);
+      addSetRow(card);
       const btn = card.querySelector('.save-exercise-btn');
       btn.dataset.editingId = '';
       btn.dataset.editingOrdre = '';
@@ -1244,14 +1552,26 @@
 
     function editExercise(exo, card) {
       card.querySelector('.ex-exercice').value = exo.exercice || '';
-      card.querySelector('.ex-series').value = exo.series || '';
-      card.querySelector('.ex-repetitions').value = exo.repetitions || '';
-      card.querySelector('.ex-charge').value = (exo.charge !== null && exo.charge !== undefined) ? exo.charge : '';
       card.querySelector('.ex-repos').value = exo.temps_repos || '';
       card.querySelector('.ex-rpe').value = exo.rpe || '';
       card.querySelector('.ex-tempo').value = exo.tempo || '';
       card.querySelector('.ex-video').value = exo.lien_video || '';
       card.querySelector('.ex-description').value = exo.description || '';
+      card.querySelector('.ex-superset').value = exo.groupe_superset || '';
+
+      const catRadio = card.querySelector(`.ex-categorie[value="${exo.categorie === 'echauffement' ? 'echauffement' : 'seance'}"]`);
+      if (catRadio) catRadio.checked = true;
+
+      clearSetRows(card);
+      if (exo.sets && Array.isArray(exo.sets) && exo.sets.length > 0) {
+        exo.sets.forEach(s => addSetRow(card, s.repetitions, s.charge));
+      } else {
+        // Ancien format (avant les séries groupées) : on reconstruit une ligne par série
+        const n = Number(exo.series) || 1;
+        for (let i = 0; i < n; i++) {
+          addSetRow(card, exo.repetitions || '', (exo.charge !== null && exo.charge !== undefined) ? exo.charge : '');
+        }
+      }
 
       const btn = card.querySelector('.save-exercise-btn');
       btn.dataset.editingId = exo.id;
@@ -1276,6 +1596,18 @@
 
       document.querySelectorAll('.existing-list').forEach(el => el.innerHTML = '');
       document.querySelectorAll('.jour-commentaire').forEach(el => el.value = '');
+      document.querySelectorAll('[data-jour]').forEach(card => {
+        card.querySelector('.wod-type').value = '';
+        card.querySelector('.wod-format').value = '';
+        card.querySelector('.wod-duree').value = '';
+        card.querySelector('.wod-notes').value = '';
+        card.querySelector('.wod-mouvements-list').innerHTML = '';
+        addWodMvtRow(card);
+        card.querySelector('.delete-wod-btn').classList.add('hidden');
+        card.querySelector('.wod-save-status').classList.add('hidden');
+        card.querySelector('.wod-form-wrapper').classList.add('hidden');
+        card.querySelector('.wod-toggle-icon').textContent = '▾';
+      });
 
       (notes || []).forEach(note => {
         const card = document.querySelector(`[data-jour="${note.jour}"]`);
@@ -1299,14 +1631,21 @@
             </div>
             <button type="button" class="edit-row-btn text-left w-full text-sm py-2 pr-3">
               <div class="flex items-center justify-between gap-2">
-                <span class="font-medium">${escapeHtml(exo.exercice)}</span>
+                <span class="font-medium flex items-center gap-1.5 flex-wrap">
+                  ${exo.categorie === 'echauffement' ? '<span class="px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-orange-500/15 text-orange-500">🔥 Échauffement</span>' : ''}
+                  ${exo.groupe_superset ? `<span class="px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-brand-blue/15 text-brand-blue">${escapeHtml(exo.groupe_superset)}</span>` : ''}
+                  ${escapeHtml(exo.exercice)}
+                </span>
                 <div class="flex items-center gap-2.5 shrink-0">
                   <span class="duplicate-btn text-[color:var(--accent)] hover:text-brand-blue text-xs whitespace-nowrap" data-id="${exo.id}">⧉ Dupliquer</span>
                   <span class="delete-btn text-red-400 hover:text-red-300 text-xs" data-id="${exo.id}">Supprimer</span>
                 </div>
               </div>
               <div class="text-xs text-[color:var(--fg-50)] mt-0.5">
-                ${escapeHtml(exo.series)}x${escapeHtml(exo.repetitions)}${(exo.charge !== null && exo.charge !== undefined) ? ` · ${escapeHtml(exo.charge)}kg` : ''}${exo.temps_repos ? ` · repos ${escapeHtml(exo.temps_repos)}` : ''}${exo.rpe ? ` · RPE ${escapeHtml(exo.rpe)}` : ''}${exo.tempo ? ` · tempo ${escapeHtml(exo.tempo)}` : ''}
+                ${(exo.sets && Array.isArray(exo.sets) && exo.sets.length)
+                  ? exo.sets.map((s, i) => `${i > 0 ? ' · ' : ''}S${i + 1}: ${escapeHtml(s.repetitions || '—')}${s.charge ? ` @ ${escapeHtml(s.charge)}` : ''}`).join('')
+                  : `${escapeHtml(exo.series)}x${escapeHtml(exo.repetitions)}${(exo.charge !== null && exo.charge !== undefined) ? ` · ${escapeHtml(exo.charge)}kg` : ''}`
+                }${exo.temps_repos ? ` · repos ${escapeHtml(exo.temps_repos)}` : ''}${exo.rpe ? ` · RPE ${escapeHtml(exo.rpe)}` : ''}${exo.tempo ? ` · tempo ${escapeHtml(exo.tempo)}` : ''}
               </div>
               ${exo.description ? `<div class="text-xs text-[color:var(--fg-40)] mt-1 italic">${escapeHtml(exo.description)}</div>` : ''}
             </button>
@@ -1352,6 +1691,7 @@
         list.appendChild(row);
       });
 
+      await loadWodsForWeek();
     }
 
     async function copyExerciseToDay(exo, targetJour) {
@@ -1364,6 +1704,7 @@
         client_email: selectedClientEmail, jour: targetJour, semaine_debut: formatDateKey(currentMonday),
         exercice: exo.exercice, series: exo.series, repetitions: exo.repetitions,
         charge: (exo.charge !== null && exo.charge !== undefined) ? exo.charge : null,
+        categorie: exo.categorie || 'seance', groupe_superset: exo.groupe_superset || null, sets: exo.sets || null,
         temps_repos: exo.temps_repos, rpe: exo.rpe, tempo: exo.tempo,
         lien_video: exo.lien_video, description: exo.description, ordre: newOrdre
       };
@@ -1808,22 +2149,25 @@
       emptyMsg.classList.add('hidden');
 
       table.innerHTML = `
-        <div class="grid grid-cols-5 gap-2 px-3 py-2 text-[10px] uppercase text-[color:var(--fg-40)] border-b border-[color:var(--border)]">
+        <div class="grid grid-cols-6 gap-2 px-3 py-2 text-[10px] uppercase text-[color:var(--fg-40)] border-b border-[color:var(--border)]">
           <span class="col-span-2">Exercice</span>
           <span class="text-right">Charge</span>
           <span class="text-right">Tonnage</span>
           <span class="text-right">RPE</span>
+          <span class="text-right">Douleur</span>
         </div>
         ${exos.map(e => {
           const tonnage = tonnageOf(e);
           const retour = rpeClientByProgId[e.id];
           const rpeClient = retour ? retour.rpe_client : null;
+          const douleur = retour ? retour.douleur_niveau : null;
           return `
-            <div class="grid grid-cols-5 gap-2 px-3 py-2.5 text-sm border-b border-[color:var(--border)] last:border-0">
+            <div class="grid grid-cols-6 gap-2 px-3 py-2.5 text-sm border-b border-[color:var(--border)] last:border-0">
               <span class="col-span-2 font-medium">${escapeHtml(e.exercice)}</span>
               <span class="text-right text-[color:var(--fg-60)]">${(e.charge !== null && e.charge !== undefined) ? escapeHtml(e.charge) + 'kg' : '—'}</span>
               <span class="text-right text-[color:var(--fg-60)]">${tonnage !== null ? Math.round(tonnage).toLocaleString('fr-FR') + 'kg' : '—'}</span>
               <span class="text-right font-semibold ${rpeClient !== null && rpeClient !== undefined ? 'text-[color:var(--accent)]' : 'text-[color:var(--fg-30)]'}">${rpeClient !== null && rpeClient !== undefined ? rpeClient : '—'}</span>
+              <span class="text-right font-semibold ${douleur ? 'text-red-500' : 'text-[color:var(--fg-30)]'}">${douleur !== null && douleur !== undefined ? douleur : '—'}</span>
             </div>
           `;
         }).join('')}
