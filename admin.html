@@ -715,6 +715,7 @@
     let wellnessByDate = {};
     let detailWeekStart = getMondayOfDate(new Date());
     let selectedDetailDate = null;
+    let allRetoursCache = [];
     let suiviLoadedFor = null;
 
     // ---------- Auto-save : brouillon local + sauvegarde différée ----------
@@ -1196,10 +1197,15 @@
               <input type="text" placeholder="RPE" class="ex-rpe px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
             </div>
 
-            <!-- 5. Tempo + vidéo (repli, modifiable à la main si besoin) -->
-            <div class="grid grid-cols-2 gap-2 mb-2">
-              <input type="text" placeholder="Tempo" class="ex-tempo px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-              <input type="text" placeholder="Lien vidéo" class="ex-video px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            <!-- 5. Tempo -->
+            <div class="mb-2">
+              <input type="text" placeholder="Tempo" class="ex-tempo w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            </div>
+
+            <!-- 5bis. Lien vidéo — bien visible, pour coller un lien à la main si besoin -->
+            <div class="mb-3">
+              <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold mb-1">🔗 Lien vidéo (colle ici si tu ne passes pas par la banque)</label>
+              <input type="text" placeholder="https://..." class="ex-video w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
             </div>
 
             <!-- 6. Commentaire libre -->
@@ -2074,6 +2080,7 @@
         .from('retours').select('*').eq('client_email', selectedClientEmail);
       rpeClientByProgId = {};
       (retours || []).forEach(r => { rpeClientByProgId[r.programme_id] = r; });
+      allRetoursCache = retours || [];
 
       const { data: wellnessRows } = await supabaseClient
         .from('wellness').select('*').eq('client_email', selectedClientEmail);
@@ -2085,7 +2092,7 @@
       selectedDetailDate = null;
 
       renderSuiviAll();
-      loadRetoursSuivi(retours || []);
+      loadRetoursSuivi([]);
     }
 
     function renderSuiviAll() {
@@ -2235,6 +2242,7 @@
         table.innerHTML = '';
         emptyMsg.classList.add('hidden');
         wellnessBox.classList.add('hidden');
+        loadRetoursSuivi([]);
         return;
       }
 
@@ -2259,9 +2267,13 @@
       if (exos.length === 0) {
         table.innerHTML = '';
         emptyMsg.classList.remove('hidden');
+        loadRetoursSuivi([]);
         return;
       }
       emptyMsg.classList.add('hidden');
+
+      const exoIdsForDay = new Set(exos.map(e => e.id));
+      loadRetoursSuivi(allRetoursCache.filter(r => exoIdsForDay.has(r.programme_id)));
 
       table.innerHTML = `
         <div class="grid grid-cols-6 gap-2 px-3 py-2 text-[10px] uppercase text-[color:var(--fg-40)] border-b border-[color:var(--border)]">
