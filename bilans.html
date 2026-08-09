@@ -35,12 +35,39 @@
   h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
   .card { transition: transform .15s ease, border-color .15s ease; }
   .card:hover { transform: translateY(-4px); }
+
+  /* Fond stylisé des cartes bilan : dégradé + motif + icône géante en filigrane.
+     Pour remplacer par une vraie photo plus tard, il suffira de remplacer le
+     background de .bilan-card-bg par : background-image: url('ta-photo.jpg'); background-size: cover; background-position: center; */
+  .bilan-card-bg {
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(circle at 15% -10%, #3D8BFF 0%, #08316E 75%);
+  }
+  .bilan-card-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.10) 1px, transparent 1px);
+    background-size: 14px 14px;
+    opacity: 0.5;
+  }
+  .bilan-card-icon-watermark {
+    position: absolute;
+    right: -18px;
+    bottom: -22px;
+    width: 130px;
+    height: 130px;
+    color: rgba(255,255,255,0.10);
+    pointer-events: none;
+  }
 </style>
 </head>
 <body class="min-h-screen">
 
   <header class="sticky top-0 z-50 bg-[color:var(--bg)] flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
     <a href="index.html" class="flex items-center gap-2">
+      <img src="logo.png" alt="Erwan Amirault" class="h-7 w-auto">
       <span class="font-heading uppercase font-bold text-sm tracking-wide">Erwan Amirault</span>
     </a>
     <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
@@ -60,18 +87,24 @@
     <div class="flex flex-col gap-5">
 
       <a href="bilan-genou.html" class="card block rounded-3xl overflow-hidden border border-[color:var(--border-strong)] hover:border-brand-blue">
-        <div class="p-7 sm:p-8 text-white" style="background: radial-gradient(circle at 20% 0%, #3D8BFF 0%, #08316E 100%);">
-          <span class="text-4xl mb-3 block">🦵</span>
-          <p class="font-heading uppercase text-2xl font-extrabold mb-1">Teste ton genou</p>
-          <p class="text-white/70 text-sm">2 min · 10 questions · score /100</p>
+        <div class="bilan-card-bg p-7 sm:p-8 text-white">
+          <svg class="bilan-card-icon-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M10 2c0 3 .5 5 2 7s2.5 3 2 6c-.3 2-1 4-1 7"/><circle cx="12" cy="9.5" r="1.6" fill="currentColor" stroke="none"/></svg>
+          <span class="relative w-11 h-11 rounded-full bg-white/15 flex items-center justify-center mb-3">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2c0 3 .5 5 2 7s2.5 3 2 6c-.3 2-1 4-1 7"/><circle cx="12" cy="9.5" r="1.6" fill="currentColor" stroke="none"/></svg>
+          </span>
+          <p class="relative font-heading uppercase text-2xl font-extrabold mb-1">Teste ton genou</p>
+          <p class="relative text-white/70 text-sm">2 min · 10 questions · score /100</p>
         </div>
       </a>
 
       <a href="bilan-epaule.html" class="card block rounded-3xl overflow-hidden border border-[color:var(--border-strong)] hover:border-brand-blue">
-        <div class="p-7 sm:p-8 text-white" style="background: radial-gradient(circle at 20% 0%, #3D8BFF 0%, #08316E 100%);">
-          <span class="text-4xl mb-3 block">💪</span>
-          <p class="font-heading uppercase text-2xl font-extrabold mb-1">Teste ton épaule</p>
-          <p class="text-white/70 text-sm">2 min · 10 questions · score /100</p>
+        <div class="bilan-card-bg p-7 sm:p-8 text-white">
+          <svg class="bilan-card-icon-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 20c0-4 1-6 3-8s3-3 3-6M12 6c1 0 3 1 4 3s2 5 2 11"/><circle cx="12" cy="6" r="1.6" fill="currentColor" stroke="none"/></svg>
+          <span class="relative w-11 h-11 rounded-full bg-white/15 flex items-center justify-center mb-3">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20c0-4 1-6 3-8s3-3 3-6M12 6c1 0 3 1 4 3s2 5 2 11"/><circle cx="12" cy="6" r="1.6" fill="currentColor" stroke="none"/></svg>
+          </span>
+          <p class="relative font-heading uppercase text-2xl font-extrabold mb-1">Teste ton épaule</p>
+          <p class="relative text-white/70 text-sm">2 min · 10 questions · score /100</p>
         </div>
       </a>
 
