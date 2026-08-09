@@ -49,6 +49,9 @@
 // Masque les liens de menu "Bilan" (espace privé) et "Bilan gratuit" (menu
 // public). Comparaison en texte exact pour ne jamais toucher au bandeau
 // promotionnel du haut, qui n'a jamais l'un de ces deux textes précis.
+// Le résultat est aussi mémorisé dans localStorage : le petit script en
+// tête de chaque page (dans le <head>) l'utilise pour masquer ces liens
+// AVANT même que la page ne s'affiche, et éviter l'effet de clignotement.
 (async () => {
   try {
     if (typeof supabaseClient === 'undefined') return;
@@ -57,7 +60,11 @@
       .select('valeur')
       .eq('cle', 'nav_bilan_visible')
       .maybeSingle();
-    if (data && data.valeur === false) {
+
+    const visible = !(data && data.valeur === false);
+    localStorage.setItem('nav_bilan_visible', visible ? 'true' : 'false');
+
+    if (!visible) {
       document.querySelectorAll('a').forEach((a) => {
         const texte = a.textContent.trim();
         if (texte === 'Bilan' || texte === 'Bilan gratuit') {
