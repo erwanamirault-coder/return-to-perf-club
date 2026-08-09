@@ -4,8 +4,12 @@
 <script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');if(localStorage.getItem('nav_bilan_visible')==='false'){var s=document.createElement('style');s.textContent='.nav-bilan-link{display:none}';document.head.appendChild(s);}</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin — Page d'accueil</title>
+<title>Admin — Page À propos</title>
 <meta name="robots" content="noindex">
+
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0F4CA9">
+<link rel="icon" href="/icons/favicon-32.png" sizes="32x32">
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -153,28 +157,30 @@
 
     <div id="admin-content" class="hidden">
       <div class="flex items-center justify-between mb-2 flex-wrap gap-3">
-        <h1 class="font-heading uppercase text-2xl font-bold">Page d'accueil</h1>
-        <a href="index.html" target="_blank" class="text-sm text-brand-blue hover:underline">Voir la page en ligne →</a>
+        <h1 class="font-heading uppercase text-2xl font-bold">Page À propos</h1>
+        <a href="a-propos.html" target="_blank" class="text-sm text-brand-blue hover:underline">Voir la page en ligne →</a>
       </div>
-      <p class="text-sm text-[color:var(--fg-60)] mb-8">Chaque carte ci-dessous est un bloc de ta page d'accueil, dans l'ordre d'affichage. Utilise ▲▼ pour réordonner, l'interrupteur pour afficher/masquer, et "Modifier" pour changer le contenu.</p>
+      <p class="text-sm text-[color:var(--fg-60)] mb-8">Chaque carte ci-dessous est une section de ta page À propos, dans l'ordre d'affichage. La FAQ tout en bas de la page n'est pas gérée ici pour l'instant.</p>
 
       <div id="blocs-list" class="flex flex-col gap-3 mb-8"></div>
 
       <div class="rounded-xl border-2 border-dashed border-[color:var(--border-strong)] p-5 mb-10">
-        <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-3">+ Ajouter un nouveau bloc</p>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <p class="text-xs uppercase tracking-widest text-[color:var(--fg-50)] font-semibold mb-3">+ Ajouter une nouvelle section</p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
           <button data-type="hero" class="add-type-btn px-3 py-2.5 rounded-lg border border-[color:var(--border)] hover:border-brand-blue text-xs font-medium transition-colors">🎯 En-tête (hero)</button>
-          <button data-type="carte_duo" class="add-type-btn px-3 py-2.5 rounded-lg border border-[color:var(--border)] hover:border-brand-blue text-xs font-medium transition-colors">🃏 Duo de cartes</button>
-          <button data-type="cadeau_cta" class="add-type-btn px-3 py-2.5 rounded-lg border border-[color:var(--border)] hover:border-brand-blue text-xs font-medium transition-colors">🎁 Encart offre</button>
           <button data-type="texte_libre" class="add-type-btn px-3 py-2.5 rounded-lg border border-[color:var(--border)] hover:border-brand-blue text-xs font-medium transition-colors">📝 Texte libre</button>
+          <button data-type="liste_numerotee" class="add-type-btn px-3 py-2.5 rounded-lg border border-[color:var(--border)] hover:border-brand-blue text-xs font-medium transition-colors">🔢 Liste numérotée</button>
+          <button data-type="grille_features" class="add-type-btn px-3 py-2.5 rounded-lg border border-[color:var(--border)] hover:border-brand-blue text-xs font-medium transition-colors">▦ Grille 3 colonnes</button>
+          <button data-type="citation" class="add-type-btn px-3 py-2.5 rounded-lg border border-[color:var(--border)] hover:border-brand-blue text-xs font-medium transition-colors">💬 Citation</button>
+          <button data-type="cta_service" class="add-type-btn px-3 py-2.5 rounded-lg border border-[color:var(--border)] hover:border-brand-blue text-xs font-medium transition-colors">🎁 Encart CTA</button>
+          <button data-type="faq" class="add-type-btn px-3 py-2.5 rounded-lg border border-[color:var(--border)] hover:border-brand-blue text-xs font-medium transition-colors">❓ FAQ</button>
         </div>
       </div>
 
-      <!-- Formulaire d'édition (modal simple) -->
       <div id="edit-panel" class="hidden fixed inset-0 z-50 bg-black/50 flex items-start sm:items-center justify-center p-4 overflow-y-auto">
         <div class="bg-[color:var(--bg)] rounded-2xl border border-[color:var(--border)] max-w-lg w-full p-6 my-8 max-h-[85vh] overflow-y-auto">
           <div class="flex items-center justify-between mb-5">
-            <h2 id="edit-panel-title" class="font-heading uppercase text-lg font-bold">Modifier le bloc</h2>
+            <h2 id="edit-panel-title" class="font-heading uppercase text-lg font-bold">Modifier la section</h2>
             <button id="close-edit-panel" class="text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">✕</button>
           </div>
 
@@ -196,14 +202,17 @@
   <script>
     const ADMIN_EMAIL = 'erwan20b@gmail.com';
     let blocs = [];
-    let editingBloc = null; // { id, type, ...champs } ou null si nouveau
+    let editingBloc = null;
     let editingIsNew = false;
 
     const typeLabels = {
       hero: '🎯 En-tête (hero)',
-      carte_duo: '🃏 Duo de cartes',
-      cadeau_cta: '🎁 Encart offre',
-      texte_libre: '📝 Texte libre'
+      texte_libre: '📝 Texte libre',
+      liste_numerotee: '🔢 Liste numérotée',
+      grille_features: '▦ Grille 3 colonnes',
+      citation: '💬 Citation',
+      cta_service: '🎁 Encart CTA',
+      faq: '❓ FAQ'
     };
 
     function escapeHtml(str) {
@@ -224,7 +233,7 @@
 
     async function loadBlocs() {
       const { data, error } = await supabaseClient
-        .from('accueil_blocs')
+        .from('apropos_blocs')
         .select('*')
         .order('ordre', { ascending: true });
 
@@ -239,7 +248,7 @@
     function renderBlocsList() {
       const list = document.getElementById('blocs-list');
       if (blocs.length === 0) {
-        list.innerHTML = `<p class="text-sm text-[color:var(--fg-50)] text-center py-8">Aucun bloc pour l'instant. Ajoutes-en un ci-dessous.</p>`;
+        list.innerHTML = `<p class="text-sm text-[color:var(--fg-50)] text-center py-8">Aucune section pour l'instant.</p>`;
         return;
       }
 
@@ -279,22 +288,22 @@
       [blocs[idx], blocs[swapIdx]] = [blocs[swapIdx], blocs[idx]];
       renderBlocsList();
 
-      await Promise.all(blocs.map((b, i) => supabaseClient.from('accueil_blocs').update({ ordre: i + 1 }).eq('id', b.id)));
+      await Promise.all(blocs.map((b, i) => supabaseClient.from('apropos_blocs').update({ ordre: i + 1 }).eq('id', b.id)));
       blocs.forEach((b, i) => b.ordre = i + 1);
     }
 
     async function toggleActif(id) {
       const bloc = blocs.find(b => b.id === id);
       const newActif = !bloc.actif;
-      const { error } = await supabaseClient.from('accueil_blocs').update({ actif: newActif }).eq('id', id);
+      const { error } = await supabaseClient.from('apropos_blocs').update({ actif: newActif }).eq('id', id);
       if (error) { alert('Erreur : ' + error.message); return; }
       bloc.actif = newActif;
       renderBlocsList();
     }
 
     async function deleteBloc(id) {
-      if (!confirm('Supprimer définitivement ce bloc de la page d\'accueil ?')) return;
-      const { error } = await supabaseClient.from('accueil_blocs').delete().eq('id', id);
+      if (!confirm('Supprimer définitivement cette section de la page À propos ?')) return;
+      const { error } = await supabaseClient.from('apropos_blocs').delete().eq('id', id);
       if (error) { alert('Erreur : ' + error.message); return; }
       blocs = blocs.filter(b => b.id !== id);
       renderBlocsList();
@@ -304,7 +313,6 @@
       btn.addEventListener('click', () => openEditPanel(null, btn.dataset.type));
     });
 
-    // ---------- Panneau d'édition (formulaire dynamique selon le type) ----------
     function openEditPanel(bloc, forcedType) {
       editingIsNew = !bloc;
       const type = bloc ? bloc.type : forcedType;
@@ -312,7 +320,15 @@
         type, ordre: blocs.length + 1, actif: true,
         badge: '', titre: '', texte: '', image_url: '',
         cta_texte: '', cta_lien: '', cta2_texte: '', cta2_lien: '',
-        extra: type === 'carte_duo' ? { cartes: [{ icone: '✨', titre: '', texte: '', cta_texte: '', cta_lien: '', image_url: null }, { icone: '✨', titre: '', texte: '', cta_texte: '', cta_lien: '', image_url: null }] } : {}
+        extra: type === 'liste_numerotee'
+          ? { items: [{ titre: '', texte: '', citation: '' }, { titre: '', texte: '', citation: '' }, { titre: '', texte: '', citation: '' }] }
+          : type === 'grille_features'
+          ? { items: [{ titre: '', texte: '' }, { titre: '', texte: '' }, { titre: '', texte: '' }] }
+          : type === 'citation'
+          ? { soustitre: '' }
+          : type === 'faq'
+          ? { items: [{ question: '', reponse: '' }] }
+          : {}
       };
 
       document.getElementById('edit-panel-title').textContent = (editingIsNew ? 'Ajouter — ' : 'Modifier — ') + (typeLabels[type] || type);
@@ -333,7 +349,7 @@
         return `
           <div>
             <label class="block text-xs font-semibold mb-1">${label}</label>
-            <textarea data-key="${key}" rows="3" placeholder="${escapeHtml(placeholder || '')}" class="edit-field w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue resize-none">${escapeHtml(value)}</textarea>
+            <textarea data-key="${key}" rows="4" placeholder="${escapeHtml(placeholder || '')}" class="edit-field w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue resize-none">${escapeHtml(value)}</textarea>
           </div>
         `;
       }
@@ -353,7 +369,6 @@
             ${value ? `<img src="${escapeHtml(value)}" class="w-14 h-14 rounded-lg object-cover border border-[color:var(--border)]">` : ''}
             <div class="flex-1">
               <input type="file" accept="image/*" data-image-key="${key}" class="image-upload-input w-full text-xs">
-              <p class="text-[10px] text-[color:var(--fg-40)] mt-1">Optionnel — laisse vide pour garder l'icône emoji par défaut.</p>
             </div>
             ${value ? `<button type="button" data-clear-key="${key}" class="clear-image-btn text-xs text-red-400 hover:text-red-300 shrink-0">Retirer</button>` : ''}
           </div>
@@ -368,49 +383,73 @@
 
       if (b.type === 'hero') {
         html = `
-          ${fieldText('Badge (petit texte au-dessus du titre)', 'badge', b.badge, 'Ex: Coach en réathlétisation & performance')}
-          ${fieldText('Titre (utilise {{ }} pour surligner en bleu)', 'titre', b.titre, 'Ex: Ta mobilité fait la différence dans {{ton sport.}}')}
-          ${fieldText('Texte / paragraphe', 'texte', b.texte, '', true)}
-        `;
-      } else if (b.type === 'carte_duo') {
-        html = `
-          ${fieldText('Titre de la section', 'titre', b.titre, 'Ex: Tu es plutôt...')}
-          <div class="border-t border-[color:var(--border)] pt-3 mt-1">
-            <p class="text-xs font-semibold mb-2">Carte 1</p>
-            ${cardSubfields(0, b.extra.cartes[0])}
-          </div>
-          <div class="border-t border-[color:var(--border)] pt-3 mt-1">
-            <p class="text-xs font-semibold mb-2">Carte 2</p>
-            ${cardSubfields(1, b.extra.cartes[1])}
-          </div>
-        `;
-      } else if (b.type === 'cadeau_cta') {
-        html = `
-          ${fieldText('Badge', 'badge', b.badge, 'Ex: 🎁 Cadeau offert')}
-          ${fieldText('Titre (utilise {{ }} pour surligner en bleu)', 'titre', b.titre, 'Ex: Fais ton {{bilan de mobilité}} gratuit')}
+          ${fieldText('Badge', 'badge', b.badge, 'Ex: À propos')}
+          ${fieldText('Titre (utilise {{ }} pour surligner en bleu)', 'titre', b.titre, 'Ex: Reprends le {{contrôle.}}')}
           ${fieldText('Texte', 'texte', b.texte, '', true)}
-          <div class="grid grid-cols-2 gap-2">
-            ${fieldText('Badge info 1', 'extra_feature_1', (b.extra && b.extra.feature_1) || '', 'Ex: Moins de 10 min')}
-            ${fieldText('Badge info 2', 'extra_feature_2', (b.extra && b.extra.feature_2) || '', 'Ex: 100% Gratuit')}
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            ${fieldText('Texte bouton principal', 'cta_texte', b.cta_texte, 'Ex: Créer mon compte gratuit')}
-            ${fieldText('Lien bouton principal', 'cta_lien', b.cta_lien, 'signup.html')}
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            ${fieldText('Texte lien secondaire', 'cta2_texte', b.cta2_texte, "Ex: J'ai déjà un compte")}
-            ${fieldText('Lien secondaire', 'cta2_lien', b.cta2_lien, 'login.html')}
-          </div>
+          ${imageField('Photo (ronde, en haut)', 'image_url', b.image_url)}
         `;
       } else if (b.type === 'texte_libre') {
         html = `
-          ${fieldText('Titre (optionnel, utilise {{ }} pour surligner)', 'titre', b.titre, '')}
-          ${fieldText('Texte (un paragraphe par ligne)', 'texte', b.texte, '', true)}
+          ${fieldText('Titre (optionnel)', 'titre', b.titre, '')}
+          ${fieldText('Texte (une ligne vide = nouveau paragraphe)', 'texte', b.texte, '', true)}
           ${imageField('Image (optionnelle)', 'image_url', b.image_url)}
+        `;
+      } else if (b.type === 'liste_numerotee') {
+        html = `
+          ${fieldText('Titre de la section', 'titre', b.titre, '')}
+          <p class="text-[10px] text-[color:var(--fg-40)] -mt-1">Ces points s'affichent sous forme d'onglets cliquables : au clic sur un point, sa "phrase à mettre en avant" apparaît dans l'encart à droite.</p>
+          ${(b.extra.items || []).map((item, i) => `
+            <div class="border-t border-[color:var(--border)] pt-3 mt-1">
+              <p class="text-xs font-semibold mb-2">Point ${i + 1}</p>
+              ${fieldText('Titre', `item__${i}__titre`, item.titre, '')}
+              ${fieldText('Texte (description sous le titre)', `item__${i}__texte`, item.texte, '', true)}
+              ${fieldText('Phrase à mettre en avant (utilise {{ }} pour surligner en bleu)', `item__${i}__citation`, item.citation, "Ex: Rien ne remplace {{l'observation directe}} du mouvement.")}
+            </div>
+          `).join('')}
+        `;
+      } else if (b.type === 'grille_features') {
+        html = `
+          ${fieldText('Titre de la section', 'titre', b.titre, '')}
+          ${fieldText('Texte d\'intro', 'texte', b.texte, '', true)}
+          ${(b.extra.items || []).map((item, i) => `
+            <div class="border-t border-[color:var(--border)] pt-3 mt-1">
+              <p class="text-xs font-semibold mb-2">Colonne ${i + 1}</p>
+              ${fieldText('Titre', `item__${i}__titre`, item.titre, '')}
+              ${fieldText('Texte', `item__${i}__texte`, item.texte, '', true)}
+            </div>
+          `).join('')}
+        `;
+      } else if (b.type === 'citation') {
+        html = `
+          ${fieldText('Citation', 'texte', b.texte, 'Une ligne vide = retour à la ligne', true)}
+          ${fieldText('Sous-titre', 'extra_soustitre', (b.extra && b.extra.soustitre) || '', 'Ex: Ma devise')}
+        `;
+      } else if (b.type === 'cta_service') {
+        html = `
+          ${fieldText('Badge (optionnel)', 'badge', b.badge, '')}
+          ${fieldText('Titre', 'titre', b.titre, '')}
+          ${fieldText('Texte', 'texte', b.texte, '', true)}
           <div class="grid grid-cols-2 gap-2">
-            ${fieldText('Texte bouton (optionnel)', 'cta_texte', b.cta_texte, '')}
+            ${fieldText('Texte bouton', 'cta_texte', b.cta_texte, '')}
             ${fieldText('Lien bouton', 'cta_lien', b.cta_lien, '')}
           </div>
+        `;
+      } else if (b.type === 'faq') {
+        html = `
+          ${fieldText('Titre de la section', 'titre', b.titre, "Ex: Des questions auxquelles je n'ai pas répondu ?")}
+          <div id="faq-items-list" class="flex flex-col gap-1">
+            ${(b.extra.items || []).map((item, i) => `
+              <div class="border-t border-[color:var(--border)] pt-3 mt-1">
+                <div class="flex items-center justify-between mb-2">
+                  <p class="text-xs font-semibold">Question ${i + 1}</p>
+                  <button type="button" data-remove-item="${i}" class="remove-faq-item-btn text-xs text-red-400 hover:text-red-300">Supprimer</button>
+                </div>
+                ${fieldText('Question', `item__${i}__question`, item.question, '')}
+                ${fieldText('Réponse', `item__${i}__reponse`, item.reponse, '', true)}
+              </div>
+            `).join('')}
+          </div>
+          <button type="button" id="add-faq-item-btn" class="text-xs px-3 py-2 rounded-lg border border-dashed border-[color:var(--border-strong)] hover:border-brand-blue transition-colors">+ Ajouter une question</button>
         `;
       }
 
@@ -423,10 +462,12 @@
             const subKey = key.replace('extra_', '');
             if (!editingBloc.extra) editingBloc.extra = {};
             editingBloc.extra[subKey] = el.value;
-          } else if (key.startsWith('carte')) {
+          } else if (key.startsWith('item__')) {
             const [, idxStr, field] = key.split('__');
             const idx = Number(idxStr);
-            editingBloc.extra.cartes[idx][field] = el.value;
+            if (!editingBloc.extra.items) editingBloc.extra.items = [];
+            if (!editingBloc.extra.items[idx]) editingBloc.extra.items[idx] = {};
+            editingBloc.extra.items[idx][field] = el.value;
           } else {
             editingBloc[key] = el.value;
           }
@@ -438,34 +479,26 @@
       });
       document.querySelectorAll('.clear-image-btn').forEach(el => {
         el.addEventListener('click', () => {
-          setFieldValue(el.dataset.clearKey, null);
+          editingBloc[el.dataset.clearKey] = null;
           renderEditForm();
         });
       });
-    }
 
-    function cardSubfields(idx, carte) {
-      return `
-        ${fieldText(`Icône emoji`, `carte__${idx}__icone`, carte.icone, '✨')}
-        ${fieldText(`Titre`, `carte__${idx}__titre`, carte.titre, '')}
-        ${fieldText(`Texte`, `carte__${idx}__texte`, carte.texte, '', true)}
-        ${fieldText(`Texte du bouton`, `carte__${idx}__cta_texte`, carte.cta_texte, 'Ex: Faire mon bilan gratuit →')}
-        ${fieldText(`Lien du bouton`, `carte__${idx}__cta_lien`, carte.cta_lien, 'signup.html')}
-        ${imageField('Image (remplace l\'icône emoji)', `carte__${idx}__image_url`, carte.image_url)}
-      `;
-    }
-
-    function setFieldValue(key, value) {
-      if (key.startsWith('extra_')) {
-        const subKey = key.replace('extra_', '');
-        if (!editingBloc.extra) editingBloc.extra = {};
-        editingBloc.extra[subKey] = value;
-      } else if (key.startsWith('carte')) {
-        const [, idxStr, field] = key.split('__');
-        editingBloc.extra.cartes[Number(idxStr)][field] = value;
-      } else {
-        editingBloc[key] = value;
+      const addFaqBtn = document.getElementById('add-faq-item-btn');
+      if (addFaqBtn) {
+        addFaqBtn.addEventListener('click', () => {
+          if (!editingBloc.extra.items) editingBloc.extra.items = [];
+          editingBloc.extra.items.push({ question: '', reponse: '' });
+          renderEditForm();
+        });
       }
+      document.querySelectorAll('.remove-faq-item-btn').forEach(el => {
+        el.addEventListener('click', () => {
+          const idx = Number(el.dataset.removeItem);
+          editingBloc.extra.items.splice(idx, 1);
+          renderEditForm();
+        });
+      });
     }
 
     async function handleImageUpload(e, key) {
@@ -473,13 +506,13 @@
       if (!file) return;
 
       const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const path = `${Date.now()}-${safeFileName}`;
+      const path = `apropos-${Date.now()}-${safeFileName}`;
 
       const { error: uploadError } = await supabaseClient.storage.from('accueil-images').upload(path, file);
       if (uploadError) { alert("Erreur d'upload : " + uploadError.message); return; }
 
       const { data: urlData } = supabaseClient.storage.from('accueil-images').getPublicUrl(path);
-      setFieldValue(key, urlData.publicUrl);
+      editingBloc[key] = urlData.publicUrl;
       renderEditForm();
     }
 
@@ -492,8 +525,8 @@
       if (editingIsNew) delete payload.id;
 
       const query = editingIsNew
-        ? supabaseClient.from('accueil_blocs').insert(payload)
-        : supabaseClient.from('accueil_blocs').update(payload).eq('id', payload.id);
+        ? supabaseClient.from('apropos_blocs').insert(payload)
+        : supabaseClient.from('apropos_blocs').update(payload).eq('id', payload.id);
 
       const { error } = await query;
       if (error) {
