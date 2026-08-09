@@ -181,6 +181,9 @@
           <button type="button" id="add-temoignage-btn" class="px-4 py-2 rounded-lg border border-brand-blue text-brand-blue text-xs font-semibold hover:bg-brand-blue/5 transition-colors">
             + Ajouter cet avis
           </button>
+          <button type="button" id="cancel-edit-temoignage-btn" class="hidden ml-2 text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] underline underline-offset-2">
+            Annuler
+          </button>
           <p id="temoignage-error" class="hidden text-xs text-red-500 mt-2"></p>
         </div>
       </div>
@@ -419,6 +422,7 @@
 
     async function loadTemoignages(offreId) {
       currentTemoignageOffreId = offreId;
+      resetTemoignageForm();
       const list = document.getElementById('temoignages-list');
       const { data, error } = await supabaseClient.from('temoignages').select('*').eq('offre_id', offreId).order('ordre', { ascending: true });
 
@@ -438,7 +442,10 @@
             <p class="text-xs font-semibold">${escapeHtml(t.auteur)}${t.contexte ? ' — ' + escapeHtml(t.contexte) : ''}</p>
             <p class="text-xs text-[color:var(--fg-50)] truncate">${escapeHtml(t.texte)}</p>
           </div>
-          <button data-id="${t.id}" class="delete-temoignage-btn text-[11px] px-2 py-1 rounded-md border border-red-300 text-red-500 hover:bg-red-500/10 transition-colors shrink-0">Supprimer</button>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button data-id="${t.id}" class="edit-temoignage-btn text-[11px] px-2 py-1 rounded-md border border-brand-blue-dark text-[color:var(--accent)] hover:bg-brand-blue/5 transition-colors">Modifier</button>
+            <button data-id="${t.id}" class="delete-temoignage-btn text-[11px] px-2 py-1 rounded-md border border-red-300 text-red-500 hover:bg-red-500/10 transition-colors">Supprimer</button>
+          </div>
         </div>
       `).join('');
 
@@ -449,13 +456,40 @@
           loadTemoignages(currentTemoignageOffreId);
         });
       });
+
+      list.querySelectorAll('.edit-temoignage-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const t = data.find(x => String(x.id) === btn.dataset.id);
+          if (!t) return;
+          document.getElementById('t-auteur').value = t.auteur || '';
+          document.getElementById('t-contexte').value = t.contexte || '';
+          document.getElementById('t-texte').value = t.texte || '';
+          document.getElementById('add-temoignage-btn').textContent = 'Mettre à jour cet avis';
+          document.getElementById('add-temoignage-btn').dataset.editingId = t.id;
+          document.getElementById('cancel-edit-temoignage-btn').classList.remove('hidden');
+          document.getElementById('t-auteur').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+      });
     }
+
+    function resetTemoignageForm() {
+      document.getElementById('t-auteur').value = '';
+      document.getElementById('t-contexte').value = '';
+      document.getElementById('t-texte').value = '';
+      document.getElementById('add-temoignage-btn').textContent = '+ Ajouter cet avis';
+      delete document.getElementById('add-temoignage-btn').dataset.editingId;
+      document.getElementById('cancel-edit-temoignage-btn').classList.add('hidden');
+    }
+
+    document.getElementById('cancel-edit-temoignage-btn').addEventListener('click', resetTemoignageForm);
 
     document.getElementById('add-temoignage-btn').addEventListener('click', async () => {
       const auteur = document.getElementById('t-auteur').value.trim();
       const contexte = document.getElementById('t-contexte').value.trim();
       const texte = document.getElementById('t-texte').value.trim();
       const errorEl = document.getElementById('temoignage-error');
+      const btn = document.getElementById('add-temoignage-btn');
+      const editingId = btn.dataset.editingId;
       errorEl.classList.add('hidden');
 
       if (!auteur || !texte) {
@@ -464,10 +498,10 @@
         return;
       }
 
-      const { error } = await supabaseClient.from('temoignages').insert({
-        offre_id: currentTemoignageOffreId,
-        auteur, contexte: contexte || null, texte,
-      });
+      const payload = { auteur, contexte: contexte || null, texte };
+      const { error } = editingId
+        ? await supabaseClient.from('temoignages').update(payload).eq('id', editingId)
+        : await supabaseClient.from('temoignages').insert({ offre_id: currentTemoignageOffreId, ...payload });
 
       if (error) {
         errorEl.textContent = 'Erreur : ' + error.message;
@@ -475,9 +509,7 @@
         return;
       }
 
-      document.getElementById('t-auteur').value = '';
-      document.getElementById('t-contexte').value = '';
-      document.getElementById('t-texte').value = '';
+      resetTemoignageForm();
       loadTemoignages(currentTemoignageOffreId);
     });
 
