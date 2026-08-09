@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');if(localStorage.getItem('nav_bilan_visible')==='false'){var s=document.createElement('style');s.textContent='.nav-bilan-link{display:none}';document.head.appendChild(s);}</script>
+<script>if(localStorage.getItem('theme')!=='dark')document.documentElement.classList.add('light');if(localStorage.getItem('nav_bilan_visible')==='false'){var s=document.createElement('style');s.textContent='.nav-bilan-link{display:none}';document.head.appendChild(s);}</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Erwan Amirault</title>
-<meta name="description" content="Fais le bilan complet de ta mobilité : épaules, hanches, chevilles, genoux, colonne. Gratuit, en moins de 10 minutes.">
+<title>Se connecter — Erwan Amirault</title>
+<meta name="description" content="Connecte-toi à ton espace Return To Perf.">
 
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#0F4CA9">
@@ -64,16 +64,6 @@
 <style>
   body { font-family: 'Poppins', sans-serif; }
   h1, h2, h3, .font-heading { font-family: 'Oswald', sans-serif; }
-
-  .reveal {
-    opacity: 0;
-    transform: translateY(24px);
-    transition: opacity 0.7s ease, transform 0.7s ease;
-  }
-  .reveal.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
 </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -156,17 +146,11 @@
     try {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session && session.user) {
-        els.dp.classList.add('hidden'); els.dp.classList.remove('flex');
-        els.dv.classList.remove('hidden'); els.dv.classList.add('flex');
-        els.mp.classList.add('hidden'); els.mp.classList.remove('flex');
-        els.mv.classList.remove('hidden'); els.mv.classList.add('flex');
-        const email = (session.user.email || '').toLowerCase().trim();
-        if (email === 'erwan20b@gmail.com') {
-          els.adminD.classList.remove('hidden');
-          els.adminM.classList.remove('hidden');
-        }
+        // Déjà connecté : direction l'espace client plutôt que de rester sur "login"
+        window.location.href = 'dashboard.html';
+        return;
       }
-    } catch (e) { /* pas connecté : on garde les liens publics */ }
+    } catch (e) { /* pas connecté : on affiche le formulaire */ }
   })();
 
   document.getElementById('nav-burger').addEventListener('click', function () {
@@ -185,31 +169,45 @@
 </script>
 <!-- ============ FIN BANDEAU + MENU ============ -->
 
-  <main class="flex-1 flex flex-col items-center px-6 py-14 text-center">
+  <main class="flex-1 flex flex-col items-center justify-center px-6 py-14">
 
-    <div class="mb-6">
-      <svg width="64" height="64" viewBox="0 0 5000 5000" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-          <g transform="matrix(1.49977,0,0,1.36765,-875.914,-643.774)">
-              <ellipse cx="2258.65" cy="2294.96" rx="1278.02" ry="1389.04" style="fill:white;"/>
-          </g>
-          <g transform="matrix(1.80276,0,0,2.94477,-1071.77,-4864.87)">
-              <path d="M1184.19,2921.59C1022.41,2808.4 924.46,2660.72 924.46,2499.28C924.46,2493.3 924.594,2487.34 924.861,2481.4C933.536,2289.25 1080.93,2117.98 1308.41,2003.13C1367.23,1973.43 1431.41,1947.52 1499.94,1926C1521.97,1919.21 1544.38,1912.76 1567.12,1906.77C1612.27,1894.9 1659.04,1884.89 1707.17,1876.89C1796.55,1862.07 1890.6,1854.16 1987.68,1854.16C2067.46,1854.16 2145.2,1859.51 2219.99,1869.63C2252.24,1874.02 2283.95,1879.31 2315.03,1885.45C2317.05,1885.82 2319.07,1886.19 2321.08,1886.57C2740.24,1970.6 3044.32,2208.7 3050.8,2490.11C3050.79,2490.6 3050.79,2491.08 3050.79,2491.57C3050.84,2494.31 3050.9,2497.06 3050.9,2499.74C3050.6,2761.38 2793.05,2986.78 2423.55,3087.79L2239.75,2044.12L1858.43,2040.57L1184.19,2921.59ZM1369.84,3024.22C1491.36,2857.35 1762.33,2489.86 1934.17,2263.64C1976.79,2548.31 2035.9,2846.26 2060.85,3142.89C2036.67,3143.89 2012.27,3144.4 1987.68,3144.4C1757.35,3144.4 1544.02,3099.86 1369.84,3024.22Z"/>
-          </g>
-          <g transform="matrix(1.05018,0.123149,-0.123149,1.05018,269.988,-435.763)">
-              <g transform="matrix(14.3046,-3.31189,3.61677,15.6214,-199.404,160.469)">
-                  <g>
-                      <path d="M199.805,172.035L199.609,172.254C199.219,172.895 199.875,173.977 201.582,175.5L225.32,193.125L233.672,206.809C240.609,223.789 244.926,234.895 246.629,240.133C247.449,241.918 248.238,242.258 248.992,241.156C249.73,240.285 250.926,237.938 252.57,234.125C261.375,212.273 266.273,199.98 267.273,197.25C272.617,182.715 275.34,175.023 275.445,174.172C275.996,172.465 275.895,171 275.133,169.773C274.246,168.949 273.031,168.59 271.484,168.695C261.918,169.586 252.164,170.277 242.223,170.77C223.797,171.516 209.82,171.852 200.293,171.777C200.129,171.828 199.965,171.914 199.805,172.035" style="fill:rgb(45,122,237);fill-rule:nonzero;"/>
-                  </g>
-              </g>
-              <g transform="matrix(14.3011,-3.32692,3.63318,15.6176,-252.871,174.952)">
-                  <path d="M34.316,96.129L33.504,100.387C32.246,109.445 33.164,121.766 36.254,137.348C39.492,154.395 44.027,168.152 49.859,178.613C51.875,182.461 54.086,186.18 56.484,189.777C57.445,191.73 61.48,196.844 68.59,205.105C78.625,214.953 89.543,222.648 101.336,228.191C107.234,230.961 113.352,233.195 119.691,234.891L129.363,237.031C142.887,239.301 156.473,239.512 170.129,237.656C184.145,235.863 198.949,232.121 214.543,226.43C234.379,218.465 246.516,213.102 250.957,210.34L224.715,182.859C214.969,189.805 205.41,195.566 196.031,200.141C186.652,204.715 177.457,208.102 168.445,210.305L155.063,212.715C146.234,213.73 137.586,213.563 129.121,212.207L116.563,209.281L104.273,204.578L98.098,201.379C82.547,193.309 68.875,180.176 57.078,161.988C53.105,155.949 49.125,147.289 45.133,136.004C42.148,127.195 38.883,114.469 35.328,97.832C35.051,96.816 34.715,96.25 34.316,96.129" style="fill:rgb(45,122,237);fill-rule:nonzero;"/>
-              </g>
-          </g>
-      </svg>
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-8">
+        <span class="inline-block mb-5 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold border border-brand-blue-dark text-[color:var(--accent)]">
+          Espace personnel
+        </span>
+        <h1 class="font-heading uppercase text-2xl sm:text-3xl font-bold leading-tight">
+          Content de te <span class="text-brand-blue">revoir.</span>
+        </h1>
+      </div>
+
+      <form id="login-form" class="flex flex-col gap-4">
+        <div>
+          <label class="block text-xs font-semibold mb-1.5">Email</label>
+          <input type="email" id="f-email" required autocomplete="email" class="w-full px-4 py-3 rounded-lg border border-[color:var(--border)] bg-[color:var(--card)] outline-none focus:border-brand-blue">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1.5">Mot de passe</label>
+          <input type="password" id="f-password" required autocomplete="current-password" class="w-full px-4 py-3 rounded-lg border border-[color:var(--border)] bg-[color:var(--card)] outline-none focus:border-brand-blue">
+        </div>
+
+        <p id="login-error" class="hidden text-sm text-red-500"></p>
+
+        <button type="submit" id="login-submit-btn" class="mt-1 px-8 py-3.5 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-white">
+          Se connecter
+        </button>
+      </form>
+
+      <div class="flex flex-col items-center gap-3 mt-6 text-sm">
+        <a href="mot-de-passe-oublie.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
+          Mot de passe oublié ?
+        </a>
+        <p class="text-[color:var(--fg-60)]">
+          Pas encore de compte ?
+          <a href="signup.html" class="text-brand-blue font-semibold hover:underline">Crée-en un gratuitement</a>
+        </p>
+      </div>
     </div>
-
-    <!-- Contenu dynamique : chargé depuis Supabase (table accueil_blocs) -->
-    <div id="blocs-container" class="w-full flex flex-col items-center"></div>
 
   </main>
 
@@ -240,144 +238,34 @@
 
   <script src="theme.js"></script>
   <script>
-    // Transforme {{texte}} en surlignage bleu, comme sur les pages de services
-    function renderHighlight(str) {
-      if (!str) return '';
-      const escaped = str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-      return escaped.replace(/\{\{(.+?)\}\}/g, '<span class="text-brand-blue">$1</span>');
-    }
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
+    const form = document.getElementById('login-form');
+    const errorEl = document.getElementById('login-error');
+    const submitBtn = document.getElementById('login-submit-btn');
+    const ADMIN_EMAIL = 'erwan20b@gmail.com';
 
-    function renderHero(bloc, delay) {
-      return `
-        <span class="reveal inline-block mb-6 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold border border-brand-blue-dark text-[color:var(--accent)]" style="transition-delay:${delay}s">
-          ${escapeHtml(bloc.badge)}
-        </span>
-        <h1 class="reveal font-heading uppercase text-3xl sm:text-4xl md:text-5xl font-bold leading-relaxed mb-6 max-w-2xl" style="transition-delay:${delay + 0.1}s">
-          ${renderHighlight(bloc.titre)}
-        </h1>
-        <p class="reveal text-[color:var(--fg-70)] text-base sm:text-lg leading-relaxed mb-12 max-w-md" style="transition-delay:${delay + 0.2}s">
-          ${escapeHtml(bloc.texte)}
-        </p>
-      `;
-    }
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl.classList.add('hidden');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Connexion...';
 
-    // Icônes pro (mêmes traits fins que le dashboard) associées aux emoji
-    // choisis dans l'admin. Rien à changer côté admin-accueil.html : tu tapes
-    // toujours un emoji, et c'est ici qu'on l'habille avec une vraie icône.
-    const SITE_ICONS = {
-      '🩹': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(45 12 12)"/><circle cx="9" cy="9" r=".6" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r=".6" fill="currentColor" stroke="none"/></svg>',
-      '⚡': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg>',
-      '🔍': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
-      '💬': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.6-.8L3 21l1.8-5.4A8.5 8.5 0 1 1 21 11.5Z"/></svg>',
-      '🎯': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>',
-      '💪': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="10" width="3" height="4"/><rect x="19" y="10" width="3" height="4"/><path d="M5 10.5V15M19 10.5V15M8 8v9a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-2M8 12h5"/></svg>',
-      '🏆': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a1 1 0 0 0-1 1v1a3 3 0 0 0 3 3M17 5h3a1 1 0 0 1 1 1v1a3 3 0 0 1-3 3"/></svg>',
-      '📅': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>',
-      '✅': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 5-5"/></svg>',
-      '✨': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></svg>'
-    };
-    const DEFAULT_SITE_ICON = SITE_ICONS['✨'];
-    function siteIcon(emoji) { return SITE_ICONS[emoji] || DEFAULT_SITE_ICON; }
+      const email = document.getElementById('f-email').value.trim().toLowerCase();
+      const password = document.getElementById('f-password').value;
 
-    function renderCarteDuo(bloc, delay) {
-      const cartes = (bloc.extra && bloc.extra.cartes) || [];
-      return `
-        <h2 class="reveal font-heading uppercase text-xl sm:text-2xl font-bold mb-6" style="transition-delay:${delay}s">${escapeHtml(bloc.titre)}</h2>
-        <div class="grid sm:grid-cols-2 gap-5 w-full max-w-2xl mb-16">
-          ${cartes.map((c, i) => `
-            <a href="${escapeHtml(c.cta_lien || '#')}" class="reveal group text-left p-6 rounded-2xl bg-[color:var(--card)] border border-[color:var(--border)] hover:border-brand-blue transition-colors" style="transition-delay:${delay + 0.1 + i * 0.1}s">
-              ${c.image_url
-                ? `<img src="${escapeHtml(c.image_url)}" class="w-10 h-10 object-cover rounded-lg mb-4" alt="">`
-                : `<span class="w-11 h-11 rounded-lg bg-brand-blue text-white flex items-center justify-center mb-4">${siteIcon(c.icone)}</span>`}
-              <h3 class="font-heading uppercase font-bold text-lg mb-2">${escapeHtml(c.titre)}</h3>
-              <p class="text-sm text-[color:var(--fg-60)] mb-4">${escapeHtml(c.texte)}</p>
-              <span class="text-sm font-semibold text-brand-blue group-hover:text-brand-blue-dark transition-colors">${escapeHtml(c.cta_texte || 'En savoir plus →')}</span>
-            </a>
-          `).join('')}
-        </div>
-      `;
-    }
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
-    function renderCadeauCta(bloc, delay) {
-      const feature1 = (bloc.extra && bloc.extra.feature_1) || '';
-      const feature2 = (bloc.extra && bloc.extra.feature_2) || '';
-      return `
-        <div class="reveal w-full max-w-xl p-8 sm:p-10 rounded-2xl bg-[color:var(--card)] border-2 border-brand-blue" style="transition-delay:${delay}s">
-          ${bloc.badge ? `<span class="inline-block mb-4 px-4 py-1.5 rounded-full text-xs tracking-widest uppercase font-semibold bg-brand-blue text-white">${escapeHtml(bloc.badge)}</span>` : ''}
-          <h2 class="font-heading uppercase text-2xl sm:text-3xl font-bold leading-relaxed mb-4">${renderHighlight(bloc.titre)}</h2>
-          <p class="text-[color:var(--fg-70)] text-base leading-relaxed mb-6 max-w-md mx-auto">${escapeHtml(bloc.texte)}</p>
-          ${(feature1 || feature2) ? `
-            <div class="flex items-center justify-center gap-6 mb-8 text-sm font-medium text-[color:var(--accent)]">
-              ${feature1 ? `<span class="flex items-center gap-2"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/></svg>${escapeHtml(feature1)}</span>` : ''}
-              ${feature2 ? `<span class="flex items-center gap-2"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>${escapeHtml(feature2)}</span>` : ''}
-            </div>` : ''}
-          ${bloc.cta_texte ? `<a href="${escapeHtml(bloc.cta_lien || '#')}" class="block w-full sm:w-auto sm:inline-block px-10 py-4 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-white mb-4">${escapeHtml(bloc.cta_texte)}</a><br>` : ''}
-          ${bloc.cta2_texte ? `<a href="${escapeHtml(bloc.cta2_lien || '#')}" class="text-sm text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">${escapeHtml(bloc.cta2_texte)}</a>` : ''}
-        </div>
-      `;
-    }
-
-    function renderTexteLibre(bloc, delay) {
-      return `
-        <div class="reveal w-full max-w-2xl text-left" style="transition-delay:${delay}s">
-          ${bloc.image_url ? `<img src="${escapeHtml(bloc.image_url)}" class="w-full rounded-2xl mb-6 object-cover" alt="">` : ''}
-          ${bloc.titre ? `<h2 class="font-heading uppercase text-2xl font-bold mb-4 text-center">${renderHighlight(bloc.titre)}</h2>` : ''}
-          ${bloc.texte ? bloc.texte.split('\n').filter(Boolean).map(p => `<p class="text-[color:var(--fg-70)] leading-relaxed mb-4">${escapeHtml(p)}</p>`).join('') : ''}
-          ${bloc.cta_texte ? `<div class="text-center mt-4"><a href="${escapeHtml(bloc.cta_lien || '#')}" class="inline-block px-8 py-3 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-sm text-white">${escapeHtml(bloc.cta_texte)}</a></div>` : ''}
-        </div>
-      `;
-    }
-
-    async function loadBlocs() {
-      const { data, error } = await supabaseClient
-        .from('accueil_blocs')
-        .select('*')
-        .eq('actif', true)
-        .order('ordre', { ascending: true });
-
-      const container = document.getElementById('blocs-container');
-
-      if (error || !data) {
-        container.innerHTML = '';
+      if (error) {
+        errorEl.textContent = "Email ou mot de passe incorrect.";
+        errorEl.classList.remove('hidden');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Se connecter';
         return;
       }
 
-      let delay = 0;
-      container.innerHTML = data.map(bloc => {
-        let html = '';
-        if (bloc.type === 'hero') html = renderHero(bloc, delay);
-        else if (bloc.type === 'carte_duo') html = renderCarteDuo(bloc, delay);
-        else if (bloc.type === 'cadeau_cta') html = renderCadeauCta(bloc, delay);
-        else if (bloc.type === 'texte_libre') html = renderTexteLibre(bloc, delay);
-        delay += 0.1;
-        return html;
-      }).join('');
-
-      // Réactive l'animation au scroll pour les éléments injectés dynamiquement
-      const revealObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-            revealObserver.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.15 });
-      document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
-    }
-
-    loadBlocs();
+      const userEmail = (data.user && data.user.email || '').toLowerCase().trim();
+      window.location.href = userEmail === ADMIN_EMAIL ? 'admin.html' : 'dashboard.html';
+    });
   </script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js').catch(() => {});
-    }
-  </script>
+
 </body>
 </html>
