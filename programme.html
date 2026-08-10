@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<script>if(localStorage.getItem('theme')!=='dark')document.documentElement.classList.add('light');</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="/manifest.json">
@@ -39,20 +39,43 @@
 </head>
 <body class="min-h-screen">
 
-  <header class="sticky top-0 z-50 bg-[color:var(--bg)] flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[color:var(--border)]">
-    <a href="index.html" class="flex items-center gap-2">
-      <img src="logo.png" alt="Erwan Amirault" class="h-7 w-auto">
-      <span class="font-heading uppercase font-bold text-sm tracking-wide">Erwan Amirault</span>
-    </a>
-    <div class="flex items-center gap-4 text-sm">
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)] border-b border-[color:var(--border)]">
+    <div class="flex items-center justify-between px-6 sm:px-10 py-4">
+      <a href="index.html" class="flex items-center gap-2 shrink-0">
+        <img src="logo.png" alt="Erwan Amirault" class="h-7 w-auto">
+        <span class="font-heading uppercase font-bold text-sm tracking-wide hidden sm:inline">Erwan Amirault</span>
+      </a>
+
+      <div class="hidden md:flex items-center gap-4 text-sm">
+        <a href="index.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Accueil</a>
+        <a href="dashboard.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Mon espace</a>
+        <a href="formations.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Formations</a>
+        <a href="parametres.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Paramètres</a>
+        <button id="logout-btn" class="underline underline-offset-4 text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Se déconnecter</button>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+        <button id="nav-burger" class="w-9 h-9 flex items-center justify-center text-2xl leading-none md:hidden">☰</button>
+      </div>
+    </div>
+
+    <div id="mobile-panel" class="md:hidden hidden flex-col gap-3 px-6 pb-4 text-sm border-t border-[color:var(--border)] pt-3">
       <a href="index.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Accueil</a>
       <a href="dashboard.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Mon espace</a>
       <a href="formations.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Formations</a>
       <a href="parametres.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Paramètres</a>
-      <button id="logout-btn" class="underline underline-offset-4 text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Se déconnecter</button>
-      <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+      <button id="logout-btn-mobile" class="text-left underline underline-offset-4 text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Se déconnecter</button>
     </div>
   </header>
+
+  <script>
+    document.getElementById('nav-burger').addEventListener('click', () => {
+      const panel = document.getElementById('mobile-panel');
+      panel.classList.toggle('hidden');
+      panel.classList.toggle('flex');
+    });
+  </script>
 
   <main class="px-6 py-12 max-w-2xl mx-auto">
     <h1 class="font-heading uppercase text-2xl font-bold mb-8 text-center">Ma programmation</h1>
@@ -805,10 +828,12 @@
       renderWeek();
     });
 
-    document.getElementById('logout-btn')?.addEventListener('click', async () => {
+    async function handleLogoutClick() {
       await supabaseClient.auth.signOut();
       window.location.href = 'index.html';
-    });
+    }
+    document.getElementById('logout-btn')?.addEventListener('click', handleLogoutClick);
+    document.getElementById('logout-btn-mobile')?.addEventListener('click', handleLogoutClick);
 
     load();
   </script>
