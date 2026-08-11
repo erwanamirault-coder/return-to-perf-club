@@ -338,8 +338,8 @@
         <div class="${cardClasses}">
           ${o.badge ? `<span class="${badgeClasses}">${escapeHtmlOffre(o.badge)}</span>` : ''}
           <h3 class="font-heading uppercase text-sm sm:text-lg font-bold mb-1.5 sm:mb-4 leading-snug">${escapeHtmlOffre(o.titre)}</h3>
-          <p class="text-xs sm:text-sm text-[color:var(--fg-70)] leading-relaxed mb-2 sm:mb-5 line-clamp-3 sm:line-clamp-none ${isBientot ? 'flex-1' : ''}">${escapeHtmlOffre(o.description)}</p>
-          ${!isBientot ? `<div class="hidden sm:block">${renderPoints(o.points, 'text-sm text-[color:var(--fg-70)] flex-1')}</div>` : ''}
+          <p class="text-xs sm:text-sm text-[color:var(--fg-70)] leading-relaxed mb-2 sm:mb-5 ${isBientot ? 'flex-1' : ''}">${escapeHtmlOffre(o.description)}</p>
+          ${!isBientot ? renderPoints(o.points, 'text-xs sm:text-sm text-[color:var(--fg-70)] flex-1') : ''}
           ${!isBientot ? `
             <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 sm:flex-wrap mt-auto pt-1 sm:pt-2">
               ${o.bouton_texte && o.bouton_lien ? `<a href="${o.bouton_lien}" target="_blank" rel="noopener noreferrer" class="inline-block text-center px-3 sm:px-6 py-2 sm:py-3 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors font-heading uppercase tracking-wide font-semibold text-[10px] sm:text-xs text-white">${escapeHtmlOffre(o.bouton_texte)}</a>` : ''}
