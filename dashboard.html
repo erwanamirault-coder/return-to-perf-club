@@ -95,6 +95,21 @@
       </div>
     </a>
 
+    <a id="carte-forme" href="ma-forme.html" class="hidden dash-card rounded-2xl border-2 border-amber-400 bg-amber-50 p-5 mb-6 text-left">
+      <div class="flex items-center gap-4">
+        <div class="shrink-0 w-11 h-11 rounded-full bg-amber-400 text-white flex items-center justify-center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a5 5 0 0 0-5 5v3a5 5 0 0 0 10 0V7a5 5 0 0 0-5-5Z"/>
+            <path d="M12 15v7M8 22h8"/>
+          </svg>
+        </div>
+        <div>
+          <span class="block font-heading uppercase font-bold text-sm mb-0.5">Ma forme du jour</span>
+          <span class="block text-xs text-[color:var(--fg-60)]">Wellness + RPE de tes séances — 1 minute par jour.</span>
+        </div>
+      </div>
+    </a>
+
     <!-- Grille des autres actions -->
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 text-left">
 
@@ -212,6 +227,10 @@
         perfLien.href = `mes-performances.html?id=${joueur.id}`;
         perfLien.classList.remove('hidden');
         perfLien.classList.add('block');
+
+        const formeLien = document.getElementById('carte-forme');
+        formeLien.classList.remove('hidden');
+        formeLien.classList.add('block');
       }
     }
 
