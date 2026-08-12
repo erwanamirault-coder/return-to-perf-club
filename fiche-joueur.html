@@ -78,6 +78,29 @@
     </div>
   </div>
 
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+    <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-4">
+      <p class="text-[11px] uppercase tracking-wide text-[color:var(--fg-40)] font-semibold mb-1">Monotonie</p>
+      <p id="monotonie-value" class="font-heading text-2xl font-bold">—</p>
+      <p class="text-[11px] text-[color:var(--fg-40)] mt-0.5">Foster, 7j</p>
+    </div>
+    <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-4">
+      <p class="text-[11px] uppercase tracking-wide text-[color:var(--fg-40)] font-semibold mb-1">Strain</p>
+      <p id="strain-value" class="font-heading text-2xl font-bold">—</p>
+      <p class="text-[11px] text-[color:var(--fg-40)] mt-0.5">charge × monotonie</p>
+    </div>
+    <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-4">
+      <p class="text-[11px] uppercase tracking-wide text-[color:var(--fg-40)] font-semibold mb-1">Disponibilité</p>
+      <p id="dispo-value" class="font-heading text-2xl font-bold">—</p>
+      <p class="text-[11px] text-[color:var(--fg-40)] mt-0.5">30 derniers jours</p>
+    </div>
+    <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-4">
+      <p class="text-[11px] uppercase tracking-wide text-[color:var(--fg-40)] font-semibold mb-1">DOMS</p>
+      <p id="doms-value" class="font-heading text-sm font-bold leading-snug">—</p>
+      <p class="text-[11px] text-[color:var(--fg-40)] mt-0.5">dernière saisie</p>
+    </div>
+  </div>
+
   <div class="grid sm:grid-cols-2 gap-4 mb-6">
     <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-5">
       <h3 class="font-heading text-sm font-semibold text-[color:var(--fg-70)] mb-3">Charge d'entraînement — 6 semaines</h3>
@@ -95,6 +118,13 @@
     <h3 class="font-heading text-sm font-semibold text-[color:var(--fg-70)] mb-4">Progression tests physiques</h3>
     <div id="tests-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center"></div>
     <p id="tests-empty" class="hidden text-sm text-[color:var(--fg-40)] text-center py-4">Aucun test enregistré pour l'instant.</p>
+  </div>
+
+  <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-5 mt-6">
+    <h3 class="font-heading text-sm font-semibold text-[color:var(--fg-70)] mb-1">Comparatif vs référentiel du poste</h3>
+    <p class="text-xs text-[color:var(--fg-40)] mb-4">Basé sur les repères que tu as renseignés dans referentiels_performance.</p>
+    <div id="comparatif-list" class="flex flex-col gap-2"></div>
+    <p id="comparatif-empty" class="hidden text-sm text-[color:var(--fg-40)] text-center py-4">Aucun référentiel renseigné pour ce poste pour l'instant.</p>
   </div>
 
 </main>
@@ -163,6 +193,38 @@
       .order('date_test', { ascending: false });
 
     renderTests(testRows || []);
+
+    // Monotonie & Strain (vue calculée côté SQL)
+    const { data: msRows } = await supabaseClient.from('v_monotonie_strain').select('*').eq('joueur_id', joueurId).maybeSingle();
+    document.getElementById('monotonie-value').textContent = msRows && msRows.monotonie !== null ? msRows.monotonie : '—';
+    document.getElementById('strain-value').textContent = msRows && msRows.strain !== null ? msRows.strain : '—';
+
+    // Disponibilité sur 30 jours
+    const since30 = new Date(Date.now() - 30 * 86400000).toISOString().slice(0,10);
+    const { data: dispoRows } = await supabaseClient.from('disponibilite').select('present').eq('joueur_id', joueurId).gte('date_jour', since30);
+    if (dispoRows && dispoRows.length) {
+      const presents = dispoRows.filter(d => d.present).length;
+      document.getElementById('dispo-value').textContent = Math.round((presents / dispoRows.length) * 100) + '%';
+    }
+
+    // Dernière saisie DOMS (zones douloureuses)
+    const { data: lastWellness } = await supabaseClient
+      .from('wellness_quotidien')
+      .select('doms_zones, date_saisie')
+      .eq('joueur_id', joueurId)
+      .order('date_saisie', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (lastWellness && lastWellness.doms_zones) {
+      const zones = Object.entries(lastWellness.doms_zones).filter(([,v]) => v >= 3).map(([k]) => k);
+      document.getElementById('doms-value').textContent = zones.length ? zones.join(', ') : 'RAS';
+    } else {
+      document.getElementById('doms-value').textContent = '—';
+    }
+
+    // Comparatif vs référentiel du poste
+    const { data: compRows } = await supabaseClient.from('v_comparatif_joueur').select('*').eq('joueur_id', joueurId);
+    renderComparatif(compRows || []);
 
     document.getElementById('loading-state').classList.add('hidden');
     document.getElementById('content').classList.remove('hidden');
@@ -258,6 +320,28 @@
           <p class="text-[11px] uppercase text-[color:var(--fg-40)] font-semibold mb-1">${escapeHtml(type)}</p>
           <p class="font-heading text-lg font-bold text-brand-blue-dark">${dernier.valeur} <span class="text-xs font-normal text-[color:var(--fg-40)]">${escapeHtml(dernier.unite)}</span></p>
           ${delta}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderComparatif(rows) {
+    const avecRef = rows.filter(r => r.valeur_cible !== null);
+    if (avecRef.length === 0) {
+      document.getElementById('comparatif-empty').classList.remove('hidden');
+      return;
+    }
+    const parType = {};
+    avecRef.forEach(r => { if (!parType[r.type_test]) parType[r.type_test] = r; });
+
+    document.getElementById('comparatif-list').innerHTML = Object.values(parType).map(r => {
+      const ecart = r.ecart_pourcent;
+      const positif = ecart >= 0;
+      return `
+        <div class="flex items-center justify-between text-sm py-2 border-b border-[color:var(--border)] last:border-0">
+          <span class="font-medium">${escapeHtml(r.type_test)}</span>
+          <span class="text-[color:var(--fg-50)]">${r.valeur_joueur} ${escapeHtml(r.unite)} <span class="text-[color:var(--fg-40)]">(cible ${r.valeur_cible})</span></span>
+          <span class="font-semibold ${positif ? 'text-green-600' : 'text-amber-500'}">${positif ? '+' : ''}${ecart}%</span>
         </div>
       `;
     }).join('');
