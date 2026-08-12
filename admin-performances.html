@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F4CA9">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon-32.png">
+<title>Performances équipe — Admin — Erwan Amirault</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { brand: { black: '#000000', white: '#FFFFFF', blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } } },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)]/95 backdrop-blur flex items-center justify-between px-6 sm:px-10 py-4 border-b border-[color:var(--border)]">
+    <a href="admin-equipe.html" class="flex items-center gap-3">
+      <img src="logo.png" alt="Erwan Amirault" class="h-7 w-auto">
+      <div class="leading-tight">
+        <p class="font-heading uppercase font-bold text-sm tracking-wide">Return To Perf</p>
+        <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-50)]">Performances équipe</p>
+      </div>
+    </a>
+    <div class="flex items-center gap-5 text-sm">
+      <a href="admin-equipe.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">← Mon équipe</a>
+      <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+    </div>
+  </header>
+
+  <main class="px-6 py-10 max-w-3xl mx-auto">
+
+    <div class="mb-8">
+      <h1 class="font-heading uppercase text-2xl font-bold leading-tight">Performances équipe</h1>
+      <p class="text-sm text-[color:var(--fg-60)] mt-1">Choisis un groupe et un mouvement, rentre le score de chaque joueur d'un coup.</p>
+    </div>
+
+    <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5 mb-6 flex flex-wrap items-end gap-3">
+      <div class="flex-1 min-w-[160px]">
+        <label class="block text-[11px] uppercase font-semibold text-[color:var(--fg-50)] tracking-wide mb-1">Groupe</label>
+        <select id="equipe-select" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></select>
+      </div>
+      <div class="flex-1 min-w-[160px]">
+        <label class="block text-[11px] uppercase font-semibold text-[color:var(--fg-50)] tracking-wide mb-1">Mouvement</label>
+        <select id="mouvement-select" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <option value="CMJ" data-unite="cm">CMJ</option>
+          <option value="Sprint_10m" data-unite="s">Sprint 10m</option>
+          <option value="Sprint_20m" data-unite="s">Sprint 20m</option>
+          <option value="Sprint_40m" data-unite="s">Sprint 40m</option>
+          <option value="VMA" data-unite="km/h">VMA</option>
+          <option value="1RM_squat" data-unite="kg">1RM Squat</option>
+          <option value="1RM_bench" data-unite="kg">1RM Développé-couché</option>
+          <option value="Grip_gauche" data-unite="kg">Préhension gauche</option>
+          <option value="Grip_droit" data-unite="kg">Préhension droite</option>
+          <option value="autre" data-unite="">Autre...</option>
+        </select>
+      </div>
+      <input type="text" id="mouvement-autre" placeholder="Nom du mouvement" class="hidden flex-1 min-w-[160px] px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      <div class="w-32">
+        <label class="block text-[11px] uppercase font-semibold text-[color:var(--fg-50)] tracking-wide mb-1">Unité</label>
+        <input type="text" id="mouvement-unite" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      </div>
+      <div class="w-40">
+        <label class="block text-[11px] uppercase font-semibold text-[color:var(--fg-50)] tracking-wide mb-1">Date du test</label>
+        <input type="date" id="test-date" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-heading uppercase text-[11px] font-bold text-[color:var(--fg-50)] tracking-widest">Scores des joueurs</h2>
+        <button id="save-all-btn" class="text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-semibold">Enregistrer tous les scores</button>
+      </div>
+      <div id="joueurs-rows" class="flex flex-col gap-2"></div>
+      <p id="joueurs-empty" class="hidden text-sm text-[color:var(--fg-50)] text-center py-6">Aucun joueur dans ce groupe.</p>
+      <p id="save-status" class="text-xs text-[color:var(--fg-50)] mt-3"></p>
+    </div>
+
+  </main>
+
+  <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    const equipeSelect = document.getElementById('equipe-select');
+    const mouvementSelect = document.getElementById('mouvement-select');
+    const joueursRows = document.getElementById('joueurs-rows');
+    let equipeActive = null;
+
+    function escapeHtml(s) {
+      return (s || '').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    // Préremplit l'unité et la date par défaut
+    document.getElementById('test-date').value = new Date().toISOString().slice(0,10);
+
+    mouvementSelect.addEventListener('change', () => {
+      const selected = mouvementSelect.options[mouvementSelect.selectedIndex];
+      const isAutre = mouvementSelect.value === 'autre';
+      document.getElementById('mouvement-autre').classList.toggle('hidden', !isAutre);
+      document.getElementById('mouvement-unite').value = selected.dataset.unite || '';
+      loadJoueursAvecDerniereValeur();
+    });
+
+    async function loadEquipes() {
+      const { data } = await supabaseClient.from('equipes').select('*').order('created_at', { ascending: false });
+      const equipes = data || [];
+      equipeSelect.innerHTML = equipes.map(e => `<option value="${e.id}">${escapeHtml(e.nom)} — ${escapeHtml(e.saison)}</option>`).join('');
+      if (equipes.length) equipeActive = equipes[0].id;
+    }
+
+    equipeSelect.addEventListener('change', () => {
+      equipeActive = equipeSelect.value;
+      loadJoueursAvecDerniereValeur();
+    });
+
+    function mouvementActuel() {
+      return mouvementSelect.value === 'autre'
+        ? document.getElementById('mouvement-autre').value.trim()
+        : mouvementSelect.value;
+    }
+
+    async function loadJoueursAvecDerniereValeur() {
+      if (!equipeActive) return;
+      const type_test = mouvementActuel();
+      const { data: joueurs } = await supabaseClient.from('joueurs').select('*').eq('equipe_id', equipeActive).order('nom');
+      const rows = joueurs || [];
+      document.getElementById('joueurs-empty').classList.toggle('hidden', rows.length > 0);
+
+      // Récupère la dernière valeur connue de chaque joueur pour ce mouvement
+      let dernieres = {};
+      if (type_test && rows.length) {
+        const ids = rows.map(j => j.id);
+        const { data: testsExistants } = await supabaseClient
+          .from('tests_physiques')
+          .select('joueur_id, valeur, date_test')
+          .in('joueur_id', ids)
+          .eq('type_test', type_test)
+          .order('date_test', { ascending: false });
+        (testsExistants || []).forEach(t => {
+          if (!dernieres[t.joueur_id]) dernieres[t.joueur_id] = t;
+        });
+      }
+
+      joueursRows.innerHTML = rows.map(j => {
+        const derniere = dernieres[j.id];
+        return `
+        <div class="joueur-perf-row flex items-center gap-3 py-2 border-b border-[color:var(--border)] last:border-0" data-joueur-id="${j.id}">
+          <span class="w-9 h-9 rounded-full bg-brand-blue/10 text-[color:var(--accent)] flex items-center justify-center text-xs font-bold shrink-0">${(j.prenom||'?').charAt(0)}${(j.nom||'').charAt(0)}</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold truncate">${escapeHtml(j.prenom)} ${escapeHtml(j.nom)}</p>
+            <p class="text-[11px] text-[color:var(--fg-40)]">${derniere ? `Dernier : ${derniere.valeur} le ${new Date(derniere.date_test).toLocaleDateString('fr-FR')}` : 'Aucune donnée'}</p>
+          </div>
+          <input type="number" step="0.01" placeholder="Score" class="score-input w-28 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        </div>
+      `;
+      }).join('');
+    }
+
+    document.getElementById('save-all-btn').addEventListener('click', async () => {
+      const type_test = mouvementActuel();
+      const unite = document.getElementById('mouvement-unite').value.trim();
+      const date_test = document.getElementById('test-date').value;
+      const status = document.getElementById('save-status');
+
+      if (!type_test || !unite || !date_test) { status.textContent = 'Renseigne le mouvement, l\'unité et la date.'; return; }
+
+      const rows = document.querySelectorAll('.joueur-perf-row');
+      const payload = [];
+      rows.forEach(row => {
+        const valeur = row.querySelector('.score-input').value;
+        if (valeur !== '') {
+          payload.push({ joueur_id: row.dataset.joueurId, type_test, valeur, unite, date_test });
+        }
+      });
+
+      if (!payload.length) { status.textContent = 'Aucun score renseigné.'; return; }
+
+      status.textContent = 'Enregistrement...';
+      const { error } = await supabaseClient.from('tests_physiques').insert(payload);
+      if (error) { status.textContent = 'Erreur : ' + error.message; return; }
+      status.textContent = `${payload.length} score(s) enregistré(s).`;
+      loadJoueursAvecDerniereValeur();
+    });
+
+    (async function init() {
+      await loadEquipes();
+      if (equipeActive) { equipeSelect.value = equipeActive; loadJoueursAvecDerniereValeur(); }
+    })();
+  </script>
+
+</body>
+</html>
