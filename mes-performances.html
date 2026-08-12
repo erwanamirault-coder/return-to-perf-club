@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<title>Ma perf — Return To Perf</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F4CA9">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon-32.png">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { brand: { black: '#000000', white: '#FFFFFF', blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } } },
+        fontFamily: { heading: ['Oswald','sans-serif'], body: ['Poppins','sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1,h2,h3,.font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<div id="loading-state" class="min-h-screen flex items-center justify-center">
+  <p class="text-sm text-[color:var(--fg-50)]">Chargement...</p>
+</div>
+
+<main id="content" class="max-w-3xl mx-auto px-4 sm:px-6 py-8 hidden">
+
+  <div class="mb-8">
+    <a href="dashboard.html" class="text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors">← Mon espace</a>
+    <h1 class="font-heading uppercase text-2xl font-bold leading-tight mt-2">Ma perf</h1>
+    <p class="text-sm text-[color:var(--fg-60)] mt-1">Tes tests sportifs, saisis par ton coach, suivis dans le temps.</p>
+  </div>
+
+  <div id="tests-container" class="flex flex-col gap-6"></div>
+  <p id="tests-empty" class="hidden text-sm text-[color:var(--fg-40)] text-center py-16">Aucun test enregistré pour l'instant. Ton coach les ajoutera au fur et à mesure.</p>
+
+</main>
+
+<script src="supabase-config.js"></script>
+<script src="theme.js"></script>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  let joueurId = params.get('id');
+
+  const colors = ['#2D7AED', '#0F4CA9', '#E9A23B', '#22c55e', '#a855f7', '#ef4444'];
+
+  (async function load() {
+    if (!joueurId) {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) { window.location.href = 'login.html'; return; }
+      const { data: joueur } = await supabaseClient.from('joueurs').select('id').eq('user_id', user.id).maybeSingle();
+      if (!joueur) { window.location.href = 'dashboard.html'; return; }
+      joueurId = joueur.id;
+    }
+
+    const { data: rows } = await supabaseClient
+      .from('tests_physiques')
+      .select('*')
+      .eq('joueur_id', joueurId)
+      .order('date_test', { ascending: true });
+
+    render(rows || []);
+
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('content').classList.remove('hidden');
+  })();
+
+  function render(rows) {
+    if (rows.length === 0) {
+      document.getElementById('tests-empty').classList.remove('hidden');
+      return;
+    }
+
+    const parType = {};
+    rows.forEach(r => {
+      if (!parType[r.type_test]) parType[r.type_test] = [];
+      parType[r.type_test].push(r);
+    });
+
+    const container = document.getElementById('tests-container');
+    Object.entries(parType).forEach(([type, list], i) => {
+      const dernier = list[list.length - 1];
+      const premier = list[0];
+      const evolution = list.length > 1 ? +(dernier.valeur - premier.valeur).toFixed(2) : null;
+
+      const card = document.createElement('div');
+      card.className = 'rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-5';
+      card.innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-heading text-sm font-bold uppercase tracking-wide">${type}</h3>
+          <div class="text-right">
+            <p class="font-heading text-xl font-bold text-brand-blue-dark">${dernier.valeur} <span class="text-xs font-normal text-[color:var(--fg-40)]">${dernier.unite}</span></p>
+            ${evolution !== null ? `<p class="text-[11px] font-semibold ${evolution >= 0 ? 'text-green-600' : 'text-red-500'}">${evolution >= 0 ? '+' : ''}${evolution} depuis le début</p>` : ''}
+          </div>
+        </div>
+        <canvas height="90"></canvas>
+      `;
+      container.appendChild(card);
+
+      new Chart(card.querySelector('canvas'), {
+        type: 'line',
+        data: {
+          labels: list.map(r => new Date(r.date_test).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })),
+          datasets: [{
+            data: list.map(r => r.valeur),
+            borderColor: colors[i % colors.length],
+            backgroundColor: colors[i % colors.length] + '15',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 4
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: { y: { grid: { color: '#F1F5F9' } }, x: { grid: { display: false } } }
+        }
+      });
+    });
+  }
+</script>
+
+</body>
+</html>
