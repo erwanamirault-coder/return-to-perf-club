@@ -68,6 +68,22 @@
 
     <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5 mb-6">
       <div class="flex items-center justify-between mb-3">
+        <h2 class="font-heading uppercase text-[11px] font-bold text-[color:var(--fg-50)] tracking-widest">Séances collectives</h2>
+        <button id="new-seance-collective-btn" class="text-xs text-[color:var(--accent)] font-semibold hover:underline">+ Programmer une séance</button>
+      </div>
+      <div id="new-seance-collective-form" class="hidden flex flex-wrap gap-2 mb-4 pb-4 border-b border-[color:var(--border)]">
+        <input type="text" id="sc-titre" placeholder="Titre (ex: Séance collective S12)" class="flex-1 min-w-[180px] px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="date" id="sc-date" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="time" id="sc-heure" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="number" id="sc-duree" placeholder="Durée (min)" class="w-28 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <button id="save-seance-collective-btn" class="px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-sm font-semibold">Créer</button>
+      </div>
+      <div id="seances-collectives-list" class="flex flex-col gap-2"></div>
+      <p id="seances-collectives-empty" class="hidden text-sm text-[color:var(--fg-50)] text-center py-4">Aucune séance collective programmée pour ce groupe.</p>
+    </div>
+
+    <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5 mb-6">
+      <div class="flex items-center justify-between mb-3">
         <h2 class="font-heading uppercase text-[11px] font-bold text-[color:var(--fg-50)] tracking-widest">Ajouter des joueurs</h2>
         <button id="add-row-btn" class="text-xs text-[color:var(--accent)] font-semibold hover:underline">+ Ajouter une ligne</button>
       </div>
@@ -170,7 +186,53 @@
     equipeSelect.addEventListener('change', () => {
       equipeActive = equipeSelect.value;
       loadJoueurs();
+      loadSeancesCollectives();
     });
+
+    document.getElementById('new-seance-collective-btn').addEventListener('click', () => {
+      document.getElementById('new-seance-collective-form').classList.toggle('hidden');
+    });
+
+    document.getElementById('save-seance-collective-btn').addEventListener('click', async () => {
+      if (!equipeActive) { alert('Sélectionne ou crée un groupe d\'abord.'); return; }
+      const titre = document.getElementById('sc-titre').value.trim();
+      const date_seance = document.getElementById('sc-date').value;
+      const heure_debut = document.getElementById('sc-heure').value || null;
+      const duree_prevue_min = document.getElementById('sc-duree').value || null;
+      if (!titre || !date_seance) { alert('Titre et date requis.'); return; }
+      const { error } = await supabaseClient.from('seances').insert({
+        equipe_id: equipeActive, titre, date_seance, heure_debut, duree_prevue_min,
+        type_seance: 'collective'
+      });
+      if (error) { alert('Erreur : ' + error.message); return; }
+      document.getElementById('sc-titre').value = '';
+      document.getElementById('sc-date').value = '';
+      document.getElementById('sc-heure').value = '';
+      document.getElementById('sc-duree').value = '';
+      document.getElementById('new-seance-collective-form').classList.add('hidden');
+      loadSeancesCollectives();
+    });
+
+    async function loadSeancesCollectives() {
+      if (!equipeActive) return;
+      const { data } = await supabaseClient
+        .from('seances')
+        .select('*')
+        .eq('equipe_id', equipeActive)
+        .eq('type_seance', 'collective')
+        .gte('date_seance', new Date(Date.now() - 7*86400000).toISOString().slice(0,10))
+        .order('date_seance', { ascending: true });
+      const rows = data || [];
+      document.getElementById('seances-collectives-empty').classList.toggle('hidden', rows.length > 0);
+      document.getElementById('seances-collectives-list').innerHTML = rows.map(s => `
+        <div class="flex items-center justify-between gap-3 py-2 border-b border-[color:var(--border)] last:border-0 text-sm">
+          <div>
+            <span class="font-semibold">${escapeHtml(s.titre)}</span>
+            <span class="text-[color:var(--fg-50)]"> — ${new Date(s.date_seance).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}${s.heure_debut ? ' à ' + s.heure_debut.slice(0,5) : ''}</span>
+          </div>
+        </div>
+      `).join('');
+    }
 
     document.getElementById('save-joueurs-btn').addEventListener('click', async () => {
       if (!equipeActive) { alert('Sélectionne ou crée un groupe d\'abord.'); return; }
@@ -264,7 +326,7 @@
 
     (async function init() {
       await loadEquipes();
-      if (equipeActive) { equipeSelect.value = equipeActive; loadJoueurs(); }
+      if (equipeActive) { equipeSelect.value = equipeActive; loadJoueurs(); loadSeancesCollectives(); }
     })();
   </script>
 
