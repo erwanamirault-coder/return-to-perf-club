@@ -272,6 +272,10 @@
       }
 
       const userEmail = (data.user && data.user.email || '').toLowerCase().trim();
+
+      // Relie automatiquement ce compte à une fiche joueur rugby si l'email correspond
+      try { await supabaseClient.rpc('link_joueur_account'); } catch (e) { /* pas grave si aucune fiche ne correspond */ }
+
       window.location.href = userEmail === ADMIN_EMAIL ? 'admin.html' : 'dashboard.html';
     });
   </script>
