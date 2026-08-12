@@ -121,10 +121,11 @@
 
     function nouvelleLigneJoueur() {
       const row = document.createElement('div');
-      row.className = 'joueur-row grid grid-cols-2 sm:grid-cols-6 gap-2';
+      row.className = 'joueur-row grid grid-cols-2 sm:grid-cols-7 gap-2';
       row.innerHTML = `
         <input type="text" placeholder="Prénom" class="j-prenom px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
         <input type="text" placeholder="Nom" class="j-nom px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="email" placeholder="Email" class="j-email px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue sm:col-span-2">
         <input type="text" placeholder="Poste" class="j-poste px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
         <input type="date" class="j-naissance px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
         <input type="number" placeholder="Poids (kg)" class="j-poids px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
@@ -183,6 +184,7 @@
         payload.push({
           equipe_id: equipeActive,
           prenom, nom,
+          email: row.querySelector('.j-email').value.trim().toLowerCase() || null,
           poste: row.querySelector('.j-poste').value.trim() || null,
           date_naissance: row.querySelector('.j-naissance').value || null,
           poids_reference: row.querySelector('.j-poids').value || null,
