@@ -79,7 +79,7 @@
     <h1 class="font-heading uppercase text-2xl sm:text-3xl font-bold mb-10">Que veux-tu faire ?</h1>
 
     <!-- Carte principale mise en avant -->
-    <a href="programme.html" class="dash-card block rounded-2xl border-2 border-brand-blue bg-brand-blue/5 p-6 sm:p-8 mb-6 text-left">
+    <a id="carte-programmation" href="programme.html" class="dash-card block rounded-2xl border-2 border-brand-blue bg-brand-blue/5 p-6 sm:p-8 mb-6 text-left">
       <div class="flex items-center gap-5">
         <div class="shrink-0 w-14 h-14 rounded-full bg-brand-blue text-white flex items-center justify-center">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -89,8 +89,8 @@
           </svg>
         </div>
         <div>
-          <span class="block font-heading uppercase font-bold text-lg mb-1">Ma programmation</span>
-          <span class="block text-sm text-[color:var(--fg-60)]">Accède à tes séances d'entraînement et à ton suivi.</span>
+          <span id="carte-programmation-titre" class="block font-heading uppercase font-bold text-lg mb-1">Ma programmation</span>
+          <span id="carte-programmation-texte" class="block text-sm text-[color:var(--fg-60)]">Accède à tes séances d'entraînement et à ton suivi.</span>
         </div>
       </div>
     </a>
@@ -110,7 +110,7 @@
         <span class="block text-sm text-[color:var(--fg-50)]">Renseigne et suis tes PR, en force comme en cardio.</span>
       </a>
 
-      <a href="statistiques.html" class="dash-card block rounded-xl border border-[color:var(--border-strong)] p-6">
+      <a id="carte-stats" href="statistiques.html" class="dash-card block rounded-xl border border-[color:var(--border-strong)] p-6">
         <div class="w-11 h-11 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center mb-4">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 20h18"/>
@@ -119,8 +119,18 @@
             <rect x="16" y="4" width="3" height="16"/>
           </svg>
         </div>
-        <span class="block font-heading uppercase font-semibold mb-2">Mes statistiques</span>
-        <span class="block text-sm text-[color:var(--fg-50)]">Suis ton RPE et ton tonnage, semaine par semaine.</span>
+        <span id="carte-stats-titre" class="block font-heading uppercase font-semibold mb-2">Mes statistiques</span>
+        <span id="carte-stats-texte" class="block text-sm text-[color:var(--fg-50)]">Suis ton RPE et ton tonnage, semaine par semaine.</span>
+      </a>
+
+      <a id="carte-perf" href="mes-performances.html" class="hidden dash-card rounded-xl border border-[color:var(--border-strong)] p-6">
+        <div class="w-11 h-11 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center mb-4">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 20V10M12 20V4M6 20v-6"/>
+          </svg>
+        </div>
+        <span class="block font-heading uppercase font-semibold mb-2">Ma perf</span>
+        <span class="block text-sm text-[color:var(--fg-50)]">Tes tests et records sportifs (CMJ, squat, sprint...), suivis dans le temps.</span>
       </a>
 
       <a href="messages.html" class="dash-card block rounded-xl border border-[color:var(--border-strong)] p-6">
@@ -174,6 +184,34 @@
       if (user.email === ADMIN_EMAIL) {
         document.getElementById('admin-link').classList.remove('hidden');
         document.getElementById('admin-link-mobile').classList.remove('hidden');
+      }
+
+      // Si ce compte est relié à une fiche joueur rugby, on adapte les cartes
+      const { data: joueur } = await supabaseClient
+        .from('joueurs')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (joueur) {
+        const progTitre = document.getElementById('carte-programmation-titre');
+        const progTexte = document.getElementById('carte-programmation-texte');
+        const progLien = document.getElementById('carte-programmation');
+        progTitre.textContent = 'Mon planning';
+        progTexte.textContent = 'Tes séances de groupe et individuelles à venir.';
+        progLien.href = 'mon-planning.html';
+
+        const statsTitre = document.getElementById('carte-stats-titre');
+        const statsTexte = document.getElementById('carte-stats-texte');
+        const statsLien = document.getElementById('carte-stats');
+        statsTitre.textContent = 'Mes statistiques';
+        statsTexte.textContent = 'Ta charge d\'entraînement, ton ACWR et ton wellness.';
+        statsLien.href = `fiche-joueur.html?id=${joueur.id}`;
+
+        const perfLien = document.getElementById('carte-perf');
+        perfLien.href = `mes-performances.html?id=${joueur.id}`;
+        perfLien.classList.remove('hidden');
+        perfLien.classList.add('block');
       }
     }
 
