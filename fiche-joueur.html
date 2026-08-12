@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<title>Fiche joueur — Return To Perf</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F4CA9">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon-32.png">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { brand: { black: '#000000', white: '#FFFFFF', blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } } },
+        fontFamily: { heading: ['Oswald','sans-serif'], body: ['Poppins','sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1,h2,h3,.font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<div id="loading-state" class="min-h-screen flex items-center justify-center">
+  <p class="text-sm text-[color:var(--fg-50)]">Chargement de la fiche...</p>
+</div>
+
+<div id="error-state" class="hidden min-h-screen flex items-center justify-center text-center px-6">
+  <div>
+    <p class="font-heading text-xl font-bold mb-2">Joueur introuvable</p>
+    <p class="text-sm text-[color:var(--fg-50)]">Vérifie le lien ou retourne à l'espace équipe.</p>
+  </div>
+</div>
+
+<main id="content" class="max-w-5xl mx-auto px-4 sm:px-6 py-8 hidden">
+
+  <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-5 sm:p-6 flex items-center justify-between gap-4 mb-6">
+    <div class="flex items-center gap-4">
+      <div id="avatar" class="w-16 h-16 rounded-full bg-gradient-to-br from-brand-blue-dark to-brand-blue-light flex items-center justify-center text-white font-heading text-xl font-bold shrink-0"></div>
+      <div>
+        <h1 id="nom-joueur" class="font-heading text-xl sm:text-2xl font-bold text-brand-blue-dark leading-tight"></h1>
+        <p id="poste-joueur" class="text-sm text-[color:var(--fg-50)]"></p>
+      </div>
+    </div>
+    <span id="statut-badge" class="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full"></span>
+  </div>
+
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+    <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-4">
+      <p class="text-[11px] uppercase tracking-wide text-[color:var(--fg-40)] font-semibold mb-1">ACWR</p>
+      <p id="acwr-value" class="font-heading text-2xl font-bold">—</p>
+      <p id="acwr-label" class="text-[11px] text-[color:var(--fg-40)] mt-0.5"></p>
+    </div>
+    <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-4">
+      <p class="text-[11px] uppercase tracking-wide text-[color:var(--fg-40)] font-semibold mb-1">Charge 7j</p>
+      <p id="charge7j-value" class="font-heading text-2xl font-bold text-brand-blue-dark">—</p>
+      <p class="text-[11px] text-[color:var(--fg-40)] mt-0.5">unités RPE</p>
+    </div>
+    <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-4">
+      <p class="text-[11px] uppercase tracking-wide text-[color:var(--fg-40)] font-semibold mb-1">Sommeil moy.</p>
+      <p id="sommeil-value" class="font-heading text-2xl font-bold text-brand-blue-dark">—</p>
+      <p class="text-[11px] text-[color:var(--fg-40)] mt-0.5">7 derniers jours</p>
+    </div>
+    <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-4">
+      <p class="text-[11px] uppercase tracking-wide text-[color:var(--fg-40)] font-semibold mb-1">Fatigue</p>
+      <p id="fatigue-value" class="font-heading text-2xl font-bold text-amber-500">—</p>
+      <p class="text-[11px] text-[color:var(--fg-40)] mt-0.5">moyenne 7j</p>
+    </div>
+  </div>
+
+  <div class="grid sm:grid-cols-2 gap-4 mb-6">
+    <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-5">
+      <h3 class="font-heading text-sm font-semibold text-[color:var(--fg-70)] mb-3">Charge d'entraînement — 6 semaines</h3>
+      <canvas id="chargeChart" height="160"></canvas>
+      <p id="charge-empty" class="hidden text-xs text-[color:var(--fg-40)] text-center py-6">Aucune séance enregistrée pour l'instant.</p>
+    </div>
+    <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-5">
+      <h3 class="font-heading text-sm font-semibold text-[color:var(--fg-70)] mb-3">Wellness — 14 derniers jours</h3>
+      <canvas id="wellnessChart" height="160"></canvas>
+      <p id="wellness-empty" class="hidden text-xs text-[color:var(--fg-40)] text-center py-6">Aucune saisie wellness pour l'instant.</p>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-5">
+    <h3 class="font-heading text-sm font-semibold text-[color:var(--fg-70)] mb-4">Progression tests physiques</h3>
+    <div id="tests-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center"></div>
+    <p id="tests-empty" class="hidden text-sm text-[color:var(--fg-40)] text-center py-4">Aucun test enregistré pour l'instant.</p>
+  </div>
+
+</main>
+
+<script src="supabase-config.js"></script>
+<script src="theme.js"></script>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const joueurId = params.get('id');
+
+  function escapeHtml(s) {
+    return (s || '').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  const badgeStatut = {
+    apte: ['bg-green-50','text-green-700','● Apte'],
+    amenage: ['bg-amber-50','text-amber-700','● Aménagé'],
+    indisponible: ['bg-red-50','text-red-700','● Indisponible']
+  };
+
+  function acwrZone(val) {
+    if (val === null) return ['text-[color:var(--fg-40)]', '—'];
+    if (val < 0.8) return ['text-blue-500', 'Charge basse'];
+    if (val <= 1.3) return ['text-green-600', 'Zone optimale'];
+    if (val <= 1.5) return ['text-amber-500', 'À surveiller'];
+    return ['text-red-500', 'Risque élevé'];
+  }
+
+  (async function load() {
+    if (!joueurId) { showError(); return; }
+
+    const { data: joueur, error } = await supabaseClient.from('joueurs').select('*').eq('id', joueurId).maybeSingle();
+    if (error || !joueur) { showError(); return; }
+
+    document.getElementById('nom-joueur').textContent = `${joueur.prenom} ${joueur.nom}`;
+    document.getElementById('poste-joueur').textContent = joueur.poste || 'Poste non renseigné';
+    document.getElementById('avatar').textContent = (joueur.prenom||'?').charAt(0).toUpperCase() + (joueur.nom||'').charAt(0).toUpperCase();
+    const [bg, text, label] = badgeStatut[joueur.statut_disponibilite] || badgeStatut.apte;
+    const statutEl = document.getElementById('statut-badge');
+    statutEl.className = `hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full ${bg} ${text}`;
+    statutEl.textContent = label;
+
+    const since42 = new Date(Date.now() - 42 * 86400000).toISOString();
+    const { data: rpeRows } = await supabaseClient
+      .from('seances_rpe')
+      .select('charge_calculee, created_at')
+      .eq('joueur_id', joueurId)
+      .gte('created_at', since42);
+
+    renderCharge(rpeRows || []);
+
+    const since14 = new Date(Date.now() - 14 * 86400000).toISOString().slice(0,10);
+    const { data: wellRows } = await supabaseClient
+      .from('wellness_quotidien')
+      .select('date_saisie, sommeil_qualite, fatigue')
+      .eq('joueur_id', joueurId)
+      .gte('date_saisie', since14)
+      .order('date_saisie', { ascending: true });
+
+    renderWellness(wellRows || []);
+
+    const { data: testRows } = await supabaseClient
+      .from('tests_physiques')
+      .select('*')
+      .eq('joueur_id', joueurId)
+      .order('date_test', { ascending: false });
+
+    renderTests(testRows || []);
+
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('content').classList.remove('hidden');
+  })();
+
+  function showError() {
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('error-state').classList.remove('hidden');
+  }
+
+  function renderCharge(rows) {
+    const semaines = [];
+    for (let i = 5; i >= 0; i--) {
+      const debut = new Date(Date.now() - (i+1) * 7 * 86400000);
+      const fin = new Date(Date.now() - i * 7 * 86400000);
+      const total = rows.filter(r => {
+        const d = new Date(r.created_at);
+        return d >= debut && d < fin;
+      }).reduce((sum, r) => sum + (r.charge_calculee || 0), 0);
+      semaines.push(total);
+    }
+
+    if (rows.length === 0) {
+      document.getElementById('charge-empty').classList.remove('hidden');
+    } else {
+      new Chart(document.getElementById('chargeChart'), {
+        type: 'bar',
+        data: { labels: ['S-5','S-4','S-3','S-2','S-1','Cette sem.'], datasets: [{ data: semaines, backgroundColor: '#2D7AED', borderRadius: 4 }] },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#F1F5F9' } }, x: { grid: { display: false } } } }
+      });
+    }
+
+    const charge7j = semaines[5];
+    const chronique = (semaines[0] + semaines[1] + semaines[2] + semaines[3]) / 4;
+    const acwr = chronique > 0 ? +(charge7j / chronique).toFixed(2) : null;
+
+    document.getElementById('charge7j-value').textContent = charge7j || 0;
+    const [colorClass, label] = acwrZone(acwr);
+    const acwrEl = document.getElementById('acwr-value');
+    acwrEl.textContent = acwr !== null ? acwr : '—';
+    acwrEl.className = `font-heading text-2xl font-bold ${colorClass}`;
+    document.getElementById('acwr-label').textContent = label;
+  }
+
+  function renderWellness(rows) {
+    if (rows.length === 0) {
+      document.getElementById('wellness-empty').classList.remove('hidden');
+      return;
+    }
+    const labels = rows.map(r => r.date_saisie.slice(5));
+    new Chart(document.getElementById('wellnessChart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Sommeil', data: rows.map(r => r.sommeil_qualite), borderColor: '#0F4CA9', backgroundColor: 'transparent', tension: 0.3 },
+          { label: 'Fatigue', data: rows.map(r => r.fatigue), borderColor: '#E9A23B', backgroundColor: 'transparent', tension: 0.3 }
+        ]
+      },
+      options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } }, scales: { y: { min: 0, max: 7, grid: { color: '#F1F5F9' } }, x: { grid: { display: false } } } }
+    });
+
+    const moySommeil = (rows.reduce((s,r) => s + (r.sommeil_qualite||0), 0) / rows.length).toFixed(1);
+    const moyFatigue = (rows.reduce((s,r) => s + (r.fatigue||0), 0) / rows.length).toFixed(1);
+    document.getElementById('sommeil-value').textContent = moySommeil + '/7';
+    document.getElementById('fatigue-value').textContent = moyFatigue + '/7';
+  }
+
+  function renderTests(rows) {
+    if (rows.length === 0) {
+      document.getElementById('tests-empty').classList.remove('hidden');
+      return;
+    }
+    const parType = {};
+    rows.forEach(r => {
+      if (!parType[r.type_test]) parType[r.type_test] = [];
+      parType[r.type_test].push(r);
+    });
+    const grid = document.getElementById('tests-grid');
+    grid.innerHTML = Object.entries(parType).map(([type, list]) => {
+      const dernier = list[0];
+      const precedent = list[1];
+      let delta = '';
+      if (precedent) {
+        const diff = +(dernier.valeur - precedent.valeur).toFixed(2);
+        const signe = diff > 0 ? '+' : '';
+        delta = `<p class="text-[11px] ${diff >= 0 ? 'text-green-600' : 'text-red-500'} font-semibold">${signe}${diff} vs préc.</p>`;
+      } else {
+        delta = `<p class="text-[11px] text-[color:var(--fg-40)] font-semibold">1er test</p>`;
+      }
+      return `
+        <div>
+          <p class="text-[11px] uppercase text-[color:var(--fg-40)] font-semibold mb-1">${escapeHtml(type)}</p>
+          <p class="font-heading text-lg font-bold text-brand-blue-dark">${dernier.valeur} <span class="text-xs font-normal text-[color:var(--fg-40)]">${escapeHtml(dernier.unite)}</span></p>
+          ${delta}
+        </div>
+      `;
+    }).join('');
+  }
+</script>
+
+</body>
+</html>
