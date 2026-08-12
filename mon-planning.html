@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<title>Mon planning — Return To Perf</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F4CA9">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon-32.png">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { brand: { black: '#000000', white: '#FFFFFF', blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } } },
+        fontFamily: { heading: ['Oswald','sans-serif'], body: ['Poppins','sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1,h2,h3,.font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<div id="loading-state" class="min-h-screen flex items-center justify-center">
+  <p class="text-sm text-[color:var(--fg-50)]">Chargement de ton planning...</p>
+</div>
+
+<div id="no-profile-state" class="hidden min-h-screen flex items-center justify-center text-center px-6">
+  <div>
+    <p class="font-heading text-xl font-bold mb-2">Aucune fiche associée</p>
+    <p class="text-sm text-[color:var(--fg-50)]">Ton coach n'a pas encore relié ton compte à une fiche joueur.</p>
+  </div>
+</div>
+
+<main id="content" class="max-w-2xl mx-auto px-4 sm:px-6 py-8 hidden">
+
+  <div class="mb-6">
+    <h1 class="font-heading uppercase text-2xl font-bold leading-tight">Mon planning</h1>
+    <p id="sous-titre" class="text-sm text-[color:var(--fg-60)] mt-1"></p>
+  </div>
+
+  <div id="jours-list" class="flex flex-col gap-4"></div>
+  <p id="planning-empty" class="hidden text-sm text-[color:var(--fg-40)] text-center py-10">Aucune séance programmée pour les prochains jours.</p>
+
+</main>
+
+<script src="supabase-config.js"></script>
+<script src="theme.js"></script>
+<script>
+  function escapeHtml(s) {
+    return (s || '').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  (async function load() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+
+    const { data: joueur } = await supabaseClient
+      .from('joueurs')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+
+    if (!joueur) {
+      document.getElementById('loading-state').classList.add('hidden');
+      document.getElementById('no-profile-state').classList.remove('hidden');
+      return;
+    }
+
+    document.getElementById('sous-titre').textContent = `${joueur.prenom} ${joueur.nom} — séances des 14 prochains jours`;
+
+    const today = new Date().toISOString().slice(0,10);
+    const in14days = new Date(Date.now() + 14 * 86400000).toISOString().slice(0,10);
+
+    // Séances de groupe (equipe_id) + séances individuelles (joueur_id), sur la même fenêtre de dates
+    const [{ data: collectives }, { data: individuelles }] = await Promise.all([
+      supabaseClient.from('seances').select('*')
+        .eq('equipe_id', joueur.equipe_id).eq('type_seance', 'collective')
+        .gte('date_seance', today).lte('date_seance', in14days),
+      supabaseClient.from('seances').select('*')
+        .eq('joueur_id', joueur.id).eq('type_seance', 'individuelle')
+        .gte('date_seance', today).lte('date_seance', in14days)
+    ]);
+
+    renderPlanning(collectives || [], individuelles || []);
+
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('content').classList.remove('hidden');
+  })();
+
+  function renderPlanning(collectives, individuelles) {
+    const parJour = {};
+    collectives.forEach(s => {
+      parJour[s.date_seance] = parJour[s.date_seance] || { collectives: [], individuelles: [] };
+      parJour[s.date_seance].collectives.push(s);
+    });
+    individuelles.forEach(s => {
+      parJour[s.date_seance] = parJour[s.date_seance] || { collectives: [], individuelles: [] };
+      parJour[s.date_seance].individuelles.push(s);
+    });
+
+    const jours = Object.keys(parJour).sort();
+    if (jours.length === 0) {
+      document.getElementById('planning-empty').classList.remove('hidden');
+      return;
+    }
+
+    document.getElementById('jours-list').innerHTML = jours.map(date => {
+      const { collectives, individuelles } = parJour[date];
+      const dateLabel = new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+      const blocCollectives = collectives.map(s => `
+        <div class="flex items-start gap-3 p-3 rounded-lg bg-brand-blue/5 border border-brand-blue/20">
+          <span class="text-[10px] font-bold uppercase tracking-wide text-brand-blue-dark bg-white px-2 py-1 rounded-full shrink-0">Groupe</span>
+          <div class="min-w-0">
+            <p class="text-sm font-semibold truncate">${escapeHtml(s.titre)}</p>
+            <p class="text-xs text-[color:var(--fg-50)]">${s.heure_debut ? s.heure_debut.slice(0,5) : ''}${s.duree_prevue_min ? ' · ' + s.duree_prevue_min + ' min' : ''}</p>
+          </div>
+        </div>
+      `).join('');
+
+      const blocIndividuelles = individuelles.map(s => `
+        <div class="flex items-start gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
+          <span class="text-[10px] font-bold uppercase tracking-wide text-amber-700 bg-white px-2 py-1 rounded-full shrink-0">Indiv.</span>
+          <div class="min-w-0">
+            <p class="text-sm font-semibold truncate">${escapeHtml(s.titre)}</p>
+            <p class="text-xs text-[color:var(--fg-50)]">${s.objectif === 'reathletisation' ? 'Réathlétisation' : 'Performance'}${s.heure_debut ? ' · ' + s.heure_debut.slice(0,5) : ''}</p>
+          </div>
+        </div>
+      `).join('');
+
+      return `
+        <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5">
+          <h2 class="font-heading text-sm font-bold uppercase tracking-wide mb-3 capitalize">${dateLabel}</h2>
+          <div class="flex flex-col gap-2">
+            ${blocCollectives}
+            ${blocIndividuelles}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+</script>
+
+</body>
+</html>
