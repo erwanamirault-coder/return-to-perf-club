@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F4CA9">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon-32.png">
+<title>Équipe — Admin — Erwan Amirault</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: { black: '#000000', white: '#FFFFFF', blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)]/95 backdrop-blur flex items-center justify-between px-6 sm:px-10 py-4 border-b border-[color:var(--border)]">
+    <a href="admin.html" class="flex items-center gap-3">
+      <img src="logo.png" alt="Erwan Amirault" class="h-7 w-auto">
+      <div class="leading-tight">
+        <p class="font-heading uppercase font-bold text-sm tracking-wide">Return To Perf</p>
+        <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-50)]">Équipe — Admin</p>
+      </div>
+    </a>
+    <div class="flex items-center gap-5 text-sm">
+      <a href="admin.html" class="text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">← Retour admin</a>
+      <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+    </div>
+  </header>
+
+  <main class="px-6 py-10 max-w-4xl mx-auto">
+
+    <div class="mb-8">
+      <h1 class="font-heading uppercase text-2xl font-bold leading-tight">Mon équipe</h1>
+      <p class="text-sm text-[color:var(--fg-60)] mt-1">Groupes, joueurs, séances individuelles et suivi de charge.</p>
+    </div>
+
+    <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5 mb-6 flex flex-wrap items-center gap-3">
+      <label class="text-xs font-semibold text-[color:var(--fg-50)] uppercase tracking-wide">Groupe actif</label>
+      <select id="equipe-select" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue min-w-[200px]"></select>
+      <button id="new-equipe-btn" class="text-sm px-3 py-2 rounded-lg border border-dashed border-[color:var(--border-strong)] hover:border-brand-blue hover:text-[color:var(--accent)] transition-colors">+ Nouveau groupe</button>
+      <div id="new-equipe-form" class="hidden w-full flex flex-wrap gap-2 mt-2 pt-3 border-t border-[color:var(--border)]">
+        <input type="text" id="new-equipe-nom" placeholder="Nom du groupe (ex: Séniors)" class="flex-1 min-w-[160px] px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="text" id="new-equipe-saison" placeholder="Saison (ex: 2026-2027)" class="flex-1 min-w-[140px] px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <button id="confirm-new-equipe" class="px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-sm font-semibold">Créer</button>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5 mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-heading uppercase text-[11px] font-bold text-[color:var(--fg-50)] tracking-widest">Ajouter des joueurs</h2>
+        <button id="add-row-btn" class="text-xs text-[color:var(--accent)] font-semibold hover:underline">+ Ajouter une ligne</button>
+      </div>
+      <div id="joueurs-rows" class="flex flex-col gap-2 mb-3"></div>
+      <div class="flex items-center gap-3">
+        <button id="save-joueurs-btn" class="px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-sm font-semibold">Enregistrer les joueurs</button>
+        <p id="save-joueurs-status" class="text-xs text-[color:var(--fg-50)]"></p>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5">
+      <h2 class="font-heading uppercase text-[11px] font-bold text-[color:var(--fg-50)] tracking-widest mb-3">Joueurs du groupe</h2>
+      <div id="joueurs-list" class="flex flex-col gap-2"></div>
+      <p id="joueurs-list-empty" class="hidden text-sm text-[color:var(--fg-50)] text-center py-6">Aucun joueur dans ce groupe pour l'instant.</p>
+    </div>
+
+    <div id="seance-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div class="bg-[color:var(--bg)] rounded-2xl border border-[color:var(--border)] p-5 sm:p-6 max-w-sm w-full">
+        <h3 class="font-heading uppercase text-sm font-bold mb-1">Séance individuelle</h3>
+        <p id="seance-modal-joueur" class="text-xs text-[color:var(--fg-50)] mb-4"></p>
+        <input type="hidden" id="seance-joueur-id">
+        <div class="flex flex-col gap-2">
+          <input type="text" id="seance-titre" placeholder="Titre (ex: Renfo genou)" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <input type="date" id="seance-date" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <select id="seance-objectif" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+            <option value="performance">Objectif : performance</option>
+            <option value="reathletisation">Objectif : réathlétisation</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2 mt-4">
+          <button id="save-seance-btn" class="flex-1 px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-sm font-semibold">Programmer</button>
+          <button id="close-seance-modal" class="px-4 py-2 rounded-lg border border-[color:var(--border)] text-sm">Annuler</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    const equipeSelect = document.getElementById('equipe-select');
+    const joueursRows = document.getElementById('joueurs-rows');
+    const joueursList = document.getElementById('joueurs-list');
+    let equipes = [];
+    let equipeActive = null;
+
+    function escapeHtml(s) {
+      return (s || '').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    function nouvelleLigneJoueur() {
+      const row = document.createElement('div');
+      row.className = 'joueur-row grid grid-cols-2 sm:grid-cols-6 gap-2';
+      row.innerHTML = `
+        <input type="text" placeholder="Prénom" class="j-prenom px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="text" placeholder="Nom" class="j-nom px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="text" placeholder="Poste" class="j-poste px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="date" class="j-naissance px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="number" placeholder="Poids (kg)" class="j-poids px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <div class="flex gap-2">
+          <input type="number" placeholder="Taille (cm)" class="j-taille flex-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <button class="remove-row-btn text-[color:var(--fg-40)] hover:text-red-500 px-2">✕</button>
+        </div>
+      `;
+      row.querySelector('.remove-row-btn').addEventListener('click', () => row.remove());
+      joueursRows.appendChild(row);
+    }
+
+    document.getElementById('add-row-btn').addEventListener('click', nouvelleLigneJoueur);
+    nouvelleLigneJoueur();
+
+    document.getElementById('new-equipe-btn').addEventListener('click', () => {
+      document.getElementById('new-equipe-form').classList.toggle('hidden');
+    });
+
+    document.getElementById('confirm-new-equipe').addEventListener('click', async () => {
+      const nom = document.getElementById('new-equipe-nom').value.trim();
+      const saison = document.getElementById('new-equipe-saison').value.trim();
+      if (!nom || !saison) return;
+      const { data, error } = await supabaseClient.from('equipes').insert({ nom, saison }).select().single();
+      if (error) { alert('Erreur : ' + error.message); return; }
+      document.getElementById('new-equipe-nom').value = '';
+      document.getElementById('new-equipe-saison').value = '';
+      document.getElementById('new-equipe-form').classList.add('hidden');
+      await loadEquipes();
+      equipeSelect.value = data.id;
+      equipeActive = data.id;
+      loadJoueurs();
+    });
+
+    async function loadEquipes() {
+      const { data } = await supabaseClient.from('equipes').select('*').order('created_at', { ascending: false });
+      equipes = data || [];
+      equipeSelect.innerHTML = equipes.map(e => `<option value="${e.id}">${escapeHtml(e.nom)} — ${escapeHtml(e.saison)}</option>`).join('');
+      if (equipes.length && !equipeActive) equipeActive = equipes[0].id;
+    }
+
+    equipeSelect.addEventListener('change', () => {
+      equipeActive = equipeSelect.value;
+      loadJoueurs();
+    });
+
+    document.getElementById('save-joueurs-btn').addEventListener('click', async () => {
+      if (!equipeActive) { alert('Sélectionne ou crée un groupe d\'abord.'); return; }
+      const rows = document.querySelectorAll('.joueur-row');
+      const status = document.getElementById('save-joueurs-status');
+      const payload = [];
+      rows.forEach(row => {
+        const prenom = row.querySelector('.j-prenom').value.trim();
+        const nom = row.querySelector('.j-nom').value.trim();
+        if (!prenom || !nom) return;
+        payload.push({
+          equipe_id: equipeActive,
+          prenom, nom,
+          poste: row.querySelector('.j-poste').value.trim() || null,
+          date_naissance: row.querySelector('.j-naissance').value || null,
+          poids_reference: row.querySelector('.j-poids').value || null,
+          taille_cm: row.querySelector('.j-taille').value || null
+        });
+      });
+      if (!payload.length) { status.textContent = 'Renseigne au moins prénom + nom sur une ligne.'; return; }
+      status.textContent = 'Enregistrement...';
+      const { error } = await supabaseClient.from('joueurs').insert(payload);
+      if (error) { status.textContent = 'Erreur : ' + error.message; return; }
+      status.textContent = payload.length + ' joueur(s) ajouté(s).';
+      joueursRows.innerHTML = '';
+      nouvelleLigneJoueur();
+      loadJoueurs();
+    });
+
+    function badgeStatut(statut) {
+      const map = {
+        apte: ['bg-green-50','text-green-700','Apte'],
+        amenage: ['bg-amber-50','text-amber-700','Aménagé'],
+        indisponible: ['bg-red-50','text-red-700','Indisponible']
+      };
+      const [bg, text, label] = map[statut] || map.apte;
+      return `<span class="${bg} ${text} text-[10px] font-semibold px-2 py-1 rounded-full shrink-0">${label}</span>`;
+    }
+
+    async function loadJoueurs() {
+      if (!equipeActive) return;
+      const { data } = await supabaseClient.from('joueurs').select('*').eq('equipe_id', equipeActive).order('nom');
+      const joueurs = data || [];
+      document.getElementById('joueurs-list-empty').classList.toggle('hidden', joueurs.length > 0);
+      joueursList.innerHTML = joueurs.map(j => `
+        <div class="flex items-center justify-between gap-3 py-2 border-b border-[color:var(--border)] last:border-0">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="w-9 h-9 rounded-full bg-brand-blue/10 text-[color:var(--accent)] flex items-center justify-center text-xs font-bold shrink-0">${(j.prenom||'?').charAt(0)}${(j.nom||'').charAt(0)}</span>
+            <div class="min-w-0">
+              <p class="text-sm font-semibold truncate">${escapeHtml(j.prenom)} ${escapeHtml(j.nom)}</p>
+              <p class="text-xs text-[color:var(--fg-50)] truncate">${escapeHtml(j.poste || 'Poste non renseigné')}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            ${badgeStatut(j.statut_disponibilite)}
+            <button class="seance-indiv-btn text-xs px-3 py-1.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors" data-id="${j.id}" data-nom="${escapeHtml(j.prenom)} ${escapeHtml(j.nom)}">+ Séance indiv.</button>
+            <a href="fiche-joueur.html?id=${j.id}" class="text-xs px-3 py-1.5 rounded-lg bg-brand-blue text-white hover:bg-brand-blue-dark transition-colors">Stats</a>
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.seance-indiv-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.getElementById('seance-joueur-id').value = btn.dataset.id;
+          document.getElementById('seance-modal-joueur').textContent = btn.dataset.nom;
+          document.getElementById('seance-modal').classList.remove('hidden');
+        });
+      });
+    }
+
+    document.getElementById('close-seance-modal').addEventListener('click', () => {
+      document.getElementById('seance-modal').classList.add('hidden');
+    });
+
+    document.getElementById('save-seance-btn').addEventListener('click', async () => {
+      const joueur_id = document.getElementById('seance-joueur-id').value;
+      const titre = document.getElementById('seance-titre').value.trim();
+      const date_seance = document.getElementById('seance-date').value;
+      const objectif = document.getElementById('seance-objectif').value;
+      if (!titre || !date_seance) { alert('Titre et date requis.'); return; }
+      const { error } = await supabaseClient.from('seances').insert({
+        equipe_id: equipeActive, joueur_id, titre, date_seance,
+        type_seance: 'individuelle', objectif
+      });
+      if (error) { alert('Erreur : ' + error.message); return; }
+      document.getElementById('seance-modal').classList.add('hidden');
+      document.getElementById('seance-titre').value = '';
+      document.getElementById('seance-date').value = '';
+    });
+
+    (async function init() {
+      await loadEquipes();
+      if (equipeActive) { equipeSelect.value = equipeActive; loadJoueurs(); }
+    })();
+  </script>
+
+</body>
+</html>
