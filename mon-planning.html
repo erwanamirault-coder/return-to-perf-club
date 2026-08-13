@@ -26,6 +26,8 @@
 <style>
   body { font-family: 'Poppins', sans-serif; }
   h1,h2,h3,.font-heading { font-family: 'Oswald', sans-serif; }
+  .scale-btn { width: 32px; height: 32px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid var(--border-strong); transition: all .15s; }
+  .scale-btn.active { background: #2D7AED; color: white; border-color: #2D7AED; }
 </style>
 </head>
 <body class="min-h-screen">
@@ -38,120 +40,270 @@
   <div>
     <p class="font-heading text-xl font-bold mb-2">Aucune fiche associée</p>
     <p class="text-sm text-[color:var(--fg-50)]">Ton coach n'a pas encore relié ton compte à une fiche joueur.</p>
+    <a href="dashboard.html" class="inline-block mt-4 text-sm text-brand-blue hover:underline">← Retour à mon espace</a>
   </div>
 </div>
 
-<main id="content" class="max-w-2xl mx-auto px-4 sm:px-6 py-8 hidden">
+<main id="content" class="max-w-3xl mx-auto px-4 sm:px-6 py-8 hidden">
 
   <div class="mb-6">
-    <h1 class="font-heading uppercase text-2xl font-bold leading-tight">Mon planning</h1>
+    <a href="dashboard.html" class="text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors">← Mon espace</a>
+    <h1 class="font-heading uppercase text-2xl font-bold leading-tight mt-2">Mon planning</h1>
     <p id="sous-titre" class="text-sm text-[color:var(--fg-60)] mt-1"></p>
   </div>
 
-  <div id="jours-list" class="flex flex-col gap-4"></div>
-  <p id="planning-empty" class="hidden text-sm text-[color:var(--fg-40)] text-center py-10">Aucune séance programmée pour les prochains jours.</p>
+  <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-5 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-heading text-sm font-bold uppercase tracking-wide">Ma forme du jour</h2>
+      <p id="date-label" class="text-xs text-[color:var(--fg-50)]"></p>
+    </div>
+
+    <div class="flex flex-col gap-3">
+      <div class="wellness-field" data-key="sommeil_qualite">
+        <p class="text-xs font-medium mb-1.5">Qualité du sommeil</p>
+        <div class="flex gap-1.5 flex-wrap">
+          <button class="scale-btn" data-val="1">1</button><button class="scale-btn" data-val="2">2</button><button class="scale-btn" data-val="3">3</button>
+          <button class="scale-btn" data-val="4">4</button><button class="scale-btn" data-val="5">5</button><button class="scale-btn" data-val="6">6</button><button class="scale-btn" data-val="7">7</button>
+        </div>
+      </div>
+      <div class="wellness-field" data-key="fatigue">
+        <p class="text-xs font-medium mb-1.5">Fatigue</p>
+        <div class="flex gap-1.5 flex-wrap">
+          <button class="scale-btn" data-val="1">1</button><button class="scale-btn" data-val="2">2</button><button class="scale-btn" data-val="3">3</button>
+          <button class="scale-btn" data-val="4">4</button><button class="scale-btn" data-val="5">5</button><button class="scale-btn" data-val="6">6</button><button class="scale-btn" data-val="7">7</button>
+        </div>
+      </div>
+      <div class="wellness-field" data-key="courbatures">
+        <p class="text-xs font-medium mb-1.5">Courbatures</p>
+        <div class="flex gap-1.5 flex-wrap">
+          <button class="scale-btn" data-val="1">1</button><button class="scale-btn" data-val="2">2</button><button class="scale-btn" data-val="3">3</button>
+          <button class="scale-btn" data-val="4">4</button><button class="scale-btn" data-val="5">5</button><button class="scale-btn" data-val="6">6</button><button class="scale-btn" data-val="7">7</button>
+        </div>
+      </div>
+      <div class="wellness-field" data-key="stress">
+        <p class="text-xs font-medium mb-1.5">Stress</p>
+        <div class="flex gap-1.5 flex-wrap">
+          <button class="scale-btn" data-val="1">1</button><button class="scale-btn" data-val="2">2</button><button class="scale-btn" data-val="3">3</button>
+          <button class="scale-btn" data-val="4">4</button><button class="scale-btn" data-val="5">5</button><button class="scale-btn" data-val="6">6</button><button class="scale-btn" data-val="7">7</button>
+        </div>
+      </div>
+      <p class="text-[11px] text-[color:var(--fg-40)]">1 = très mauvais · 7 = excellent (sauf stress : 1 = calme, 7 = très stressé)</p>
+
+      <div class="grid grid-cols-2 gap-3 pt-2 border-t border-[color:var(--border)]">
+        <div>
+          <label class="text-xs font-medium text-[color:var(--fg-60)]">Sommeil (heures)</label>
+          <input type="number" step="0.5" id="sommeil-duree" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        </div>
+        <div>
+          <label class="text-xs font-medium text-[color:var(--fg-60)]">Poids (kg)</label>
+          <input type="number" step="0.1" id="poids-jour" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        </div>
+      </div>
+      <div>
+        <label class="text-xs font-medium text-[color:var(--fg-60)]">Zone douloureuse (si besoin)</label>
+        <input type="text" id="zone-douleur" placeholder="ex: genou droit" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      </div>
+    </div>
+
+    <button id="save-wellness-btn" class="w-full mt-4 px-4 py-2.5 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-sm font-semibold">Enregistrer ma forme du jour</button>
+    <p id="wellness-status" class="text-xs text-center text-[color:var(--fg-50)] mt-2"></p>
+  </div>
+
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-heading text-sm font-bold uppercase tracking-wide">Mes séances</h2>
+    <div class="flex items-center gap-2">
+      <button id="prev-week-btn" class="w-8 h-8 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors text-sm">←</button>
+      <p id="semaine-label" class="text-xs font-semibold min-w-[110px] text-center"></p>
+      <button id="next-week-btn" class="w-8 h-8 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors text-sm">→</button>
+    </div>
+  </div>
+
+  <div id="semaine-grid" class="flex flex-col gap-3"></div>
 
 </main>
 
 <script src="supabase-config.js"></script>
 <script src="theme.js"></script>
 <script>
+  let joueur = null;
+  const wellnessValues = { sommeil_qualite: null, fatigue: null, courbatures: null, stress: null };
+  const today = new Date().toISOString().slice(0,10);
+  let lundiSemaine = getLundiDeLaSemaine(new Date());
+
   function escapeHtml(s) {
     return (s || '').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   }
 
+  function getLundiDeLaSemaine(date) {
+    const d = new Date(date);
+    const jour = d.getDay();
+    const diff = jour === 0 ? -6 : 1 - jour;
+    d.setDate(d.getDate() + diff);
+    d.setHours(0,0,0,0);
+    return d;
+  }
+  function toISODate(d) { return d.toISOString().slice(0,10); }
+
+  document.getElementById('date-label').textContent = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  document.querySelectorAll('.wellness-field').forEach(field => {
+    const key = field.dataset.key;
+    field.querySelectorAll('.scale-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        field.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        wellnessValues[key] = parseInt(btn.dataset.val);
+      });
+    });
+  });
+
   (async function load() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session) { window.location.href = 'login.html'; return; }
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) { window.location.href = 'login.html'; return; }
 
-    const { data: joueur } = await supabaseClient
-      .from('joueurs')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .maybeSingle();
-
-    if (!joueur) {
+    const { data } = await supabaseClient.from('joueurs').select('*').eq('user_id', user.id).maybeSingle();
+    if (!data) {
       document.getElementById('loading-state').classList.add('hidden');
       document.getElementById('no-profile-state').classList.remove('hidden');
       return;
     }
+    joueur = data;
+    document.getElementById('sous-titre').textContent = `${joueur.prenom} ${joueur.nom}`;
 
-    document.getElementById('sous-titre').textContent = `${joueur.prenom} ${joueur.nom} — séances des 14 prochains jours`;
+    const { data: existant } = await supabaseClient
+      .from('wellness_quotidien')
+      .select('*')
+      .eq('joueur_id', joueur.id)
+      .eq('date_saisie', today)
+      .maybeSingle();
 
-    const today = new Date().toISOString().slice(0,10);
-    const in14days = new Date(Date.now() + 14 * 86400000).toISOString().slice(0,10);
+    if (existant) {
+      ['sommeil_qualite','fatigue','courbatures','stress'].forEach(key => {
+        if (existant[key]) {
+          wellnessValues[key] = existant[key];
+          const btn = document.querySelector(`.wellness-field[data-key="${key}"] .scale-btn[data-val="${existant[key]}"]`);
+          if (btn) btn.classList.add('active');
+        }
+      });
+      if (existant.sommeil_duree_h) document.getElementById('sommeil-duree').value = existant.sommeil_duree_h;
+      if (existant.poids_du_jour) document.getElementById('poids-jour').value = existant.poids_du_jour;
+      if (existant.zone_douleur) document.getElementById('zone-douleur').value = existant.zone_douleur;
+      document.getElementById('wellness-status').textContent = 'Déjà rempli aujourd\'hui — tu peux modifier.';
+    }
 
-    // Séances de groupe (equipe_id) + séances individuelles (joueur_id), sur la même fenêtre de dates
-    const [{ data: collectives }, { data: individuelles }] = await Promise.all([
-      supabaseClient.from('seances').select('*')
-        .eq('equipe_id', joueur.equipe_id).eq('type_seance', 'collective')
-        .gte('date_seance', today).lte('date_seance', in14days),
-      supabaseClient.from('seances').select('*')
-        .eq('joueur_id', joueur.id).eq('type_seance', 'individuelle')
-        .gte('date_seance', today).lte('date_seance', in14days)
-    ]);
-
-    renderPlanning(collectives || [], individuelles || []);
+    await loadSemaine();
 
     document.getElementById('loading-state').classList.add('hidden');
     document.getElementById('content').classList.remove('hidden');
   })();
 
-  function renderPlanning(collectives, individuelles) {
+  document.getElementById('save-wellness-btn').addEventListener('click', async () => {
+    const status = document.getElementById('wellness-status');
+    const payload = {
+      joueur_id: joueur.id,
+      date_saisie: today,
+      sommeil_qualite: wellnessValues.sommeil_qualite,
+      fatigue: wellnessValues.fatigue,
+      courbatures: wellnessValues.courbatures,
+      stress: wellnessValues.stress,
+      sommeil_duree_h: document.getElementById('sommeil-duree').value || null,
+      poids_du_jour: document.getElementById('poids-jour').value || null,
+      zone_douleur: document.getElementById('zone-douleur').value.trim() || null
+    };
+    status.textContent = 'Enregistrement...';
+    const { error } = await supabaseClient.from('wellness_quotidien').upsert(payload, { onConflict: 'joueur_id,date_saisie' });
+    if (error) { status.textContent = 'Erreur : ' + error.message; return; }
+    status.textContent = 'Enregistré ✓';
+  });
+
+  document.getElementById('prev-week-btn').addEventListener('click', () => { lundiSemaine.setDate(lundiSemaine.getDate() - 7); loadSemaine(); });
+  document.getElementById('next-week-btn').addEventListener('click', () => { lundiSemaine.setDate(lundiSemaine.getDate() + 7); loadSemaine(); });
+
+  const joursLabels = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+
+  async function loadSemaine() {
+    const dimanche = new Date(lundiSemaine); dimanche.setDate(dimanche.getDate() + 6);
+    document.getElementById('semaine-label').textContent = `${lundiSemaine.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} — ${dimanche.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`;
+
+    const [{ data: collectives }, { data: individuelles }, { data: rpeExistants }] = await Promise.all([
+      supabaseClient.from('seances').select('*').eq('equipe_id', joueur.equipe_id).eq('type_seance', 'collective')
+        .gte('date_seance', toISODate(lundiSemaine)).lte('date_seance', toISODate(dimanche)),
+      supabaseClient.from('seances').select('*').eq('joueur_id', joueur.id).eq('type_seance', 'individuelle')
+        .gte('date_seance', toISODate(lundiSemaine)).lte('date_seance', toISODate(dimanche)),
+      supabaseClient.from('seances_rpe').select('*').eq('joueur_id', joueur.id)
+    ]);
+
     const parJour = {};
-    collectives.forEach(s => {
-      parJour[s.date_seance] = parJour[s.date_seance] || { collectives: [], individuelles: [] };
-      parJour[s.date_seance].collectives.push(s);
-    });
-    individuelles.forEach(s => {
-      parJour[s.date_seance] = parJour[s.date_seance] || { collectives: [], individuelles: [] };
-      parJour[s.date_seance].individuelles.push(s);
-    });
+    (collectives || []).forEach(s => { parJour[s.date_seance] = parJour[s.date_seance] || []; parJour[s.date_seance].push(s); });
+    (individuelles || []).forEach(s => { parJour[s.date_seance] = parJour[s.date_seance] || []; parJour[s.date_seance].push(s); });
 
-    const jours = Object.keys(parJour).sort();
-    if (jours.length === 0) {
-      document.getElementById('planning-empty').classList.remove('hidden');
-      return;
-    }
+    renderSemaine(parJour, rpeExistants || []);
+  }
 
-    document.getElementById('jours-list').innerHTML = jours.map(date => {
-      const { collectives, individuelles } = parJour[date];
-      const dateLabel = new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-
-      const blocCollectives = collectives.map(s => `
-        <div class="rounded-lg bg-brand-blue/5 border border-brand-blue/20 overflow-hidden">
-          <a href="voir-seance.html?id=${s.id}" class="flex items-start gap-3 p-3 hover:bg-brand-blue/10 transition-colors">
-            <span class="text-[10px] font-bold uppercase tracking-wide text-brand-blue-dark bg-white px-2 py-1 rounded-full shrink-0">Groupe</span>
-            <div class="min-w-0">
-              <p class="text-sm font-semibold truncate">${escapeHtml(s.titre)}</p>
-              <p class="text-xs text-[color:var(--fg-50)]">${s.heure_debut ? s.heure_debut.slice(0,5) : ''}${s.duree_prevue_min ? ' · ' + s.duree_prevue_min + ' min' : ''} · Voir le détail →</p>
-            </div>
-          </a>
-        </div>
-      `).join('');
-
-      const blocIndividuelles = individuelles.map(s => `
-        <div class="rounded-lg bg-amber-50 border border-amber-200 overflow-hidden">
-          <a href="voir-seance.html?id=${s.id}" class="flex items-start gap-3 p-3 hover:bg-amber-100 transition-colors">
-            <span class="text-[10px] font-bold uppercase tracking-wide text-amber-700 bg-white px-2 py-1 rounded-full shrink-0">Indiv.</span>
-            <div class="min-w-0">
-              <p class="text-sm font-semibold truncate">${escapeHtml(s.titre)}</p>
-              <p class="text-xs text-[color:var(--fg-50)]">${s.objectif === 'reathletisation' ? 'Réathlétisation' : 'Performance'}${s.heure_debut ? ' · ' + s.heure_debut.slice(0,5) : ''} · Voir le détail →</p>
-            </div>
-          </a>
-        </div>
-      `).join('');
+  function renderSemaine(parJour, rpeExistants) {
+    const grid = document.getElementById('semaine-grid');
+    grid.innerHTML = joursLabels.map((label, i) => {
+      const d = new Date(lundiSemaine); d.setDate(d.getDate() + i);
+      const dateISO = toISODate(d);
+      const estAujourdhui = dateISO === today;
+      const seancesDuJour = parJour[dateISO] || [];
 
       return `
-        <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5">
-          <h2 class="font-heading text-sm font-bold uppercase tracking-wide mb-3 capitalize">${dateLabel}</h2>
-          <div class="flex flex-col gap-2">
-            ${blocCollectives}
-            ${blocIndividuelles}
-          </div>
+        <div class="rounded-2xl border ${estAujourdhui ? 'border-brand-blue' : 'border-[color:var(--border)]'} bg-[color:var(--card)] p-4">
+          <p class="text-xs font-bold uppercase tracking-wide mb-2 ${estAujourdhui ? 'text-brand-blue-dark' : 'text-[color:var(--fg-50)]'}">${label} ${d.getDate()}/${d.getMonth()+1}${estAujourdhui ? ' · Aujourd\\'hui' : ''}</p>
+          ${seancesDuJour.length === 0
+            ? `<p class="text-xs text-[color:var(--fg-30)]">Repos</p>`
+            : `<div class="flex flex-col gap-2">${seancesDuJour.map(s => renderSeanceCard(s, rpeExistants)).join('')}</div>`
+          }
         </div>
       `;
     }).join('');
+
+    grid.querySelectorAll('.save-rpe-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const card = btn.closest('[data-seance-id]');
+        const seance_id = card.dataset.seanceId;
+        const rpe = card.querySelector('.rpe-select').value;
+        const duree_reelle_min = card.querySelector('.duree-input').value;
+        const commentaire = card.querySelector('.commentaire-input').value.trim() || null;
+        if (rpe === '' || !duree_reelle_min) { alert('Renseigne le RPE et la durée.'); return; }
+        const { error } = await supabaseClient.from('seances_rpe').insert({ seance_id, joueur_id: joueur.id, rpe, duree_reelle_min, commentaire });
+        if (error) { alert('Erreur : ' + error.message); return; }
+        loadSemaine();
+      });
+    });
+  }
+
+  function renderSeanceCard(s, rpeExistants) {
+    const rpeDeja = rpeExistants.find(r => r.seance_id === s.id);
+    const badge = s.type_seance === 'collective'
+      ? `<span class="text-[10px] font-bold uppercase text-brand-blue-dark bg-brand-blue/10 px-2 py-1 rounded-full shrink-0">Groupe</span>`
+      : `<span class="text-[10px] font-bold uppercase text-amber-700 bg-amber-50 px-2 py-1 rounded-full shrink-0">Indiv.</span>`;
+
+    return `
+      <div class="rounded-lg border border-[color:var(--border)] p-2.5" data-seance-id="${s.id}">
+        <div class="flex items-center justify-between gap-2 mb-1.5">
+          <a href="voir-seance.html?id=${s.id}" class="text-sm font-semibold hover:underline">${escapeHtml(s.titre)}</a>
+          ${badge}
+        </div>
+        ${rpeDeja
+          ? `<p class="text-[11px] text-green-600 font-semibold">RPE noté : ${rpeDeja.rpe}/10 · ${rpeDeja.duree_reelle_min} min ✓${rpeDeja.commentaire ? '<br><span class="text-[color:var(--fg-50)] font-normal">« ' + escapeHtml(rpeDeja.commentaire) + ' »</span>' : ''}</p>`
+          : `
+          <div class="flex flex-col gap-1.5 mt-1.5">
+            <div class="flex items-center gap-1.5">
+              <select class="rpe-select flex-1 px-2 py-1.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
+                <option value="">RPE (0-10)</option>
+                ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">${n}</option>`).join('')}
+              </select>
+              <input type="number" class="duree-input w-16 px-2 py-1.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue" placeholder="min">
+            </div>
+            <input type="text" class="commentaire-input px-2 py-1.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue" placeholder="Commentaire (optionnel)">
+            <button class="save-rpe-btn self-start text-xs px-3 py-1.5 rounded-lg bg-brand-blue text-white font-semibold">Envoyer</button>
+          </div>
+          `
+        }
+      </div>
+    `;
   }
 </script>
 
