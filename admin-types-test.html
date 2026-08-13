@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F4CA9">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon-32.png">
+<title>Catalogue des tests — Admin — Erwan Amirault</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { brand: { black: '#000000', white: '#FFFFFF', blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } } },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)]/95 backdrop-blur flex items-center justify-between px-6 sm:px-10 py-4 border-b border-[color:var(--border)]">
+    <a href="admin-equipe.html" class="flex items-center gap-3">
+      <img src="logo.png" alt="Erwan Amirault" class="h-7 w-auto">
+      <div class="leading-tight">
+        <p class="font-heading uppercase font-bold text-sm tracking-wide">Return To Perf</p>
+        <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-50)]">Catalogue des tests</p>
+      </div>
+    </a>
+    <a href="admin-equipe.html" class="text-sm text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">← Mon équipe</a>
+  </header>
+
+  <main class="px-6 py-10 max-w-2xl mx-auto">
+
+    <div class="mb-8">
+      <h1 class="font-heading uppercase text-2xl font-bold leading-tight">Catalogue des tests</h1>
+      <p class="text-sm text-[color:var(--fg-60)] mt-1">Les mouvements ajoutés ici apparaissent automatiquement dans les menus de saisie.</p>
+    </div>
+
+    <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5 mb-6">
+      <h2 class="font-heading uppercase text-[11px] font-bold text-[color:var(--fg-50)] tracking-widest mb-3" id="form-title">Ajouter un test</h2>
+      <div class="grid sm:grid-cols-2 gap-2 mb-2">
+        <input type="text" id="f-nom" placeholder="Nom affiché (ex: Développé couché)" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="text" id="f-categorie" placeholder="Catégorie (ex: Force / Musculation)" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" list="categories-existantes">
+        <datalist id="categories-existantes"></datalist>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-2 mb-3">
+        <input type="text" id="f-unite" placeholder="Unité (kg, cm, s, m...)" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="number" id="f-ordre" placeholder="Ordre d'affichage" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="save-btn" class="text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-semibold" data-editing-id="">Ajouter ce test</button>
+        <button id="cancel-edit-btn" class="hidden text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">Annuler</button>
+        <span id="save-status" class="text-xs text-[color:var(--fg-50)]"></span>
+      </div>
+    </div>
+
+    <div id="tests-container" class="flex flex-col gap-6"></div>
+
+  </main>
+
+  <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    function escapeHtml(s) {
+      return (s || '').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    function codeFromNom(nom) {
+      return nom.trim().replace(/[^a-zA-Z0-9À-ÿ]+/g, '_').replace(/^_+|_+$/g, '');
+    }
+
+    const saveBtn = document.getElementById('save-btn');
+
+    async function loadTests() {
+      const { data } = await supabaseClient.from('types_test').select('*').order('categorie').order('ordre');
+      const rows = data || [];
+
+      const categories = [...new Set(rows.map(r => r.categorie))];
+      document.getElementById('categories-existantes').innerHTML = categories.map(c => `<option value="${escapeHtml(c)}">`).join('');
+
+      const parCategorie = {};
+      rows.forEach(t => { if (!parCategorie[t.categorie]) parCategorie[t.categorie] = []; parCategorie[t.categorie].push(t); });
+
+      document.getElementById('tests-container').innerHTML = Object.entries(parCategorie).map(([cat, tests]) => `
+        <div>
+          <h3 class="font-heading uppercase text-xs font-bold text-[color:var(--fg-50)] tracking-widest mb-2">${escapeHtml(cat)}</h3>
+          <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] divide-y divide-[color:var(--border)]">
+            ${tests.map(t => `
+              <div class="flex items-center justify-between gap-3 px-4 py-2.5 ${t.actif ? '' : 'opacity-40'}">
+                <div class="min-w-0">
+                  <p class="text-sm font-medium truncate">${escapeHtml(t.nom)}</p>
+                  <p class="text-[11px] text-[color:var(--fg-40)]">${escapeHtml(t.unite || 'sans unité')}</p>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <button class="edit-test-btn text-xs px-2.5 py-1.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors" data-id="${t.id}">Modifier</button>
+                  <button class="toggle-test-btn text-xs px-2.5 py-1.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors" data-id="${t.id}" data-actif="${t.actif}">${t.actif ? 'Désactiver' : 'Activer'}</button>
+                  <button class="delete-test-btn text-xs px-2.5 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors" data-id="${t.id}" data-nom="${escapeHtml(t.nom)}">Supprimer</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.edit-test-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const t = rows.find(r => r.id === btn.dataset.id);
+          document.getElementById('f-nom').value = t.nom;
+          document.getElementById('f-categorie').value = t.categorie;
+          document.getElementById('f-unite').value = t.unite || '';
+          document.getElementById('f-ordre').value = t.ordre;
+          saveBtn.dataset.editingId = t.id;
+          saveBtn.textContent = 'Mettre à jour';
+          document.getElementById('form-title').textContent = 'Modifier un test';
+          document.getElementById('cancel-edit-btn').classList.remove('hidden');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+
+      document.querySelectorAll('.toggle-test-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const nouvelEtat = btn.dataset.actif !== 'true';
+          await supabaseClient.from('types_test').update({ actif: nouvelEtat }).eq('id', btn.dataset.id);
+          loadTests();
+        });
+      });
+
+      document.querySelectorAll('.delete-test-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm(`Supprimer définitivement "${btn.dataset.nom}" du catalogue ?\n\nLes tests déjà enregistrés pour ce mouvement resteront visibles dans l'historique des joueurs, mais il n'apparaîtra plus dans les menus.`)) return;
+          const { error } = await supabaseClient.from('types_test').delete().eq('id', btn.dataset.id);
+          if (error) { alert('Erreur : ' + error.message); return; }
+          loadTests();
+        });
+      });
+    }
+
+    function resetForm() {
+      document.getElementById('f-nom').value = '';
+      document.getElementById('f-categorie').value = '';
+      document.getElementById('f-unite').value = '';
+      document.getElementById('f-ordre').value = '';
+      saveBtn.dataset.editingId = '';
+      saveBtn.textContent = 'Ajouter ce test';
+      document.getElementById('form-title').textContent = 'Ajouter un test';
+      document.getElementById('cancel-edit-btn').classList.add('hidden');
+    }
+
+    document.getElementById('cancel-edit-btn').addEventListener('click', resetForm);
+
+    saveBtn.addEventListener('click', async () => {
+      const nom = document.getElementById('f-nom').value.trim();
+      const categorie = document.getElementById('f-categorie').value.trim();
+      const unite = document.getElementById('f-unite').value.trim();
+      const ordre = document.getElementById('f-ordre').value || 99;
+      const status = document.getElementById('save-status');
+
+      if (!nom || !categorie) { status.textContent = 'Nom et catégorie requis.'; return; }
+
+      const editingId = saveBtn.dataset.editingId;
+      let result;
+      if (editingId) {
+        result = await supabaseClient.from('types_test').update({ nom, categorie, unite, ordre }).eq('id', editingId);
+      } else {
+        result = await supabaseClient.from('types_test').insert({ nom, code: codeFromNom(nom), categorie, unite, ordre });
+      }
+
+      if (result.error) { status.textContent = 'Erreur : ' + result.error.message; return; }
+      status.textContent = 'Enregistré ✓';
+      setTimeout(() => status.textContent = '', 2000);
+      resetForm();
+      loadTests();
+    });
+
+    loadTests();
+  </script>
+
+</body>
+</html>
