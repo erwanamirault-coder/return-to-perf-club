@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<title>Détail séance — Return To Perf</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F4CA9">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon-32.png">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { brand: { black: '#000000', white: '#FFFFFF', blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } } },
+        fontFamily: { heading: ['Oswald','sans-serif'], body: ['Poppins','sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1,h2,h3,.font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<div id="loading-state" class="min-h-screen flex items-center justify-center">
+  <p class="text-sm text-[color:var(--fg-50)]">Chargement...</p>
+</div>
+
+<main id="content" class="max-w-lg mx-auto px-4 sm:px-6 py-8 hidden">
+
+  <a href="mon-planning.html" class="text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors">← Mon planning</a>
+
+  <div id="seance-header" class="mt-2 mb-6"></div>
+
+  <div id="exercices-list" class="flex flex-col gap-3"></div>
+  <p id="exercices-empty" class="hidden text-sm text-[color:var(--fg-40)] text-center py-10">Le détail de cette séance n'a pas encore été ajouté par ton coach.</p>
+
+</main>
+
+<script src="supabase-config.js"></script>
+<script src="theme.js"></script>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const seanceId = params.get('id');
+
+  function escapeHtml(s) {
+    return (s || '').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  (async function load() {
+    if (!seanceId) { window.location.href = 'mon-planning.html'; return; }
+
+    const { data: seance } = await supabaseClient.from('seances').select('*').eq('id', seanceId).maybeSingle();
+    if (!seance) { window.location.href = 'mon-planning.html'; return; }
+
+    const badge = seance.type_seance === 'collective'
+      ? `<span class="text-[10px] font-bold uppercase text-brand-blue-dark bg-brand-blue/10 px-2 py-1 rounded-full">Groupe</span>`
+      : `<span class="text-[10px] font-bold uppercase text-amber-700 bg-amber-50 px-2 py-1 rounded-full">Indiv.</span>`;
+    document.getElementById('seance-header').innerHTML = `
+      <div class="flex items-center gap-2 mb-1">${badge}<span class="text-xs text-[color:var(--fg-50)]">${new Date(seance.date_seance).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span></div>
+      <h1 class="font-heading uppercase text-xl font-bold leading-tight">${escapeHtml(seance.titre)}</h1>
+    `;
+
+    const { data: exercices } = await supabaseClient.from('seance_exercices').select('*').eq('seance_id', seanceId).order('ordre', { ascending: true });
+    const rows = exercices || [];
+
+    if (rows.length === 0) {
+      document.getElementById('exercices-empty').classList.remove('hidden');
+    } else {
+      document.getElementById('exercices-list').innerHTML = rows.map(ex => `
+        <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-4">
+          <p class="text-sm font-semibold mb-1">${escapeHtml(ex.exercice)}</p>
+          <p class="text-xs text-[color:var(--fg-60)] mb-2">
+            ${ex.series ? ex.series + ' séries' : ''}${ex.repetitions ? ' × ' + escapeHtml(ex.repetitions) : ''}${ex.charge ? ' · ' + escapeHtml(ex.charge) : ''}
+            ${ex.temps_repos ? ' · Repos ' + escapeHtml(ex.temps_repos) : ''}${ex.rpe ? ' · RPE ' + escapeHtml(ex.rpe) : ''}${ex.tempo ? ' · Tempo ' + escapeHtml(ex.tempo) : ''}
+          </p>
+          ${ex.description ? `<p class="text-xs text-[color:var(--fg-50)] mb-2">${escapeHtml(ex.description)}</p>` : ''}
+          ${ex.lien_video ? `<a href="${escapeHtml(ex.lien_video)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs text-brand-blue font-semibold hover:underline">🎥 Voir la vidéo</a>` : ''}
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('content').classList.remove('hidden');
+  })();
+</script>
+
+</body>
+</html>
