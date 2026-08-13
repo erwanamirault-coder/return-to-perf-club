@@ -26,8 +26,6 @@
 <style>
   body { font-family: 'Poppins', sans-serif; }
   h1,h2,h3,.font-heading { font-family: 'Oswald', sans-serif; }
-  .scale-btn { width: 32px; height: 32px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid var(--border-strong); transition: all .15s; }
-  .scale-btn.active { background: #2D7AED; color: white; border-color: #2D7AED; }
 </style>
 </head>
 <body class="min-h-screen">
@@ -52,56 +50,79 @@
     <p id="sous-titre" class="text-sm text-[color:var(--fg-60)] mt-1"></p>
   </div>
 
-  <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-5 mb-6">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="font-heading text-sm font-bold uppercase tracking-wide">Ma forme du jour</h2>
-      <p id="date-label" class="text-xs text-[color:var(--fg-50)]"></p>
+  <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 mb-6">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-heading text-xs font-bold uppercase tracking-wide text-[color:var(--fg-50)]">Ma forme du jour</h2>
+      <p id="date-label" class="text-[11px] text-[color:var(--fg-40)]"></p>
     </div>
 
-    <div class="flex flex-col gap-3">
+    <div class="grid grid-cols-2 gap-2.5 mb-2.5">
       <div class="wellness-field" data-key="sommeil_qualite">
-        <p class="text-xs font-medium mb-1.5">Qualité du sommeil</p>
-        <div class="flex gap-1.5 flex-wrap">
-          <button class="scale-btn" data-val="1">1</button><button class="scale-btn" data-val="2">2</button><button class="scale-btn" data-val="3">3</button>
-          <button class="scale-btn" data-val="4">4</button><button class="scale-btn" data-val="5">5</button><button class="scale-btn" data-val="6">6</button><button class="scale-btn" data-val="7">7</button>
-        </div>
+        <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Sommeil</label>
+        <select class="wellness-select w-full mt-1 px-2.5 py-1.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <option value="">—</option>
+          <option value="1">1 · Très mauvais</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4 · Moyen</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7 · Excellent</option>
+        </select>
       </div>
       <div class="wellness-field" data-key="fatigue">
-        <p class="text-xs font-medium mb-1.5">Fatigue</p>
-        <div class="flex gap-1.5 flex-wrap">
-          <button class="scale-btn" data-val="1">1</button><button class="scale-btn" data-val="2">2</button><button class="scale-btn" data-val="3">3</button>
-          <button class="scale-btn" data-val="4">4</button><button class="scale-btn" data-val="5">5</button><button class="scale-btn" data-val="6">6</button><button class="scale-btn" data-val="7">7</button>
-        </div>
+        <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Fatigue</label>
+        <select class="wellness-select w-full mt-1 px-2.5 py-1.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <option value="">—</option>
+          <option value="1">1 · Très fatigué</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4 · Moyen</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7 · En pleine forme</option>
+        </select>
       </div>
       <div class="wellness-field" data-key="courbatures">
-        <p class="text-xs font-medium mb-1.5">Courbatures</p>
-        <div class="flex gap-1.5 flex-wrap">
-          <button class="scale-btn" data-val="1">1</button><button class="scale-btn" data-val="2">2</button><button class="scale-btn" data-val="3">3</button>
-          <button class="scale-btn" data-val="4">4</button><button class="scale-btn" data-val="5">5</button><button class="scale-btn" data-val="6">6</button><button class="scale-btn" data-val="7">7</button>
-        </div>
+        <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Courbatures</label>
+        <select class="wellness-select w-full mt-1 px-2.5 py-1.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <option value="">—</option>
+          <option value="1">1 · Très douloureux</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4 · Moyen</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7 · Aucune</option>
+        </select>
       </div>
       <div class="wellness-field" data-key="stress">
-        <p class="text-xs font-medium mb-1.5">Stress</p>
-        <div class="flex gap-1.5 flex-wrap">
-          <button class="scale-btn" data-val="1">1</button><button class="scale-btn" data-val="2">2</button><button class="scale-btn" data-val="3">3</button>
-          <button class="scale-btn" data-val="4">4</button><button class="scale-btn" data-val="5">5</button><button class="scale-btn" data-val="6">6</button><button class="scale-btn" data-val="7">7</button>
-        </div>
+        <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Stress</label>
+        <select class="wellness-select w-full mt-1 px-2.5 py-1.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <option value="">—</option>
+          <option value="1">1 · Calme</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4 · Moyen</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7 · Très stressé</option>
+        </select>
       </div>
-      <p class="text-[11px] text-[color:var(--fg-40)]">1 = très mauvais · 7 = excellent (sauf stress : 1 = calme, 7 = très stressé)</p>
+    </div>
 
-      <div class="grid grid-cols-2 gap-3 pt-2 border-t border-[color:var(--border)]">
-        <div>
-          <label class="text-xs font-medium text-[color:var(--fg-60)]">Sommeil (heures)</label>
-          <input type="number" step="0.5" id="sommeil-duree" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-        </div>
-        <div>
-          <label class="text-xs font-medium text-[color:var(--fg-60)]">Poids (kg)</label>
-          <input type="number" step="0.1" id="poids-jour" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-        </div>
+    <div class="grid grid-cols-3 gap-2 pt-2.5 border-t border-[color:var(--border)]">
+      <div>
+        <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Sommeil (h)</label>
+        <input type="number" step="0.5" id="sommeil-duree" class="w-full mt-1 px-2.5 py-1.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
       </div>
       <div>
-        <label class="text-xs font-medium text-[color:var(--fg-60)]">Zone douloureuse (si besoin)</label>
-        <input type="text" id="zone-douleur" placeholder="ex: genou droit" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Poids (kg)</label>
+        <input type="number" step="0.1" id="poids-jour" class="w-full mt-1 px-2.5 py-1.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      </div>
+      <div>
+        <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Douleur</label>
+        <input type="text" id="zone-douleur" placeholder="zone" class="w-full mt-1 px-2.5 py-1.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
       </div>
     </div>
 
@@ -150,12 +171,8 @@
 
   document.querySelectorAll('.wellness-field').forEach(field => {
     const key = field.dataset.key;
-    field.querySelectorAll('.scale-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        field.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        wellnessValues[key] = parseInt(btn.dataset.val);
-      });
+    field.querySelector('.wellness-select').addEventListener('change', (e) => {
+      wellnessValues[key] = e.target.value ? parseInt(e.target.value) : null;
     });
   });
 
@@ -183,8 +200,8 @@
       ['sommeil_qualite','fatigue','courbatures','stress'].forEach(key => {
         if (existant[key]) {
           wellnessValues[key] = existant[key];
-          const btn = document.querySelector(`.wellness-field[data-key="${key}"] .scale-btn[data-val="${existant[key]}"]`);
-          if (btn) btn.classList.add('active');
+          const select = document.querySelector(`.wellness-field[data-key="${key}"] .wellness-select`);
+          if (select) select.value = existant[key];
         }
       });
       if (existant.sommeil_duree_h) document.getElementById('sommeil-duree').value = existant.sommeil_duree_h;
