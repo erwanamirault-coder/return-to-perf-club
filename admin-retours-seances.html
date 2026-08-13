@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F4CA9">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon-32.png">
+<title>Retours séances — Admin — Erwan Amirault</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { brand: { black: '#000000', white: '#FFFFFF', blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } } },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)]/95 backdrop-blur flex items-center justify-between px-6 sm:px-10 py-4 border-b border-[color:var(--border)]">
+    <a href="admin-equipe.html" class="flex items-center gap-3">
+      <img src="logo.png" alt="Erwan Amirault" class="h-7 w-auto">
+      <div class="leading-tight">
+        <p class="font-heading uppercase font-bold text-sm tracking-wide">Return To Perf</p>
+        <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-50)]">Retours séances</p>
+      </div>
+    </a>
+    <a href="admin-equipe.html" class="text-sm text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">← Mon équipe</a>
+  </header>
+
+  <main class="px-6 py-10 max-w-3xl mx-auto">
+
+    <div class="mb-8 flex items-center justify-between flex-wrap gap-3">
+      <div>
+        <h1 class="font-heading uppercase text-2xl font-bold leading-tight">Retours séances</h1>
+        <p class="text-sm text-[color:var(--fg-60)] mt-1">Le RPE et les commentaires de tes joueurs, regroupés par séance.</p>
+      </div>
+      <select id="equipe-select" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></select>
+    </div>
+
+    <div id="seances-list" class="flex flex-col gap-4"></div>
+    <p id="seances-empty" class="hidden text-sm text-[color:var(--fg-50)] text-center py-10">Aucun retour de séance pour l'instant.</p>
+
+  </main>
+
+  <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    const equipeSelect = document.getElementById('equipe-select');
+    let equipeActive = null;
+
+    function escapeHtml(s) {
+      return (s || '').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    async function loadEquipes() {
+      const { data } = await supabaseClient.from('equipes').select('*').order('created_at', { ascending: false });
+      const equipes = data || [];
+      equipeSelect.innerHTML = equipes.map(e => `<option value="${e.id}">${escapeHtml(e.nom)} — ${escapeHtml(e.saison)}</option>`).join('');
+      if (equipes.length) equipeActive = equipes[0].id;
+    }
+
+    equipeSelect.addEventListener('change', () => {
+      equipeActive = equipeSelect.value;
+      loadRetours();
+    });
+
+    async function loadRetours() {
+      if (!equipeActive) return;
+
+      const { data: joueursEquipe } = await supabaseClient.from('joueurs').select('id, prenom, nom').eq('equipe_id', equipeActive);
+      const joueursMap = {};
+      (joueursEquipe || []).forEach(j => joueursMap[j.id] = `${j.prenom} ${j.nom}`);
+      const joueurIds = Object.keys(joueursMap);
+
+      if (!joueurIds.length) {
+        document.getElementById('seances-empty').classList.remove('hidden');
+        document.getElementById('seances-list').innerHTML = '';
+        return;
+      }
+
+      const { data: rpeRows } = await supabaseClient
+        .from('seances_rpe')
+        .select('*, seances(titre, date_seance, type_seance)')
+        .in('joueur_id', joueurIds)
+        .order('created_at', { ascending: false });
+
+      const rows = rpeRows || [];
+      document.getElementById('seances-empty').classList.toggle('hidden', rows.length > 0);
+
+      const parSeance = {};
+      rows.forEach(r => {
+        if (!r.seances) return;
+        const key = r.seance_id;
+        if (!parSeance[key]) parSeance[key] = { seance: r.seances, retours: [] };
+        parSeance[key].retours.push(r);
+      });
+
+      const seanceIds = Object.keys(parSeance).sort((a,b) => new Date(parSeance[b].seance.date_seance) - new Date(parSeance[a].seance.date_seance));
+
+      document.getElementById('seances-list').innerHTML = seanceIds.map(id => {
+        const { seance, retours } = parSeance[id];
+        const badge = seance.type_seance === 'collective'
+          ? `<span class="text-[10px] font-bold uppercase text-brand-blue-dark bg-brand-blue/10 px-2 py-1 rounded-full">Groupe</span>`
+          : `<span class="text-[10px] font-bold uppercase text-amber-700 bg-amber-50 px-2 py-1 rounded-full">Indiv.</span>`;
+        return `
+          <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h2 class="font-heading text-sm font-bold uppercase tracking-wide">${escapeHtml(seance.titre)}</h2>
+                <p class="text-xs text-[color:var(--fg-50)]">${new Date(seance.date_seance).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+              </div>
+              ${badge}
+            </div>
+            <div class="flex flex-col gap-2">
+              ${retours.map(r => `
+                <div class="flex items-start justify-between gap-3 py-2 border-t border-[color:var(--border)] text-sm">
+                  <div class="min-w-0">
+                    <p class="font-semibold">${escapeHtml(joueursMap[r.joueur_id] || 'Joueur')}</p>
+                    ${r.commentaire ? `<p class="text-xs text-[color:var(--fg-60)] mt-0.5">« ${escapeHtml(r.commentaire)} »</p>` : ''}
+                  </div>
+                  <span class="text-xs font-semibold text-brand-blue-dark shrink-0">RPE ${r.rpe}/10 · ${r.duree_reelle_min} min</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    (async function init() {
+      await loadEquipes();
+      if (equipeActive) { equipeSelect.value = equipeActive; loadRetours(); }
+    })();
+  </script>
+
+</body>
+</html>
