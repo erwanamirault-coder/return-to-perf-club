@@ -57,6 +57,7 @@
 
     <nav class="flex items-center gap-1 mb-8 overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0 border-b border-[color:var(--border)]">
       <a href="admin-equipe.html" class="shrink-0 text-sm font-semibold px-3 py-2.5 border-b-2 border-brand-blue text-[color:var(--accent)] whitespace-nowrap">Joueurs & séances</a>
+      <a href="admin-planning-semaine.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Planning semaine</a>
       <a href="admin-performances.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Saisir des perfs</a>
       <a href="stats-equipe.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Stats équipe</a>
       <a href="admin-retours-seances.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Retours séances</a>
@@ -148,6 +149,28 @@
         <div class="flex items-center gap-2 mt-4">
           <button id="save-test-btn" class="flex-1 px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-sm font-semibold">Enregistrer</button>
           <button id="close-test-modal" class="px-4 py-2 rounded-lg border border-[color:var(--border)] text-sm">Annuler</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="dup-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div class="bg-[color:var(--bg)] rounded-2xl border border-[color:var(--border)] p-5 sm:p-6 max-w-sm w-full">
+        <h3 class="font-heading uppercase text-sm font-bold mb-1">Dupliquer la séance</h3>
+        <p id="dup-modal-titre" class="text-xs text-[color:var(--fg-50)] mb-4"></p>
+        <input type="hidden" id="dup-seance-id">
+        <div class="flex flex-col gap-2">
+          <div id="dup-joueur-field" class="hidden">
+            <label class="text-[11px] uppercase text-[color:var(--fg-40)] font-semibold">Vers quel joueur</label>
+            <select id="dup-joueur-select" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></select>
+          </div>
+          <div>
+            <label class="text-[11px] uppercase text-[color:var(--fg-40)] font-semibold">Nouvelle date</label>
+            <input type="date" id="dup-date" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+        </div>
+        <div class="flex items-center gap-2 mt-4">
+          <button id="confirm-dup-btn" class="flex-1 px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-sm font-semibold">Dupliquer</button>
+          <button id="close-dup-modal" class="px-4 py-2 rounded-lg border border-[color:var(--border)] text-sm">Annuler</button>
         </div>
       </div>
     </div>
@@ -262,9 +285,14 @@
             <span class="font-semibold">${escapeHtml(s.titre)}</span>
             <span class="text-[color:var(--fg-50)]"> — ${new Date(s.date_seance).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}${s.heure_debut ? ' à ' + s.heure_debut.slice(0,5) : ''}</span>
           </div>
-          <a href="admin-seance-detail.html?id=${s.id}" class="text-xs px-3 py-1.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors shrink-0">Détail</a>
+          <div class="flex items-center gap-2 shrink-0">
+            <button class="dup-seance-btn text-xs px-3 py-1.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors" data-id="${s.id}" data-titre="${escapeHtml(s.titre)}" data-type="collective">Dupliquer</button>
+            <a href="admin-seance-detail.html?id=${s.id}" class="text-xs px-3 py-1.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors">Détail</a>
+          </div>
         </div>
       `).join('');
+
+      attacherBoutonsDup();
     }
 
     document.getElementById('save-joueurs-btn').addEventListener('click', async () => {
@@ -353,9 +381,13 @@
               : rows.map(s => `
                 <div class="flex items-center justify-between gap-3 text-xs">
                   <span>${escapeHtml(s.titre)} — ${new Date(s.date_seance).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} <span class="text-[color:var(--fg-40)]">(${s.objectif === 'reathletisation' ? 'réathlétisation' : 'performance'})</span></span>
-                  <a href="admin-seance-detail.html?id=${s.id}" class="px-2.5 py-1 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors shrink-0">Détail</a>
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <button class="dup-seance-btn px-2.5 py-1 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors" data-id="${s.id}" data-titre="${escapeHtml(s.titre)}" data-type="individuelle">Dupliquer</button>
+                    <a href="admin-seance-detail.html?id=${s.id}" class="px-2.5 py-1 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors">Détail</a>
+                  </div>
                 </div>
               `).join('');
+            attacherBoutonsDup();
           }
         });
       });
@@ -440,6 +472,73 @@
       document.getElementById('seance-modal').classList.add('hidden');
       document.getElementById('seance-titre').value = '';
       document.getElementById('seance-date').value = '';
+    });
+
+    // ============ DUPLICATION DE SÉANCE ============
+    async function dupliquerSeance(seanceId, { newDate, newJoueurId }) {
+      const { data: original, error: err1 } = await supabaseClient.from('seances').select('*').eq('id', seanceId).single();
+      if (err1 || !original) return { error: err1 || { message: 'Séance introuvable' } };
+
+      const nouvelleSeance = {
+        equipe_id: original.equipe_id,
+        type_seance: original.type_seance,
+        titre: original.titre,
+        date_seance: newDate,
+        heure_debut: original.heure_debut,
+        duree_prevue_min: original.duree_prevue_min,
+        objectif: original.objectif,
+        joueur_id: original.type_seance === 'individuelle' ? (newJoueurId || original.joueur_id) : null
+      };
+
+      const { data: created, error: err2 } = await supabaseClient.from('seances').insert(nouvelleSeance).select().single();
+      if (err2) return { error: err2 };
+
+      const { data: exercices } = await supabaseClient.from('seance_exercices').select('*').eq('seance_id', seanceId);
+      if (exercices && exercices.length) {
+        const payload = exercices.map(ex => {
+          const { id, created_at, seance_id, ...rest } = ex;
+          return { ...rest, seance_id: created.id };
+        });
+        await supabaseClient.from('seance_exercices').insert(payload);
+      }
+      return { data: created };
+    }
+
+    function attacherBoutonsDup() {
+      document.querySelectorAll('.dup-seance-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          document.getElementById('dup-seance-id').value = btn.dataset.id;
+          document.getElementById('dup-modal-titre').textContent = btn.dataset.titre;
+          document.getElementById('dup-date').value = '';
+          const joueurField = document.getElementById('dup-joueur-field');
+          if (btn.dataset.type === 'individuelle') {
+            joueurField.classList.remove('hidden');
+            const joueurSelect = document.getElementById('dup-joueur-select');
+            const { data: joueursDuGroupe } = await supabaseClient.from('joueurs').select('id, prenom, nom').eq('equipe_id', equipeActive).order('nom');
+            joueurSelect.innerHTML = (joueursDuGroupe || []).map(j => `<option value="${j.id}">${escapeHtml(j.prenom)} ${escapeHtml(j.nom)}</option>`).join('');
+          } else {
+            joueurField.classList.add('hidden');
+          }
+          document.getElementById('dup-modal').classList.remove('hidden');
+        });
+      });
+    }
+
+    document.getElementById('close-dup-modal').addEventListener('click', () => {
+      document.getElementById('dup-modal').classList.add('hidden');
+    });
+
+    document.getElementById('confirm-dup-btn').addEventListener('click', async () => {
+      const seanceId = document.getElementById('dup-seance-id').value;
+      const newDate = document.getElementById('dup-date').value;
+      const newJoueurId = document.getElementById('dup-joueur-select').value;
+      if (!newDate) { alert('Choisis une date.'); return; }
+
+      const { error } = await dupliquerSeance(seanceId, { newDate, newJoueurId });
+      if (error) { alert('Erreur : ' + error.message); return; }
+
+      document.getElementById('dup-modal').classList.add('hidden');
+      loadSeancesCollectives();
     });
 
     (async function init() {
