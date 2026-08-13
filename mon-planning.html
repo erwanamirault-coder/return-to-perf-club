@@ -118,7 +118,9 @@
     </div>
   </div>
 
-  <div id="semaine-grid" class="flex flex-col gap-3"></div>
+  <div id="jours-strip" class="grid grid-cols-7 gap-1.5 mb-4"></div>
+
+  <div id="jour-detail" class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4"></div>
 
 </main>
 
@@ -219,7 +221,10 @@
   document.getElementById('prev-week-btn').addEventListener('click', () => { lundiSemaine.setDate(lundiSemaine.getDate() - 7); loadSemaine(); });
   document.getElementById('next-week-btn').addEventListener('click', () => { lundiSemaine.setDate(lundiSemaine.getDate() + 7); loadSemaine(); });
 
-  const joursLabels = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  const joursLabels = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  let parJourCache = {};
+  let rpeCache = [];
+  let jourSelectionne = today;
 
   async function loadSemaine() {
     const dimanche = new Date(lundiSemaine); dimanche.setDate(dimanche.getDate() + 6);
@@ -233,33 +238,68 @@
       supabaseClient.from('seances_rpe').select('*').eq('joueur_id', joueur.id)
     ]);
 
-    const parJour = {};
-    (collectives || []).forEach(s => { parJour[s.date_seance] = parJour[s.date_seance] || []; parJour[s.date_seance].push(s); });
-    (individuelles || []).forEach(s => { parJour[s.date_seance] = parJour[s.date_seance] || []; parJour[s.date_seance].push(s); });
+    parJourCache = {};
+    (collectives || []).forEach(s => { parJourCache[s.date_seance] = parJourCache[s.date_seance] || []; parJourCache[s.date_seance].push(s); });
+    (individuelles || []).forEach(s => { parJourCache[s.date_seance] = parJourCache[s.date_seance] || []; parJourCache[s.date_seance].push(s); });
+    rpeCache = rpeExistants || [];
 
-    renderSemaine(parJour, rpeExistants || []);
+    // Sélectionne aujourd'hui si dans la semaine affichée, sinon le lundi
+    const joursDeCetteSemaine = [];
+    for (let i = 0; i < 7; i++) { const d = new Date(lundiSemaine); d.setDate(d.getDate() + i); joursDeCetteSemaine.push(toISODate(d)); }
+    jourSelectionne = joursDeCetteSemaine.includes(today) ? today : joursDeCetteSemaine[0];
+
+    renderJoursStrip();
+    renderJourDetail();
   }
 
-  function renderSemaine(parJour, rpeExistants) {
-    const grid = document.getElementById('semaine-grid');
-    grid.innerHTML = joursLabels.map((label, i) => {
+  function renderJoursStrip() {
+    const strip = document.getElementById('jours-strip');
+    strip.innerHTML = joursLabels.map((label, i) => {
       const d = new Date(lundiSemaine); d.setDate(d.getDate() + i);
       const dateISO = toISODate(d);
       const estAujourdhui = dateISO === today;
-      const seancesDuJour = parJour[dateISO] || [];
-
+      const estSelectionne = dateISO === jourSelectionne;
+      const aDesSeances = (parJourCache[dateISO] || []).length > 0;
       return `
-        <div class="rounded-2xl border ${estAujourdhui ? 'border-brand-blue' : 'border-[color:var(--border)]'} bg-[color:var(--card)] p-4">
-          <p class="text-xs font-bold uppercase tracking-wide mb-2 ${estAujourdhui ? 'text-brand-blue-dark' : 'text-[color:var(--fg-50)]'}">${label} ${d.getDate()}/${d.getMonth()+1}${estAujourdhui ? ' · Aujourd\\'hui' : ''}</p>
-          ${seancesDuJour.length === 0
-            ? `<p class="text-xs text-[color:var(--fg-30)]">Repos</p>`
-            : `<div class="flex flex-col gap-2">${seancesDuJour.map(s => renderSeanceCard(s, rpeExistants)).join('')}</div>`
-          }
-        </div>
+        <button class="jour-btn flex flex-col items-center gap-1 py-2 rounded-xl border transition-colors ${
+          estSelectionne ? 'bg-brand-blue border-brand-blue text-white' : 'border-[color:var(--border)] hover:border-brand-blue'
+        }" data-date="${dateISO}">
+          <span class="text-[10px] uppercase font-semibold ${estSelectionne ? 'text-white/80' : 'text-[color:var(--fg-40)]'}">${label}</span>
+          <span class="text-sm font-bold ${estAujourdhui && !estSelectionne ? 'text-brand-blue-dark' : ''}">${d.getDate()}</span>
+          <span class="w-1.5 h-1.5 rounded-full ${aDesSeances ? (estSelectionne ? 'bg-white' : 'bg-brand-blue') : 'bg-transparent'}"></span>
+        </button>
       `;
     }).join('');
 
-    grid.querySelectorAll('.save-rpe-btn').forEach(btn => {
+    strip.querySelectorAll('.jour-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        jourSelectionne = btn.dataset.date;
+        renderJoursStrip();
+        renderJourDetail();
+      });
+    });
+  }
+
+  function renderJourDetail() {
+    const detail = document.getElementById('jour-detail');
+    const d = new Date(jourSelectionne);
+    const dateLabel = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    const seancesDuJour = parJourCache[jourSelectionne] || [];
+    const seancesGroupe = seancesDuJour.filter(s => s.type_seance === 'collective');
+    const seancesIndiv = seancesDuJour.filter(s => s.type_seance === 'individuelle');
+
+    detail.innerHTML = `
+      <p class="text-xs font-bold uppercase tracking-wide text-[color:var(--fg-50)] mb-3 capitalize">${dateLabel}</p>
+      ${seancesDuJour.length === 0
+        ? `<p class="text-sm text-[color:var(--fg-30)] py-4 text-center">Repos — aucune séance ce jour.</p>`
+        : `<div class="flex flex-col gap-3">
+             ${seancesGroupe.map(s => renderSeanceCard(s, rpeCache)).join('')}
+             ${seancesIndiv.map(s => renderSeanceCard(s, rpeCache)).join('')}
+           </div>`
+      }
+    `;
+
+    detail.querySelectorAll('.save-rpe-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const card = btn.closest('[data-seance-id]');
         const seance_id = card.dataset.seanceId;
@@ -269,7 +309,7 @@
         if (rpe === '' || !duree_reelle_min) { alert('Renseigne le RPE et la durée.'); return; }
         const { error } = await supabaseClient.from('seances_rpe').insert({ seance_id, joueur_id: joueur.id, rpe, duree_reelle_min, commentaire });
         if (error) { alert('Erreur : ' + error.message); return; }
-        loadSemaine();
+        await loadSemaine();
       });
     });
   }
