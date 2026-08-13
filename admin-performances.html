@@ -61,15 +61,52 @@
       <div class="flex-1 min-w-[160px]">
         <label class="block text-[11px] uppercase font-semibold text-[color:var(--fg-50)] tracking-wide mb-1">Mouvement</label>
         <select id="mouvement-select" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-          <option value="CMJ" data-unite="cm">CMJ</option>
-          <option value="Sprint_10m" data-unite="s">Sprint 10m</option>
-          <option value="Sprint_20m" data-unite="s">Sprint 20m</option>
-          <option value="Sprint_40m" data-unite="s">Sprint 40m</option>
-          <option value="VMA" data-unite="km/h">VMA</option>
-          <option value="1RM_squat" data-unite="kg">1RM Squat</option>
-          <option value="1RM_bench" data-unite="kg">1RM Développé-couché</option>
-          <option value="Grip_gauche" data-unite="kg">Préhension gauche</option>
-          <option value="Grip_droit" data-unite="kg">Préhension droite</option>
+          <optgroup label="Force / Musculation">
+            <option value="Developpe_couche" data-unite="kg">Développé couché</option>
+            <option value="Developpe_incline_60" data-unite="kg">Développé incliné 60°</option>
+            <option value="Tirage_banc" data-unite="kg">Tirage banc</option>
+            <option value="Traction" data-unite="kg">Traction</option>
+            <option value="Developpe_couche_elastique" data-unite="kg">Développé couché élastique</option>
+            <option value="Box_squat_90" data-unite="kg">Box squat 90°</option>
+            <option value="Box_squat_90_elastique" data-unite="kg">Box squat 90° élastique</option>
+            <option value="Fente_safety_bar" data-unite="kg">Fente Safety Bar</option>
+            <option value="Fente_elastique" data-unite="kg">Fente élastique</option>
+            <option value="Souleve_terre_trap_bar" data-unite="kg">Soulevé de terre trap bar</option>
+            <option value="Souleve_terre_barre" data-unite="kg">Soulevé de terre barre</option>
+            <option value="Souleve_terre_trap_bar_elastique" data-unite="kg">Soulevé de terre trap bar + élastique</option>
+          </optgroup>
+          <optgroup label="Force-vitesse / Explosivité">
+            <option value="Jete_medecine_ball" data-unite="m">Jeté de medecine-ball</option>
+            <option value="Arrache" data-unite="kg">Arraché</option>
+            <option value="Epaule" data-unite="kg">Épaulé</option>
+            <option value="Epaule_jete" data-unite="kg">Épaulé-jeté</option>
+            <option value="CMJ" data-unite="cm">CMJ</option>
+            <option value="CMJ_drop" data-unite="cm">CMJ Drop (Drop Jump)</option>
+            <option value="Squat_jump" data-unite="cm">Squat Jump</option>
+            <option value="Broad_jump" data-unite="m">Broad Jump</option>
+            <option value="Jump_unipodal" data-unite="cm">Jump unipodal</option>
+            <option value="Profil_FV_sprint" data-unite="">Profil Force-Vitesse sprint</option>
+            <option value="Profil_FV_V0" data-unite="m/s">Profil Force-Vitesse départ (V0)</option>
+          </optgroup>
+          <optgroup label="Vitesse">
+            <option value="Sprint_10m" data-unite="s">Sprint 10m</option>
+            <option value="Sprint_20m" data-unite="s">Sprint 20m</option>
+            <option value="Sprint_40m" data-unite="s">Sprint 40m</option>
+            <option value="Sprint_cote" data-unite="s">Sprint en côte</option>
+            <option value="Hop_test" data-unite="m">Hop test</option>
+            <option value="Triple_hop_test" data-unite="m">Triple hop test</option>
+          </optgroup>
+          <optgroup label="Stabilité / Force isométrique">
+            <option value="Test_IYT_epaule" data-unite="kg">Test IYT épaule</option>
+            <option value="Force_max_cervicales" data-unite="kg">Force max cervicales</option>
+          </optgroup>
+          <optgroup label="Endurance">
+            <option value="Bronco_continu" data-unite="s">Bronco test continu</option>
+            <option value="Bronco_intermittent" data-unite="s">Bronco test intermittent</option>
+            <option value="Test_assault_bike" data-unite="cal">Test Assault Bike</option>
+            <option value="Bike_test_bikeerg" data-unite="watts">Bike test (BikeErg)</option>
+            <option value="VMA" data-unite="km/h">VMA</option>
+          </optgroup>
           <option value="autre" data-unite="">Autre...</option>
         </select>
       </div>
