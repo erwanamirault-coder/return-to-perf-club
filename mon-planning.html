@@ -193,6 +193,27 @@
       document.getElementById('wellness-status').textContent = 'Déjà rempli aujourd\'hui — tu peux modifier.';
     }
 
+    async function allerVersProchaineSeanceSiVide() {
+      const dimancheActuel = new Date(lundiSemaine); dimancheActuel.setDate(dimancheActuel.getDate() + 6);
+      const [{ data: collectivesSemaine }, { data: indivSemaine }] = await Promise.all([
+        supabaseClient.from('seances').select('id').eq('equipe_id', joueur.equipe_id).eq('type_seance', 'collective')
+          .gte('date_seance', toISODate(lundiSemaine)).lte('date_seance', toISODate(dimancheActuel)),
+        supabaseClient.from('seances').select('id').eq('joueur_id', joueur.id).eq('type_seance', 'individuelle')
+          .gte('date_seance', toISODate(lundiSemaine)).lte('date_seance', toISODate(dimancheActuel))
+      ]);
+      if ((collectivesSemaine && collectivesSemaine.length) || (indivSemaine && indivSemaine.length)) return;
+
+      const [{ data: prochaineCol }, { data: prochaineIndiv }] = await Promise.all([
+        supabaseClient.from('seances').select('date_seance').eq('equipe_id', joueur.equipe_id).eq('type_seance', 'collective')
+          .gte('date_seance', toISODate(lundiSemaine)).order('date_seance', { ascending: true }).limit(1).maybeSingle(),
+        supabaseClient.from('seances').select('date_seance').eq('joueur_id', joueur.id).eq('type_seance', 'individuelle')
+          .gte('date_seance', toISODate(lundiSemaine)).order('date_seance', { ascending: true }).limit(1).maybeSingle()
+      ]);
+      const dates = [prochaineCol?.date_seance, prochaineIndiv?.date_seance].filter(Boolean).sort();
+      if (dates.length) lundiSemaine = getLundiDeLaSemaine(new Date(dates[0]));
+    }
+
+    await allerVersProchaineSeanceSiVide();
     await loadSemaine();
 
     document.getElementById('loading-state').classList.add('hidden');
