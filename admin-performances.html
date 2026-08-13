@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#0F4CA9">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/favicon-32.png">
-<title>Performances équipe — Admin — Erwan Amirault</title>
+<title>Retours séances — Admin — Erwan Amirault</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -37,80 +37,31 @@
       <img src="logo.png" alt="Erwan Amirault" class="h-7 w-auto">
       <div class="leading-tight">
         <p class="font-heading uppercase font-bold text-sm tracking-wide">Return To Perf</p>
-        <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-50)]">Performances équipe</p>
+        <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-50)]">Retours séances</p>
       </div>
     </a>
-    <div class="flex items-center gap-5 text-sm">
-      <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
-    </div>
   </header>
 
   <main class="px-6 py-10 max-w-3xl mx-auto">
 
     <nav class="flex items-center gap-1 mb-8 overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0 border-b border-[color:var(--border)]">
       <a href="admin-equipe.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Joueurs & séances</a>
-      <a href="admin-performances.html" class="shrink-0 text-sm font-semibold px-3 py-2.5 border-b-2 border-brand-blue text-[color:var(--accent)] whitespace-nowrap">Saisir des perfs</a>
+      <a href="admin-performances.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Saisir des perfs</a>
       <a href="stats-equipe.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Stats équipe</a>
-      <a href="admin-retours-seances.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Retours séances</a>
+      <a href="admin-retours-seances.html" class="shrink-0 text-sm font-semibold px-3 py-2.5 border-b-2 border-brand-blue text-[color:var(--accent)] whitespace-nowrap">Retours séances</a>
       <a href="admin-types-test.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Catalogue tests</a>
     </nav>
 
-    <div class="mb-8">
-      <h1 class="font-heading uppercase text-2xl font-bold leading-tight">Performances équipe</h1>
-      <p class="text-sm text-[color:var(--fg-60)] mt-1">Choisis un groupe et un mouvement, puis enchaîne joueur par joueur — Entrée valide et passe au suivant.</p>
+    <div class="mb-8 flex items-center justify-between flex-wrap gap-3">
+      <div>
+        <h1 class="font-heading uppercase text-2xl font-bold leading-tight">Retours séances</h1>
+        <p class="text-sm text-[color:var(--fg-60)] mt-1">Le RPE et les commentaires de tes joueurs, regroupés par séance.</p>
+      </div>
+      <select id="equipe-select" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></select>
     </div>
 
-    <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5 mb-6 flex flex-wrap items-end gap-3">
-      <div class="flex-1 min-w-[160px]">
-        <label class="block text-[11px] uppercase font-semibold text-[color:var(--fg-50)] tracking-wide mb-1">Groupe</label>
-        <select id="equipe-select" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></select>
-      </div>
-      <div class="flex-1 min-w-[160px]">
-        <label class="block text-[11px] uppercase font-semibold text-[color:var(--fg-50)] tracking-wide mb-1">Mouvement</label>
-        <select id="mouvement-select" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-          <option value="">Chargement...</option>
-        </select>
-        <a href="admin-types-test.html" target="_blank" class="text-[10px] text-brand-blue hover:underline mt-1 inline-block">Gérer le catalogue →</a>
-      </div>
-      <input type="text" id="mouvement-autre" placeholder="Nom du mouvement" class="hidden flex-1 min-w-[160px] px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-      <div class="w-32">
-        <label class="block text-[11px] uppercase font-semibold text-[color:var(--fg-50)] tracking-wide mb-1">Unité</label>
-        <input type="text" id="mouvement-unite" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-      </div>
-      <div class="w-40">
-        <label class="block text-[11px] uppercase font-semibold text-[color:var(--fg-50)] tracking-wide mb-1">Date du test</label>
-        <input type="date" id="test-date" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-      </div>
-    </div>
-
-    <!-- MODE FLUX RAPIDE -->
-    <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-6 sm:p-8 text-center">
-
-      <div id="flux-progress" class="flex items-center justify-center gap-1.5 mb-6 flex-wrap"></div>
-
-      <div id="flux-joueur-actif">
-        <p id="flux-joueur-nom" class="font-heading uppercase text-2xl font-bold leading-tight"></p>
-        <p id="flux-joueur-derniere" class="text-xs text-[color:var(--fg-40)] mt-1 mb-6"></p>
-
-        <div class="flex items-center justify-center gap-2 mb-4">
-          <input type="number" step="0.01" id="flux-valeur" placeholder="0" class="w-32 text-center text-2xl font-heading font-bold px-3 py-3 rounded-xl bg-[color:var(--bg)] border-2 border-[color:var(--border-strong)] outline-none focus:border-brand-blue">
-          <span id="flux-unite" class="text-sm text-[color:var(--fg-50)] font-medium"></span>
-        </div>
-
-        <div class="flex items-center justify-center gap-2">
-          <button id="flux-skip-btn" class="text-sm px-4 py-2.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors">Passer</button>
-          <button id="flux-save-btn" class="text-sm px-6 py-2.5 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-semibold">Enregistrer et suivant →</button>
-        </div>
-      </div>
-
-      <div id="flux-termine" class="hidden">
-        <p class="font-heading uppercase text-lg font-bold text-green-600 mb-1">Tous les joueurs sont testés ✓</p>
-        <p class="text-sm text-[color:var(--fg-50)] mb-4">Change de mouvement ci-dessus pour enchaîner sur le test suivant.</p>
-        <button id="flux-recommencer-btn" class="text-sm px-4 py-2 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors">Revoir / corriger un joueur</button>
-      </div>
-
-      <p id="joueurs-empty" class="hidden text-sm text-[color:var(--fg-50)] text-center py-6">Aucun joueur dans ce groupe.</p>
-    </div>
+    <div id="seances-list" class="flex flex-col gap-4"></div>
+    <p id="seances-empty" class="hidden text-sm text-[color:var(--fg-50)] text-center py-10">Aucun retour de séance pour l'instant.</p>
 
   </main>
 
@@ -118,39 +69,11 @@
   <script src="theme.js"></script>
   <script>
     const equipeSelect = document.getElementById('equipe-select');
-    const mouvementSelect = document.getElementById('mouvement-select');
-        let equipeActive = null;
+    let equipeActive = null;
 
     function escapeHtml(s) {
       return (s || '').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     }
-
-    // Préremplit l'unité et la date par défaut
-    document.getElementById('test-date').value = new Date().toISOString().slice(0,10);
-
-    async function loadCatalogueTests() {
-      const { data } = await supabaseClient.from('types_test').select('*').eq('actif', true).order('categorie').order('ordre');
-      const rows = data || [];
-      const parCategorie = {};
-      rows.forEach(t => { if (!parCategorie[t.categorie]) parCategorie[t.categorie] = []; parCategorie[t.categorie].push(t); });
-
-      mouvementSelect.innerHTML = Object.entries(parCategorie).map(([cat, tests]) => `
-        <optgroup label="${cat}">
-          ${tests.map(t => `<option value="${t.code}" data-unite="${t.unite || ''}">${t.nom}</option>`).join('')}
-        </optgroup>
-      `).join('') + `<option value="autre" data-unite="">Autre...</option>`;
-
-      const first = mouvementSelect.options[0];
-      if (first) document.getElementById('mouvement-unite').value = first.dataset.unite || '';
-    }
-
-    mouvementSelect.addEventListener('change', () => {
-      const selected = mouvementSelect.options[mouvementSelect.selectedIndex];
-      const isAutre = mouvementSelect.value === 'autre';
-      document.getElementById('mouvement-autre').classList.toggle('hidden', !isAutre);
-      document.getElementById('mouvement-unite').value = selected.dataset.unite || '';
-      loadJoueursAvecDerniereValeur();
-    });
 
     async function loadEquipes() {
       const { data } = await supabaseClient.from('equipes').select('*').order('created_at', { ascending: false });
@@ -161,108 +84,75 @@
 
     equipeSelect.addEventListener('change', () => {
       equipeActive = equipeSelect.value;
-      loadJoueursAvecDerniereValeur();
+      loadRetours();
     });
 
-    function mouvementActuel() {
-      return mouvementSelect.value === 'autre'
-        ? document.getElementById('mouvement-autre').value.trim()
-        : mouvementSelect.value;
-    }
-
-    let joueursListe = [];
-    let dernieresValeurs = {};
-    let indexActuel = 0;
-
-    async function loadJoueursAvecDerniereValeur() {
+    async function loadRetours() {
       if (!equipeActive) return;
-      const type_test = mouvementActuel();
-      const { data: joueurs } = await supabaseClient.from('joueurs').select('*').eq('equipe_id', equipeActive).order('nom');
-      joueursListe = joueurs || [];
-      document.getElementById('joueurs-empty').classList.toggle('hidden', joueursListe.length > 0);
 
-      dernieresValeurs = {};
-      if (type_test && joueursListe.length) {
-        const ids = joueursListe.map(j => j.id);
-        const { data: testsExistants } = await supabaseClient
-          .from('tests_physiques')
-          .select('joueur_id, valeur, date_test')
-          .in('joueur_id', ids)
-          .eq('type_test', type_test)
-          .order('date_test', { ascending: false });
-        (testsExistants || []).forEach(t => {
-          if (!dernieresValeurs[t.joueur_id]) dernieresValeurs[t.joueur_id] = t;
-        });
-      }
+      const { data: joueursEquipe } = await supabaseClient.from('joueurs').select('id, prenom, nom').eq('equipe_id', equipeActive);
+      const joueursMap = {};
+      (joueursEquipe || []).forEach(j => joueursMap[j.id] = `${j.prenom} ${j.nom}`);
+      const joueurIds = Object.keys(joueursMap);
 
-      indexActuel = 0;
-      renderProgress();
-      afficherJoueurActuel();
-    }
-
-    function renderProgress() {
-      document.getElementById('flux-progress').innerHTML = joueursListe.map((j, i) => `
-        <span class="w-2.5 h-2.5 rounded-full ${i < indexActuel ? 'bg-green-500' : i === indexActuel ? 'bg-brand-blue' : 'bg-[color:var(--border-strong)]'}" title="${escapeHtml(j.prenom)} ${escapeHtml(j.nom)}"></span>
-      `).join('');
-    }
-
-    function afficherJoueurActuel() {
-      if (!joueursListe.length) return;
-      if (indexActuel >= joueursListe.length) {
-        document.getElementById('flux-joueur-actif').classList.add('hidden');
-        document.getElementById('flux-termine').classList.remove('hidden');
+      if (!joueurIds.length) {
+        document.getElementById('seances-empty').classList.remove('hidden');
+        document.getElementById('seances-list').innerHTML = '';
         return;
       }
-      document.getElementById('flux-joueur-actif').classList.remove('hidden');
-      document.getElementById('flux-termine').classList.add('hidden');
 
-      const j = joueursListe[indexActuel];
-      const derniere = dernieresValeurs[j.id];
-      document.getElementById('flux-joueur-nom').textContent = `${j.prenom} ${j.nom}`;
-      document.getElementById('flux-joueur-derniere').textContent = derniere
-        ? `Dernier score : ${derniere.valeur} le ${new Date(derniere.date_test).toLocaleDateString('fr-FR')}`
-        : 'Aucune donnée précédente';
-      document.getElementById('flux-unite').textContent = document.getElementById('mouvement-unite').value;
-      const valeurInput = document.getElementById('flux-valeur');
-      valeurInput.value = '';
-      valeurInput.focus();
-      renderProgress();
+      const { data: rpeRows } = await supabaseClient
+        .from('seances_rpe')
+        .select('*, seances(titre, date_seance, type_seance)')
+        .in('joueur_id', joueurIds)
+        .order('created_at', { ascending: false });
+
+      const rows = rpeRows || [];
+      document.getElementById('seances-empty').classList.toggle('hidden', rows.length > 0);
+
+      const parSeance = {};
+      rows.forEach(r => {
+        if (!r.seances) return;
+        const key = r.seance_id;
+        if (!parSeance[key]) parSeance[key] = { seance: r.seances, retours: [] };
+        parSeance[key].retours.push(r);
+      });
+
+      const seanceIds = Object.keys(parSeance).sort((a,b) => new Date(parSeance[b].seance.date_seance) - new Date(parSeance[a].seance.date_seance));
+
+      document.getElementById('seances-list').innerHTML = seanceIds.map(id => {
+        const { seance, retours } = parSeance[id];
+        const badge = seance.type_seance === 'collective'
+          ? `<span class="text-[10px] font-bold uppercase text-brand-blue-dark bg-brand-blue/10 px-2 py-1 rounded-full">Groupe</span>`
+          : `<span class="text-[10px] font-bold uppercase text-amber-700 bg-amber-50 px-2 py-1 rounded-full">Indiv.</span>`;
+        return `
+          <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h2 class="font-heading text-sm font-bold uppercase tracking-wide">${escapeHtml(seance.titre)}</h2>
+                <p class="text-xs text-[color:var(--fg-50)]">${new Date(seance.date_seance).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+              </div>
+              ${badge}
+            </div>
+            <div class="flex flex-col gap-2">
+              ${retours.map(r => `
+                <div class="flex items-start justify-between gap-3 py-2 border-t border-[color:var(--border)] text-sm">
+                  <div class="min-w-0">
+                    <p class="font-semibold">${escapeHtml(joueursMap[r.joueur_id] || 'Joueur')}</p>
+                    ${r.commentaire ? `<p class="text-xs text-[color:var(--fg-60)] mt-0.5">« ${escapeHtml(r.commentaire)} »</p>` : ''}
+                  </div>
+                  <span class="text-xs font-semibold text-brand-blue-dark shrink-0">RPE ${r.rpe}/10 · ${r.duree_reelle_min} min</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
     }
-
-    async function enregistrerEtSuivant() {
-      const type_test = mouvementActuel();
-      const unite = document.getElementById('mouvement-unite').value.trim();
-      const date_test = document.getElementById('test-date').value;
-      const valeur = document.getElementById('flux-valeur').value;
-
-      if (!type_test || !unite || !date_test) { alert('Renseigne le mouvement, l\'unité et la date en haut de page.'); return; }
-      if (valeur === '') { alert('Renseigne une valeur (ou clique "Passer").'); return; }
-
-      const joueur_id = joueursListe[indexActuel].id;
-      const { error } = await supabaseClient.from('tests_physiques').insert({ joueur_id, type_test, valeur, unite, date_test });
-      if (error) { alert('Erreur : ' + error.message); return; }
-
-      indexActuel++;
-      afficherJoueurActuel();
-    }
-
-    document.getElementById('flux-save-btn').addEventListener('click', enregistrerEtSuivant);
-    document.getElementById('flux-valeur').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') enregistrerEtSuivant();
-    });
-    document.getElementById('flux-skip-btn').addEventListener('click', () => {
-      indexActuel++;
-      afficherJoueurActuel();
-    });
-    document.getElementById('flux-recommencer-btn').addEventListener('click', () => {
-      indexActuel = 0;
-      afficherJoueurActuel();
-    });
 
     (async function init() {
-      await loadCatalogueTests();
       await loadEquipes();
-      if (equipeActive) { equipeSelect.value = equipeActive; loadJoueursAvecDerniereValeur(); }
+      if (equipeActive) { equipeSelect.value = equipeActive; loadRetours(); }
     })();
   </script>
 
