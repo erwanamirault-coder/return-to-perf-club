@@ -208,9 +208,33 @@
       status.textContent = `${seances.length} séance(s) dupliquée(s) vers la semaine suivante ✓`;
     });
 
+    async function allerVersProchaineSeanceSiVide() {
+      const dimancheActuel = new Date(lundiSemaine); dimancheActuel.setDate(dimancheActuel.getDate() + 6);
+      const { data: seancesSemaine } = await supabaseClient
+        .from('seances').select('id')
+        .eq('equipe_id', equipeActive).eq('type_seance', 'collective')
+        .gte('date_seance', toISODate(lundiSemaine)).lte('date_seance', toISODate(dimancheActuel));
+
+      if (seancesSemaine && seancesSemaine.length) return; // déjà des séances cette semaine, rien à faire
+
+      const { data: prochaine } = await supabaseClient
+        .from('seances').select('date_seance')
+        .eq('equipe_id', equipeActive).eq('type_seance', 'collective')
+        .gte('date_seance', toISODate(lundiSemaine))
+        .order('date_seance', { ascending: true }).limit(1).maybeSingle();
+
+      if (prochaine) {
+        lundiSemaine = getLundiDeLaSemaine(new Date(prochaine.date_seance));
+      }
+    }
+
     (async function init() {
       await loadEquipes();
-      if (equipeActive) { equipeSelect.value = equipeActive; loadSemaine(); }
+      if (equipeActive) {
+        equipeSelect.value = equipeActive;
+        await allerVersProchaineSeanceSiVide();
+        loadSemaine();
+      }
     })();
   </script>
 
