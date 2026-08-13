@@ -40,10 +40,17 @@
         <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-50)]">Catalogue des tests</p>
       </div>
     </a>
-    <a href="admin-equipe.html" class="text-sm text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">← Mon équipe</a>
   </header>
 
   <main class="px-6 py-10 max-w-2xl mx-auto">
+
+    <nav class="flex items-center gap-1 mb-8 overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0 border-b border-[color:var(--border)]">
+      <a href="admin-equipe.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Joueurs & séances</a>
+      <a href="admin-performances.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Saisir des perfs</a>
+      <a href="stats-equipe.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Stats équipe</a>
+      <a href="admin-retours-seances.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Retours séances</a>
+      <a href="admin-types-test.html" class="shrink-0 text-sm font-semibold px-3 py-2.5 border-b-2 border-brand-blue text-[color:var(--accent)] whitespace-nowrap">Catalogue tests</a>
+    </nav>
 
     <div class="mb-8">
       <h1 class="font-heading uppercase text-2xl font-bold leading-tight">Catalogue des tests</h1>
@@ -57,9 +64,30 @@
         <input type="text" id="f-categorie" placeholder="Catégorie (ex: Force / Musculation)" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue" list="categories-existantes">
         <datalist id="categories-existantes"></datalist>
       </div>
-      <div class="grid sm:grid-cols-2 gap-2 mb-3">
-        <input type="text" id="f-unite" placeholder="Unité (kg, cm, s, m...)" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-        <input type="number" id="f-ordre" placeholder="Ordre d'affichage" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      <div class="flex flex-col sm:flex-row gap-2 mb-2">
+        <select id="f-unite" class="flex-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <option value="">Sans unité</option>
+          <option value="kg">kg (kilogrammes)</option>
+          <option value="g">g (grammes)</option>
+          <option value="cm">cm (centimètres)</option>
+          <option value="m">m (mètres)</option>
+          <option value="km">km (kilomètres)</option>
+          <option value="s">s (secondes)</option>
+          <option value="min">min (minutes)</option>
+          <option value="km/h">km/h</option>
+          <option value="m/s">m/s</option>
+          <option value="watts">watts</option>
+          <option value="cal">cal (calories)</option>
+          <option value="reps">reps (répétitions)</option>
+          <option value="%">% (pourcentage)</option>
+          <option value="bpm">bpm (battements/min)</option>
+          <option value="points">points / score</option>
+          <option value="autre">Autre (préciser)</option>
+        </select>
+        <input type="text" id="f-unite-autre" placeholder="Préciser l'unité" class="hidden flex-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      </div>
+      <div class="mb-3">
+        <input type="number" id="f-ordre" placeholder="Ordre d'affichage (optionnel)" class="w-full sm:w-48 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
       </div>
       <div class="flex items-center gap-3">
         <button id="save-btn" class="text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-semibold" data-editing-id="">Ajouter ce test</button>
@@ -84,6 +112,11 @@
     }
 
     const saveBtn = document.getElementById('save-btn');
+    const uniteListeConnue = ['', 'kg', 'g', 'cm', 'm', 'km', 's', 'min', 'km/h', 'm/s', 'watts', 'cal', 'reps', '%', 'bpm', 'points'];
+
+    document.getElementById('f-unite').addEventListener('change', (e) => {
+      document.getElementById('f-unite-autre').classList.toggle('hidden', e.target.value !== 'autre');
+    });
 
     async function loadTests() {
       const { data } = await supabaseClient.from('types_test').select('*').order('categorie').order('ordre');
@@ -121,7 +154,17 @@
           const t = rows.find(r => r.id === btn.dataset.id);
           document.getElementById('f-nom').value = t.nom;
           document.getElementById('f-categorie').value = t.categorie;
-          document.getElementById('f-unite').value = t.unite || '';
+          const uniteSelect = document.getElementById('f-unite');
+          const uniteAutre = document.getElementById('f-unite-autre');
+          if (uniteListeConnue.includes(t.unite || '')) {
+            uniteSelect.value = t.unite || '';
+            uniteAutre.classList.add('hidden');
+            uniteAutre.value = '';
+          } else {
+            uniteSelect.value = 'autre';
+            uniteAutre.classList.remove('hidden');
+            uniteAutre.value = t.unite || '';
+          }
           document.getElementById('f-ordre').value = t.ordre;
           saveBtn.dataset.editingId = t.id;
           saveBtn.textContent = 'Mettre à jour';
@@ -153,6 +196,8 @@
       document.getElementById('f-nom').value = '';
       document.getElementById('f-categorie').value = '';
       document.getElementById('f-unite').value = '';
+      document.getElementById('f-unite-autre').value = '';
+      document.getElementById('f-unite-autre').classList.add('hidden');
       document.getElementById('f-ordre').value = '';
       saveBtn.dataset.editingId = '';
       saveBtn.textContent = 'Ajouter ce test';
@@ -165,7 +210,8 @@
     saveBtn.addEventListener('click', async () => {
       const nom = document.getElementById('f-nom').value.trim();
       const categorie = document.getElementById('f-categorie').value.trim();
-      const unite = document.getElementById('f-unite').value.trim();
+      const uniteSelect = document.getElementById('f-unite').value;
+      const unite = uniteSelect === 'autre' ? document.getElementById('f-unite-autre').value.trim() : uniteSelect;
       const ordre = document.getElementById('f-ordre').value || 99;
       const status = document.getElementById('save-status');
 
