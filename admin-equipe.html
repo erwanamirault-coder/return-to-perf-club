@@ -265,6 +265,7 @@
             <span class="font-semibold">${escapeHtml(s.titre)}</span>
             <span class="text-[color:var(--fg-50)]"> — ${new Date(s.date_seance).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}${s.heure_debut ? ' à ' + s.heure_debut.slice(0,5) : ''}</span>
           </div>
+          <a href="admin-seance-detail.html?id=${s.id}" class="text-xs px-3 py-1.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors shrink-0">Détail</a>
         </div>
       `).join('');
     }
@@ -314,22 +315,53 @@
       const joueurs = data || [];
       document.getElementById('joueurs-list-empty').classList.toggle('hidden', joueurs.length > 0);
       joueursList.innerHTML = joueurs.map(j => `
-        <div class="flex items-center justify-between gap-3 py-2 border-b border-[color:var(--border)] last:border-0">
-          <div class="flex items-center gap-3 min-w-0">
-            <span class="w-9 h-9 rounded-full bg-brand-blue/10 text-[color:var(--accent)] flex items-center justify-center text-xs font-bold shrink-0">${(j.prenom||'?').charAt(0)}${(j.nom||'').charAt(0)}</span>
-            <div class="min-w-0">
-              <p class="text-sm font-semibold truncate">${escapeHtml(j.prenom)} ${escapeHtml(j.nom)}</p>
-              <p class="text-xs text-[color:var(--fg-50)] truncate">${escapeHtml(j.poste || 'Poste non renseigné')}</p>
+        <div class="border-b border-[color:var(--border)] last:border-0" data-joueur-block="${j.id}">
+          <div class="flex items-center justify-between gap-3 py-2">
+            <div class="flex items-center gap-3 min-w-0">
+              <span class="w-9 h-9 rounded-full bg-brand-blue/10 text-[color:var(--accent)] flex items-center justify-center text-xs font-bold shrink-0">${(j.prenom||'?').charAt(0)}${(j.nom||'').charAt(0)}</span>
+              <div class="min-w-0">
+                <p class="text-sm font-semibold truncate">${escapeHtml(j.prenom)} ${escapeHtml(j.nom)}</p>
+                <p class="text-xs text-[color:var(--fg-50)] truncate">${escapeHtml(j.poste || 'Poste non renseigné')}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+              ${badgeStatut(j.statut_disponibilite)}
+              <button class="toggle-seances-indiv-btn text-xs px-3 py-1.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors" data-id="${j.id}">Ses séances</button>
+              <button class="seance-indiv-btn text-xs px-3 py-1.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors" data-id="${j.id}" data-nom="${escapeHtml(j.prenom)} ${escapeHtml(j.nom)}">+ Séance indiv.</button>
+              <button class="test-btn text-xs px-3 py-1.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors" data-id="${j.id}" data-nom="${escapeHtml(j.prenom)} ${escapeHtml(j.nom)}">+ Test</button>
+              <a href="fiche-joueur.html?id=${j.id}" class="text-xs px-3 py-1.5 rounded-lg bg-brand-blue text-white hover:bg-brand-blue-dark transition-colors">Stats</a>
             </div>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
-            ${badgeStatut(j.statut_disponibilite)}
-            <button class="seance-indiv-btn text-xs px-3 py-1.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors" data-id="${j.id}" data-nom="${escapeHtml(j.prenom)} ${escapeHtml(j.nom)}">+ Séance indiv.</button>
-            <button class="test-btn text-xs px-3 py-1.5 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors" data-id="${j.id}" data-nom="${escapeHtml(j.prenom)} ${escapeHtml(j.nom)}">+ Test</button>
-            <a href="fiche-joueur.html?id=${j.id}" class="text-xs px-3 py-1.5 rounded-lg bg-brand-blue text-white hover:bg-brand-blue-dark transition-colors">Stats</a>
-          </div>
+          <div class="seances-indiv-panel hidden pb-3 pl-12 flex flex-col gap-1.5"></div>
         </div>
       `).join('');
+
+      document.querySelectorAll('.toggle-seances-indiv-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const block = document.querySelector(`[data-joueur-block="${btn.dataset.id}"]`);
+          const panel = block.querySelector('.seances-indiv-panel');
+          const isHidden = panel.classList.contains('hidden');
+          panel.classList.toggle('hidden');
+          if (isHidden) {
+            panel.innerHTML = `<p class="text-xs text-[color:var(--fg-40)]">Chargement...</p>`;
+            const { data: seancesIndiv } = await supabaseClient
+              .from('seances')
+              .select('*')
+              .eq('joueur_id', btn.dataset.id)
+              .eq('type_seance', 'individuelle')
+              .order('date_seance', { ascending: false });
+            const rows = seancesIndiv || [];
+            panel.innerHTML = rows.length === 0
+              ? `<p class="text-xs text-[color:var(--fg-40)]">Aucune séance individuelle pour ce joueur.</p>`
+              : rows.map(s => `
+                <div class="flex items-center justify-between gap-3 text-xs">
+                  <span>${escapeHtml(s.titre)} — ${new Date(s.date_seance).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} <span class="text-[color:var(--fg-40)]">(${s.objectif === 'reathletisation' ? 'réathlétisation' : 'performance'})</span></span>
+                  <a href="admin-seance-detail.html?id=${s.id}" class="px-2.5 py-1 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors shrink-0">Détail</a>
+                </div>
+              `).join('');
+          }
+        });
+      });
 
       document.querySelectorAll('.seance-indiv-btn').forEach(btn => {
         btn.addEventListener('click', () => {
