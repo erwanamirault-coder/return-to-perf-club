@@ -206,15 +206,18 @@
             ${badge}
           </div>
           ${rpeDeja
-            ? `<p class="text-xs text-green-600 font-semibold">RPE déjà noté : ${rpeDeja.rpe}/10 · ${rpeDeja.duree_reelle_min} min ✓</p>`
+            ? `<p class="text-xs text-green-600 font-semibold">RPE déjà noté : ${rpeDeja.rpe}/10 · ${rpeDeja.duree_reelle_min} min ✓${rpeDeja.commentaire ? '<br><span class="text-[color:var(--fg-50)] font-normal">« ' + rpeDeja.commentaire + ' »</span>' : ''}</p>`
             : `
-            <div class="flex items-center gap-2">
-              <select class="rpe-select flex-1 px-2 py-1.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
-                <option value="">RPE (0-10)</option>
-                ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">${n}</option>`).join('')}
-              </select>
-              <input type="number" class="duree-input w-20 px-2 py-1.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue" placeholder="min">
-              <button class="save-rpe-btn text-xs px-3 py-1.5 rounded-lg bg-brand-blue text-white font-semibold">OK</button>
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center gap-2">
+                <select class="rpe-select flex-1 px-2 py-1.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
+                  <option value="">RPE (0-10)</option>
+                  ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">${n}</option>`).join('')}
+                </select>
+                <input type="number" class="duree-input w-20 px-2 py-1.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue" placeholder="min">
+              </div>
+              <input type="text" class="commentaire-input px-2 py-1.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue" placeholder="Commentaire (optionnel) — ressenti, douleur, remarque...">
+              <button class="save-rpe-btn self-start text-xs px-3 py-1.5 rounded-lg bg-brand-blue text-white font-semibold">Envoyer</button>
             </div>
             `
           }
@@ -228,10 +231,11 @@
         const seance_id = card.dataset.seanceId;
         const rpe = card.querySelector('.rpe-select').value;
         const duree_reelle_min = card.querySelector('.duree-input').value;
+        const commentaire = card.querySelector('.commentaire-input').value.trim() || null;
         if (rpe === '' || !duree_reelle_min) { alert('Renseigne le RPE et la durée.'); return; }
-        const { error } = await supabaseClient.from('seances_rpe').insert({ seance_id, joueur_id: joueur.id, rpe, duree_reelle_min });
+        const { error } = await supabaseClient.from('seances_rpe').insert({ seance_id, joueur_id: joueur.id, rpe, duree_reelle_min, commentaire });
         if (error) { alert('Erreur : ' + error.message); return; }
-        card.querySelector('.flex.items-center.gap-2').outerHTML = `<p class="text-xs text-green-600 font-semibold">RPE déjà noté : ${rpe}/10 · ${duree_reelle_min} min ✓</p>`;
+        card.querySelector('.flex.flex-col.gap-2').outerHTML = `<p class="text-xs text-green-600 font-semibold">RPE déjà noté : ${rpe}/10 · ${duree_reelle_min} min ✓${commentaire ? '<br><span class="text-[color:var(--fg-50)] font-normal">« ' + commentaire + ' »</span>' : ''}</p>`;
       });
     });
   }
