@@ -119,22 +119,26 @@
       const dateLabel = new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
       const blocCollectives = collectives.map(s => `
-        <div class="flex items-start gap-3 p-3 rounded-lg bg-brand-blue/5 border border-brand-blue/20">
-          <span class="text-[10px] font-bold uppercase tracking-wide text-brand-blue-dark bg-white px-2 py-1 rounded-full shrink-0">Groupe</span>
-          <div class="min-w-0">
-            <p class="text-sm font-semibold truncate">${escapeHtml(s.titre)}</p>
-            <p class="text-xs text-[color:var(--fg-50)]">${s.heure_debut ? s.heure_debut.slice(0,5) : ''}${s.duree_prevue_min ? ' · ' + s.duree_prevue_min + ' min' : ''}</p>
-          </div>
+        <div class="rounded-lg bg-brand-blue/5 border border-brand-blue/20 overflow-hidden">
+          <a href="voir-seance.html?id=${s.id}" class="flex items-start gap-3 p-3 hover:bg-brand-blue/10 transition-colors">
+            <span class="text-[10px] font-bold uppercase tracking-wide text-brand-blue-dark bg-white px-2 py-1 rounded-full shrink-0">Groupe</span>
+            <div class="min-w-0">
+              <p class="text-sm font-semibold truncate">${escapeHtml(s.titre)}</p>
+              <p class="text-xs text-[color:var(--fg-50)]">${s.heure_debut ? s.heure_debut.slice(0,5) : ''}${s.duree_prevue_min ? ' · ' + s.duree_prevue_min + ' min' : ''} · Voir le détail →</p>
+            </div>
+          </a>
         </div>
       `).join('');
 
       const blocIndividuelles = individuelles.map(s => `
-        <div class="flex items-start gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
-          <span class="text-[10px] font-bold uppercase tracking-wide text-amber-700 bg-white px-2 py-1 rounded-full shrink-0">Indiv.</span>
-          <div class="min-w-0">
-            <p class="text-sm font-semibold truncate">${escapeHtml(s.titre)}</p>
-            <p class="text-xs text-[color:var(--fg-50)]">${s.objectif === 'reathletisation' ? 'Réathlétisation' : 'Performance'}${s.heure_debut ? ' · ' + s.heure_debut.slice(0,5) : ''}</p>
-          </div>
+        <div class="rounded-lg bg-amber-50 border border-amber-200 overflow-hidden">
+          <a href="voir-seance.html?id=${s.id}" class="flex items-start gap-3 p-3 hover:bg-amber-100 transition-colors">
+            <span class="text-[10px] font-bold uppercase tracking-wide text-amber-700 bg-white px-2 py-1 rounded-full shrink-0">Indiv.</span>
+            <div class="min-w-0">
+              <p class="text-sm font-semibold truncate">${escapeHtml(s.titre)}</p>
+              <p class="text-xs text-[color:var(--fg-50)]">${s.objectif === 'reathletisation' ? 'Réathlétisation' : 'Performance'}${s.heure_debut ? ' · ' + s.heure_debut.slice(0,5) : ''} · Voir le détail →</p>
+            </div>
+          </a>
         </div>
       `).join('');
 
