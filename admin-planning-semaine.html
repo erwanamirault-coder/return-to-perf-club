@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F4CA9">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon-32.png">
+<title>Planning semaine — Admin — Erwan Amirault</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { brand: { black: '#000000', white: '#FFFFFF', blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } } },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)]/95 backdrop-blur flex items-center justify-between px-6 sm:px-10 py-4 border-b border-[color:var(--border)]">
+    <a href="admin-equipe.html" class="flex items-center gap-3">
+      <img src="logo.png" alt="Erwan Amirault" class="h-7 w-auto">
+      <div class="leading-tight">
+        <p class="font-heading uppercase font-bold text-sm tracking-wide">Return To Perf</p>
+        <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-50)]">Planning semaine</p>
+      </div>
+    </a>
+    <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+  </header>
+
+  <main class="px-6 py-10 max-w-5xl mx-auto">
+
+    <nav class="flex items-center gap-1 mb-8 overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0 border-b border-[color:var(--border)]">
+      <a href="admin-equipe.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Joueurs & séances</a>
+      <a href="admin-planning-semaine.html" class="shrink-0 text-sm font-semibold px-3 py-2.5 border-b-2 border-brand-blue text-[color:var(--accent)] whitespace-nowrap">Planning semaine</a>
+      <a href="admin-performances.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Saisir des perfs</a>
+      <a href="stats-equipe.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Stats équipe</a>
+      <a href="admin-retours-seances.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Retours séances</a>
+      <a href="admin-types-test.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Catalogue tests</a>
+    </nav>
+
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+      <select id="equipe-select" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></select>
+      <div class="flex items-center gap-2 flex-wrap">
+        <button id="prev-week-btn" class="w-9 h-9 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors">←</button>
+        <p id="semaine-label" class="text-sm font-semibold min-w-[140px] text-center"></p>
+        <button id="next-week-btn" class="w-9 h-9 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors">→</button>
+        <button id="dup-semaine-btn" class="text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-semibold ml-2">Dupliquer vers semaine suivante</button>
+      </div>
+    </div>
+
+    <div id="semaine-grid" class="grid grid-cols-1 sm:grid-cols-7 gap-2"></div>
+    <p id="dup-status" class="text-xs text-[color:var(--fg-50)] mt-3 text-center"></p>
+
+    <div id="quick-create-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div class="bg-[color:var(--bg)] rounded-2xl border border-[color:var(--border)] p-5 sm:p-6 max-w-sm w-full">
+        <h3 class="font-heading uppercase text-sm font-bold mb-1">Nouvelle séance collective</h3>
+        <p id="quick-create-date" class="text-xs text-[color:var(--fg-50)] mb-4"></p>
+        <input type="text" id="quick-create-titre" placeholder="Titre de la séance" class="w-full px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <div class="flex items-center gap-2 mt-4">
+          <button id="quick-create-confirm" class="flex-1 px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-sm font-semibold">Créer et ouvrir le détail</button>
+          <button id="quick-create-cancel" class="px-4 py-2 rounded-lg border border-[color:var(--border)] text-sm">Annuler</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    const equipeSelect = document.getElementById('equipe-select');
+    let equipeActive = null;
+    let lundiSemaine = getLundiDeLaSemaine(new Date());
+
+    function escapeHtml(s) {
+      return (s || '').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    function getLundiDeLaSemaine(date) {
+      const d = new Date(date);
+      const jour = d.getDay();
+      const diff = jour === 0 ? -6 : 1 - jour;
+      d.setDate(d.getDate() + diff);
+      d.setHours(0,0,0,0);
+      return d;
+    }
+
+    function toISODate(d) { return d.toISOString().slice(0,10); }
+
+    async function loadEquipes() {
+      const { data } = await supabaseClient.from('equipes').select('*').order('created_at', { ascending: false });
+      const equipes = data || [];
+      equipeSelect.innerHTML = equipes.map(e => `<option value="${e.id}">${escapeHtml(e.nom)} — ${escapeHtml(e.saison)}</option>`).join('');
+      if (equipes.length) equipeActive = equipes[0].id;
+    }
+
+    equipeSelect.addEventListener('change', () => { equipeActive = equipeSelect.value; loadSemaine(); });
+    document.getElementById('prev-week-btn').addEventListener('click', () => { lundiSemaine.setDate(lundiSemaine.getDate() - 7); loadSemaine(); });
+    document.getElementById('next-week-btn').addEventListener('click', () => { lundiSemaine.setDate(lundiSemaine.getDate() + 7); loadSemaine(); });
+
+    const joursLabels = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+
+    async function loadSemaine() {
+      if (!equipeActive) return;
+      const dimanche = new Date(lundiSemaine); dimanche.setDate(dimanche.getDate() + 6);
+      document.getElementById('semaine-label').textContent = `${lundiSemaine.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} — ${dimanche.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`;
+
+      const { data: seances } = await supabaseClient
+        .from('seances')
+        .select('*, seance_exercices(id)')
+        .eq('equipe_id', equipeActive)
+        .eq('type_seance', 'collective')
+        .gte('date_seance', toISODate(lundiSemaine))
+        .lte('date_seance', toISODate(dimanche));
+
+      const parJour = {};
+      (seances || []).forEach(s => { parJour[s.date_seance] = s; });
+
+      const grid = document.getElementById('semaine-grid');
+      grid.innerHTML = joursLabels.map((label, i) => {
+        const d = new Date(lundiSemaine); d.setDate(d.getDate() + i);
+        const dateISO = toISODate(d);
+        const s = parJour[dateISO];
+        return `
+          <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-3 min-h-[110px] flex flex-col" data-date="${dateISO}">
+            <p class="text-[11px] uppercase font-semibold text-[color:var(--fg-40)] mb-2">${label} <span class="normal-case font-normal">${d.getDate()}/${d.getMonth()+1}</span></p>
+            ${s
+              ? `<a href="admin-seance-detail.html?id=${s.id}" class="flex-1 flex flex-col justify-between">
+                   <p class="text-sm font-semibold text-brand-blue-dark leading-snug">${escapeHtml(s.titre)}</p>
+                   <p class="text-[11px] text-[color:var(--fg-40)] mt-2">${s.seance_exercices.length} exercice(s)</p>
+                 </a>`
+              : `<button class="add-day-btn flex-1 flex items-center justify-center text-[color:var(--fg-30)] hover:text-brand-blue transition-colors text-2xl" data-date="${dateISO}">+</button>`
+            }
+          </div>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.add-day-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.getElementById('quick-create-date').textContent = new Date(btn.dataset.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+          document.getElementById('quick-create-titre').value = '';
+          document.getElementById('quick-create-modal').dataset.date = btn.dataset.date;
+          document.getElementById('quick-create-modal').classList.remove('hidden');
+        });
+      });
+    }
+
+    document.getElementById('quick-create-cancel').addEventListener('click', () => {
+      document.getElementById('quick-create-modal').classList.add('hidden');
+    });
+
+    document.getElementById('quick-create-confirm').addEventListener('click', async () => {
+      const titre = document.getElementById('quick-create-titre').value.trim();
+      const date_seance = document.getElementById('quick-create-modal').dataset.date;
+      if (!titre) { alert('Titre requis.'); return; }
+      const { data, error } = await supabaseClient.from('seances').insert({
+        equipe_id: equipeActive, type_seance: 'collective', titre, date_seance
+      }).select().single();
+      if (error) { alert('Erreur : ' + error.message); return; }
+      window.location.href = `admin-seance-detail.html?id=${data.id}`;
+    });
+
+    document.getElementById('dup-semaine-btn').addEventListener('click', async () => {
+      const status = document.getElementById('dup-status');
+      const dimanche = new Date(lundiSemaine); dimanche.setDate(dimanche.getDate() + 6);
+      const { data: seances } = await supabaseClient
+        .from('seances')
+        .select('*')
+        .eq('equipe_id', equipeActive)
+        .eq('type_seance', 'collective')
+        .gte('date_seance', toISODate(lundiSemaine))
+        .lte('date_seance', toISODate(dimanche));
+
+      if (!seances || !seances.length) { status.textContent = 'Aucune séance cette semaine à dupliquer.'; return; }
+      if (!confirm(`Dupliquer ${seances.length} séance(s) vers la semaine suivante (avec leurs exercices) ?`)) return;
+
+      status.textContent = 'Duplication en cours...';
+      for (const s of seances) {
+        const nouvelleDate = new Date(s.date_seance);
+        nouvelleDate.setDate(nouvelleDate.getDate() + 7);
+        const { data: created, error } = await supabaseClient.from('seances').insert({
+          equipe_id: s.equipe_id, type_seance: 'collective', titre: s.titre,
+          date_seance: toISODate(nouvelleDate), heure_debut: s.heure_debut, duree_prevue_min: s.duree_prevue_min
+        }).select().single();
+        if (error) continue;
+        const { data: exercices } = await supabaseClient.from('seance_exercices').select('*').eq('seance_id', s.id);
+        if (exercices && exercices.length) {
+          const payload = exercices.map(ex => { const { id, created_at, seance_id, ...rest } = ex; return { ...rest, seance_id: created.id }; });
+          await supabaseClient.from('seance_exercices').insert(payload);
+        }
+      }
+      status.textContent = `${seances.length} séance(s) dupliquée(s) vers la semaine suivante ✓`;
+    });
+
+    (async function init() {
+      await loadEquipes();
+      if (equipeActive) { equipeSelect.value = equipeActive; loadSemaine(); }
+    })();
+  </script>
+
+</body>
+</html>
