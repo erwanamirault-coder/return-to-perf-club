@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F4CA9">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon-32.png">
+<title>Détail séance — Admin — Erwan Amirault</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { brand: { black: '#000000', white: '#FFFFFF', blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } } },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)]/95 backdrop-blur flex items-center justify-between px-6 sm:px-10 py-4 border-b border-[color:var(--border)]">
+    <a href="admin-equipe.html" class="flex items-center gap-3">
+      <img src="logo.png" alt="Erwan Amirault" class="h-7 w-auto">
+      <div class="leading-tight">
+        <p class="font-heading uppercase font-bold text-sm tracking-wide">Return To Perf</p>
+        <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-50)]">Détail séance</p>
+      </div>
+    </a>
+    <a href="admin-equipe.html" class="text-sm text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">← Mon équipe</a>
+  </header>
+
+  <main class="px-6 py-10 max-w-2xl mx-auto">
+
+    <div id="seance-header" class="mb-6"></div>
+
+    <p class="text-[10px] text-[color:var(--fg-40)] mb-1.5">💡 Clique sur un exercice déjà ajouté ci-dessous pour le modifier.</p>
+    <div id="existing-list" class="flex flex-col gap-2 mb-4"></div>
+
+    <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5">
+
+      <div class="flex flex-col sm:flex-row gap-1.5 mb-2">
+        <input type="text" placeholder="Nom de l'exercice" id="ex-exercice" class="flex-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <button type="button" id="open-bank-picker-btn" class="shrink-0 px-3 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] text-xs font-semibold hover:bg-brand-blue/5 transition-colors">🎥 Choisir dans ma banque</button>
+      </div>
+      <p class="text-[10px] text-[color:var(--fg-40)] mb-3">💡 Remplit automatiquement le nom et le lien vidéo.</p>
+
+      <div class="mb-3">
+        <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold mb-1.5">Séries</label>
+        <div class="grid grid-cols-3 gap-2">
+          <input type="number" placeholder="Séries" id="ex-series" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <input type="text" placeholder="Répétitions" id="ex-reps" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <input type="text" placeholder="Charge" id="ex-charge" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <input type="text" placeholder="Temps de repos" id="ex-repos" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <input type="text" placeholder="RPE" id="ex-rpe" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      </div>
+
+      <div class="mb-2">
+        <input type="text" placeholder="Tempo" id="ex-tempo" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      </div>
+
+      <div class="mb-3">
+        <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold mb-1">🔗 Lien vidéo</label>
+        <input type="text" placeholder="https://..." id="ex-video" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      </div>
+
+      <div class="mb-3">
+        <textarea placeholder="Explication de l'exercice — consignes, points d'attention..." rows="2" id="ex-description" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></textarea>
+      </div>
+
+      <div class="flex items-center gap-3 flex-wrap">
+        <button id="save-exercise-btn" class="text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium" data-editing-id="">
+          + Ajouter cet exercice
+        </button>
+        <button id="cancel-edit-btn" class="hidden text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">
+          Annuler la modification
+        </button>
+        <span id="save-confirm" class="hidden text-xs text-[color:var(--accent)] font-medium">Enregistré ✓</span>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script src="supabase-config.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const seanceId = params.get('id');
+
+    function escapeHtml(s) {
+      return (s || '').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    const btn = document.getElementById('save-exercise-btn');
+    const existingList = document.getElementById('existing-list');
+
+    async function loadSeanceHeader() {
+      const { data: seance } = await supabaseClient.from('seances').select('*').eq('id', seanceId).maybeSingle();
+      if (!seance) { document.getElementById('seance-header').innerHTML = `<p class="text-sm text-red-500">Séance introuvable.</p>`; return; }
+      const badge = seance.type_seance === 'collective'
+        ? `<span class="text-[10px] font-bold uppercase text-brand-blue-dark bg-brand-blue/10 px-2 py-1 rounded-full">Groupe</span>`
+        : `<span class="text-[10px] font-bold uppercase text-amber-700 bg-amber-50 px-2 py-1 rounded-full">Indiv.</span>`;
+      document.getElementById('seance-header').innerHTML = `
+        <div class="flex items-center gap-2 mb-1">${badge}<span class="text-xs text-[color:var(--fg-50)]">${new Date(seance.date_seance).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span></div>
+        <h1 class="font-heading uppercase text-2xl font-bold leading-tight">${escapeHtml(seance.titre)}</h1>
+      `;
+    }
+
+    async function loadExercices() {
+      const { data } = await supabaseClient.from('seance_exercices').select('*').eq('seance_id', seanceId).order('ordre', { ascending: true });
+      const rows = data || [];
+      existingList.innerHTML = rows.map(ex => `
+        <div class="exercice-card rounded-lg border border-[color:var(--border)] p-3 flex items-center justify-between gap-3 cursor-pointer hover:border-brand-blue transition-colors" data-id="${ex.id}">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold truncate">${escapeHtml(ex.exercice)}</p>
+            <p class="text-xs text-[color:var(--fg-50)] truncate">${ex.series || ''}${ex.series ? ' x ' : ''}${escapeHtml(ex.repetitions || '')}${ex.charge ? ' · ' + escapeHtml(ex.charge) : ''}${ex.lien_video ? ' · 🎥' : ''}</p>
+          </div>
+          <button class="delete-ex-btn text-[color:var(--fg-40)] hover:text-red-500 shrink-0 px-2" data-id="${ex.id}">✕</button>
+        </div>
+      `).join('');
+
+      existingList.querySelectorAll('.exercice-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+          if (e.target.closest('.delete-ex-btn')) return;
+          const ex = rows.find(r => r.id === card.dataset.id);
+          fillForm(ex);
+        });
+      });
+      existingList.querySelectorAll('.delete-ex-btn').forEach(delBtn => {
+        delBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          if (!confirm('Supprimer cet exercice ?')) return;
+          await supabaseClient.from('seance_exercices').delete().eq('id', delBtn.dataset.id);
+          loadExercices();
+        });
+      });
+    }
+
+    function fillForm(ex) {
+      document.getElementById('ex-exercice').value = ex.exercice || '';
+      document.getElementById('ex-series').value = ex.series || '';
+      document.getElementById('ex-reps').value = ex.repetitions || '';
+      document.getElementById('ex-charge').value = ex.charge || '';
+      document.getElementById('ex-repos').value = ex.temps_repos || '';
+      document.getElementById('ex-rpe').value = ex.rpe || '';
+      document.getElementById('ex-tempo').value = ex.tempo || '';
+      document.getElementById('ex-video').value = ex.lien_video || '';
+      document.getElementById('ex-description').value = ex.description || '';
+      btn.dataset.editingId = ex.id;
+      btn.textContent = 'Mettre à jour cet exercice';
+      document.getElementById('cancel-edit-btn').classList.remove('hidden');
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    function resetForm() {
+      ['ex-exercice','ex-series','ex-reps','ex-charge','ex-repos','ex-rpe','ex-tempo','ex-video','ex-description'].forEach(id => document.getElementById(id).value = '');
+      btn.dataset.editingId = '';
+      btn.textContent = '+ Ajouter cet exercice';
+      document.getElementById('cancel-edit-btn').classList.add('hidden');
+    }
+
+    document.getElementById('cancel-edit-btn').addEventListener('click', resetForm);
+
+    btn.addEventListener('click', async () => {
+      const exercice = document.getElementById('ex-exercice').value.trim();
+      if (!exercice) { alert('Le nom de l\'exercice est requis.'); return; }
+
+      const payload = {
+        seance_id: seanceId,
+        exercice,
+        series: document.getElementById('ex-series').value || null,
+        repetitions: document.getElementById('ex-reps').value.trim() || null,
+        charge: document.getElementById('ex-charge').value.trim() || null,
+        temps_repos: document.getElementById('ex-repos').value.trim() || null,
+        rpe: document.getElementById('ex-rpe').value.trim() || null,
+        tempo: document.getElementById('ex-tempo').value.trim() || null,
+        lien_video: document.getElementById('ex-video').value.trim() || null,
+        description: document.getElementById('ex-description').value.trim() || null
+      };
+
+      const editingId = btn.dataset.editingId;
+      let result;
+      if (editingId) {
+        result = await supabaseClient.from('seance_exercices').update(payload).eq('id', editingId);
+      } else {
+        const { data: existing } = await supabaseClient.from('seance_exercices').select('id').eq('seance_id', seanceId);
+        payload.ordre = (existing || []).length;
+        result = await supabaseClient.from('seance_exercices').insert(payload);
+      }
+
+      if (result.error) { alert('Erreur : ' + result.error.message); return; }
+
+      const confirmEl = document.getElementById('save-confirm');
+      confirmEl.classList.remove('hidden');
+      setTimeout(() => confirmEl.classList.add('hidden'), 2000);
+
+      resetForm();
+      loadExercices();
+    });
+
+    (async function init() {
+      if (!seanceId) { document.getElementById('seance-header').innerHTML = `<p class="text-sm text-red-500">Aucune séance sélectionnée.</p>`; return; }
+      await loadSeanceHeader();
+      await loadExercices();
+    })();
+
+    // Banque d'exercices (même système que pour les clients classiques)
+    let bankExercicesCache = null;
+
+    document.getElementById('open-bank-picker-btn').addEventListener('click', async () => {
+      document.getElementById('bank-picker-panel').classList.remove('hidden');
+      document.getElementById('bank-picker-search').value = '';
+      if (!bankExercicesCache) {
+        const { data } = await supabaseClient.from('banque_exercices').select('*').order('categorie', { ascending: true }).order('nom', { ascending: true });
+        bankExercicesCache = data || [];
+      }
+      renderBankPicker('');
+    });
+
+    function renderBankPicker(term) {
+      const list = document.getElementById('bank-picker-list');
+      const filtered = term
+        ? bankExercicesCache.filter(e => e.nom.toLowerCase().includes(term) || e.categorie.toLowerCase().includes(term))
+        : bankExercicesCache;
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<p class="text-xs text-[color:var(--fg-50)]">Aucun résultat. <a href="admin-banque-exercices.html" target="_blank" class="text-brand-blue hover:underline">Ajoute des vidéos ici</a>.</p>`;
+        return;
+      }
+
+      const byCategorie = {};
+      const order = [];
+      filtered.forEach(e => {
+        if (!byCategorie[e.categorie]) { byCategorie[e.categorie] = []; order.push(e.categorie); }
+        byCategorie[e.categorie].push(e);
+      });
+
+      list.innerHTML = order.map(cat => `
+        <div>
+          <p class="text-[11px] uppercase tracking-widest font-semibold text-brand-blue mb-1.5">${escapeHtml(cat)}</p>
+          <div class="flex flex-col gap-1">
+            ${byCategorie[cat].map(e => `
+              <button type="button" data-id="${e.id}" class="pick-exercice-btn text-left text-sm px-2.5 py-2 rounded-lg hover:bg-[color:var(--card)] transition-colors">${escapeHtml(e.nom)}</button>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.pick-exercice-btn').forEach(pickBtn => {
+        pickBtn.addEventListener('click', () => {
+          const ex = bankExercicesCache.find(e => String(e.id) === pickBtn.dataset.id);
+          if (!ex) return;
+          const exerciceInput = document.getElementById('ex-exercice');
+          const videoInput = document.getElementById('ex-video');
+          if (!exerciceInput.value.trim()) exerciceInput.value = ex.nom;
+          videoInput.value = ex.lien_video;
+          document.getElementById('bank-picker-panel').classList.add('hidden');
+        });
+      });
+    }
+
+    document.getElementById('bank-picker-search').addEventListener('input', (e) => renderBankPicker(e.target.value.trim().toLowerCase()));
+    document.getElementById('close-bank-picker-btn').addEventListener('click', () => document.getElementById('bank-picker-panel').classList.add('hidden'));
+  </script>
+  <div id="bank-picker-panel" class="hidden fixed inset-0 z-50 bg-black/50 flex items-start sm:items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-[color:var(--bg)] rounded-2xl border border-[color:var(--border)] max-w-lg w-full p-6 my-8 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-heading uppercase text-lg font-bold">🎥 Choisir dans la banque</h2>
+        <button type="button" id="close-bank-picker-btn" class="text-[color:var(--fg-50)] hover:text-[color:var(--fg)]">✕</button>
+      </div>
+      <input type="text" id="bank-picker-search" placeholder="Rechercher un exercice..." class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-4">
+      <div id="bank-picker-list" class="flex-1 overflow-y-auto flex flex-col gap-4"></div>
+      <a href="admin-banque-exercices.html" target="_blank" class="text-xs text-brand-blue hover:underline mt-4">Gérer la banque d'exercices →</a>
+    </div>
+  </div>
+
+</body>
+</html>
