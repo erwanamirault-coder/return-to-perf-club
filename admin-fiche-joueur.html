@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F4CA9">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon-32.png">
+<title>Fiche joueur — Admin — Erwan Amirault</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { brand: { black: '#000000', white: '#FFFFFF', blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } } },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)]/95 backdrop-blur flex items-center justify-between px-6 sm:px-10 py-4 border-b border-[color:var(--border)]">
+    <a href="admin-equipe.html" class="flex items-center gap-3">
+      <img src="logo.png" alt="Erwan Amirault" class="h-7 w-auto">
+      <div class="leading-tight">
+        <p class="font-heading uppercase font-bold text-sm tracking-wide">Return To Perf</p>
+        <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-50)]">Fiche joueur</p>
+      </div>
+    </a>
+    <a href="admin-equipe.html" class="text-sm text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">← Mon équipe</a>
+  </header>
+
+  <main class="px-6 py-10 max-w-2xl mx-auto">
+
+    <div id="loading-state" class="text-center py-10 text-sm text-[color:var(--fg-50)]">Chargement...</div>
+
+    <div id="content" class="hidden">
+
+      <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div>
+          <h1 id="joueur-nom-titre" class="font-heading uppercase text-2xl font-bold leading-tight"></h1>
+          <p class="text-sm text-[color:var(--fg-60)] mt-1">Informations, statut et suivi des blessures.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <a id="lien-stats" href="#" class="text-sm px-4 py-2 rounded-lg border border-brand-blue-dark text-[color:var(--accent)] hover:bg-brand-blue/5 transition-colors font-medium">Voir ses stats →</a>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5 mb-6">
+        <h2 class="font-heading uppercase text-[11px] font-bold text-[color:var(--fg-50)] tracking-widest mb-3">Informations</h2>
+
+        <div class="grid sm:grid-cols-2 gap-2 mb-2">
+          <div>
+            <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Prénom</label>
+            <input type="text" id="f-prenom" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Nom</label>
+            <input type="text" id="f-nom" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Email</label>
+          <input type="email" id="f-email" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          <p class="text-[10px] text-[color:var(--fg-40)] mt-1">Doit correspondre à l'email utilisé par le joueur pour créer son compte.</p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-2 mb-2">
+          <div>
+            <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Poste</label>
+            <input type="text" id="f-poste" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Date de naissance</label>
+            <input type="date" id="f-naissance" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-3 gap-2 mb-2">
+          <div>
+            <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Poids (kg)</label>
+            <input type="number" step="0.1" id="f-poids" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Taille (cm)</label>
+            <input type="number" id="f-taille" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Statut</label>
+            <select id="f-statut" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <option value="apte">Apte</option>
+              <option value="amenage">Aménagé</option>
+              <option value="indisponible">Indisponible</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 mt-3">
+          <button id="save-joueur-btn" class="text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-semibold">Enregistrer</button>
+          <span id="save-status" class="text-xs text-[color:var(--fg-50)]"></span>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5 mb-6">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-heading uppercase text-[11px] font-bold text-[color:var(--fg-50)] tracking-widest">Blessures</h2>
+          <button id="new-blessure-btn" class="text-xs text-[color:var(--accent)] font-semibold hover:underline">+ Déclarer une blessure</button>
+        </div>
+
+        <div id="new-blessure-form" class="hidden grid sm:grid-cols-2 gap-2 mb-4 pb-4 border-b border-[color:var(--border)]">
+          <div>
+            <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Zone touchée</label>
+            <input type="text" id="b-zone" placeholder="ex: genou droit" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Gravité</label>
+            <select id="b-gravite" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <option value="legere">Légère</option>
+              <option value="moderee">Modérée</option>
+              <option value="severe">Sévère</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Date de début</label>
+            <input type="date" id="b-date-debut" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Retour estimé</label>
+            <input type="date" id="b-date-retour" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div>
+            <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Mécanisme</label>
+            <select id="b-mecanisme" class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+              <option value="contact">Contact</option>
+              <option value="non-contact">Non-contact</option>
+              <option value="surcharge">Surcharge</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Notes</label>
+            <input type="text" id="b-notes" placeholder="Détails, circonstances..." class="w-full mt-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+          </div>
+          <div class="sm:col-span-2 flex items-center gap-2 mt-1">
+            <button id="save-blessure-btn" class="text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-semibold" data-editing-id="">Enregistrer la blessure</button>
+            <button id="cancel-blessure-btn" class="text-xs text-[color:var(--fg-50)] hover:text-[color:var(--fg)] transition-colors underline underline-offset-4">Annuler</button>
+          </div>
+        </div>
+
+        <div id="blessures-list" class="flex flex-col gap-2"></div>
+        <p id="blessures-empty" class="hidden text-sm text-[color:var(--fg-40)] text-center py-4">Aucune blessure enregistrée.</p>
+      </div>
+
+      <div class="rounded-2xl border border-red-200 bg-red-50/40 p-4 sm:p-5">
+        <h2 class="font-heading uppercase text-[11px] font-bold text-red-500 tracking-widest mb-2">Zone sensible</h2>
+        <p class="text-xs text-[color:var(--fg-60)] mb-3">Supprime définitivement ce joueur, ses séances individuelles, ses tests, son wellness et son historique. Irréversible.</p>
+        <button id="delete-joueur-btn" class="text-sm px-4 py-2 rounded-lg border border-red-300 text-red-500 hover:bg-red-50 transition-colors font-semibold">Supprimer ce joueur</button>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const joueurId = params.get('id');
+
+    function escapeHtml(s) {
+      return (s || '').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    if (!joueurId) window.location.href = 'admin-equipe.html';
+
+    (async function load() {
+      const { data: joueur, error } = await supabaseClient.from('joueurs').select('*').eq('id', joueurId).maybeSingle();
+      if (error || !joueur) { window.location.href = 'admin-equipe.html'; return; }
+
+      document.getElementById('joueur-nom-titre').textContent = `${joueur.prenom} ${joueur.nom}`;
+      document.getElementById('lien-stats').href = `fiche-joueur.html?id=${joueur.id}`;
+      document.getElementById('f-prenom').value = joueur.prenom || '';
+      document.getElementById('f-nom').value = joueur.nom || '';
+      document.getElementById('f-email').value = joueur.email || '';
+      document.getElementById('f-poste').value = joueur.poste || '';
+      document.getElementById('f-naissance').value = joueur.date_naissance || '';
+      document.getElementById('f-poids').value = joueur.poids_reference || '';
+      document.getElementById('f-taille').value = joueur.taille_cm || '';
+      document.getElementById('f-statut').value = joueur.statut_disponibilite || 'apte';
+
+      document.getElementById('loading-state').classList.add('hidden');
+      document.getElementById('content').classList.remove('hidden');
+
+      loadBlessures();
+    })();
+
+    document.getElementById('save-joueur-btn').addEventListener('click', async () => {
+      const status = document.getElementById('save-status');
+      const payload = {
+        prenom: document.getElementById('f-prenom').value.trim(),
+        nom: document.getElementById('f-nom').value.trim(),
+        email: document.getElementById('f-email').value.trim().toLowerCase() || null,
+        poste: document.getElementById('f-poste').value.trim() || null,
+        date_naissance: document.getElementById('f-naissance').value || null,
+        poids_reference: document.getElementById('f-poids').value || null,
+        taille_cm: document.getElementById('f-taille').value || null,
+        statut_disponibilite: document.getElementById('f-statut').value
+      };
+      if (!payload.prenom || !payload.nom) { status.textContent = 'Prénom et nom requis.'; return; }
+      status.textContent = 'Enregistrement...';
+      const { error } = await supabaseClient.from('joueurs').update(payload).eq('id', joueurId);
+      if (error) { status.textContent = 'Erreur : ' + error.message; return; }
+      status.textContent = 'Enregistré ✓';
+      document.getElementById('joueur-nom-titre').textContent = `${payload.prenom} ${payload.nom}`;
+      setTimeout(() => status.textContent = '', 2000);
+    });
+
+    document.getElementById('delete-joueur-btn').addEventListener('click', async () => {
+      const nom = document.getElementById('joueur-nom-titre').textContent;
+      if (!confirm(`Supprimer définitivement ${nom} ? Cette action supprime aussi ses séances individuelles, tests et historique. Irréversible.`)) return;
+      const { error } = await supabaseClient.from('joueurs').delete().eq('id', joueurId);
+      if (error) { alert('Erreur : ' + error.message); return; }
+      window.location.href = 'admin-equipe.html';
+    });
+
+    document.getElementById('new-blessure-btn').addEventListener('click', () => {
+      resetBlessureForm();
+      document.getElementById('new-blessure-form').classList.remove('hidden');
+    });
+    document.getElementById('cancel-blessure-btn').addEventListener('click', () => {
+      document.getElementById('new-blessure-form').classList.add('hidden');
+    });
+
+    function resetBlessureForm() {
+      document.getElementById('b-zone').value = '';
+      document.getElementById('b-gravite').value = 'legere';
+      document.getElementById('b-date-debut').value = '';
+      document.getElementById('b-date-retour').value = '';
+      document.getElementById('b-mecanisme').value = 'contact';
+      document.getElementById('b-notes').value = '';
+      document.getElementById('save-blessure-btn').dataset.editingId = '';
+    }
+
+    document.getElementById('save-blessure-btn').addEventListener('click', async () => {
+      const zone = document.getElementById('b-zone').value.trim();
+      const date_debut = document.getElementById('b-date-debut').value;
+      if (!zone || !date_debut) { alert('Zone et date de début requises.'); return; }
+
+      const payload = {
+        joueur_id: joueurId,
+        zone,
+        gravite: document.getElementById('b-gravite').value,
+        date_debut,
+        date_retour_estimee: document.getElementById('b-date-retour').value || null,
+        mecanisme: document.getElementById('b-mecanisme').value,
+        notes: document.getElementById('b-notes').value.trim() || null
+      };
+
+      const editingId = document.getElementById('save-blessure-btn').dataset.editingId;
+      const result = editingId
+        ? await supabaseClient.from('blessures').update(payload).eq('id', editingId)
+        : await supabaseClient.from('blessures').insert(payload);
+
+      if (result.error) { alert('Erreur : ' + result.error.message); return; }
+      document.getElementById('new-blessure-form').classList.add('hidden');
+      loadBlessures();
+    });
+
+    async function loadBlessures() {
+      const { data } = await supabaseClient.from('blessures').select('*').eq('joueur_id', joueurId).order('date_debut', { ascending: false });
+      const rows = data || [];
+      document.getElementById('blessures-empty').classList.toggle('hidden', rows.length > 0);
+
+      const graviteStyle = { legere: ['bg-blue-50','text-blue-600'], moderee: ['bg-amber-50','text-amber-600'], severe: ['bg-red-50','text-red-600'] };
+
+      document.getElementById('blessures-list').innerHTML = rows.map(b => {
+        const [bg, text] = graviteStyle[b.gravite] || graviteStyle.legere;
+        const enCours = !b.date_retour_reelle;
+        return `
+          <div class="rounded-lg border border-[color:var(--border)] p-3">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <span class="text-sm font-semibold">${escapeHtml(b.zone)}</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-bold uppercase px-2 py-1 rounded-full ${bg} ${text}">${b.gravite}</span>
+                ${enCours ? `<span class="text-[10px] font-bold uppercase px-2 py-1 rounded-full bg-red-50 text-red-600">En cours</span>` : `<span class="text-[10px] font-bold uppercase px-2 py-1 rounded-full bg-green-50 text-green-600">Terminée</span>`}
+              </div>
+            </div>
+            <p class="text-xs text-[color:var(--fg-50)]">Depuis le ${new Date(b.date_debut).toLocaleDateString('fr-FR')}${b.date_retour_estimee ? ' · retour estimé ' + new Date(b.date_retour_estimee).toLocaleDateString('fr-FR') : ''}</p>
+            ${b.notes ? `<p class="text-xs text-[color:var(--fg-50)] mt-1">${escapeHtml(b.notes)}</p>` : ''}
+            <div class="flex items-center gap-2 mt-2">
+              ${enCours ? `<button class="cloturer-blessure-btn text-[11px] px-2.5 py-1 rounded-lg border border-[color:var(--border-strong)] hover:border-brand-blue transition-colors" data-id="${b.id}">Marquer comme guéri</button>` : ''}
+              <button class="delete-blessure-btn text-[11px] px-2.5 py-1 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors" data-id="${b.id}">Supprimer</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.cloturer-blessure-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          await supabaseClient.from('blessures').update({ date_retour_reelle: new Date().toISOString().slice(0,10) }).eq('id', btn.dataset.id);
+          loadBlessures();
+        });
+      });
+      document.querySelectorAll('.delete-blessure-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Supprimer cette blessure de l\'historique ?')) return;
+          await supabaseClient.from('blessures').delete().eq('id', btn.dataset.id);
+          loadBlessures();
+        });
+      });
+    }
+  </script>
+
+</body>
+</html>
