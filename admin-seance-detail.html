@@ -47,10 +47,28 @@
 
     <div id="seance-header" class="mb-6"></div>
 
-    <p class="text-[10px] text-[color:var(--fg-40)] mb-1.5">💡 Clique sur un exercice déjà ajouté ci-dessous pour le modifier.</p>
+    <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5 mb-6">
+      <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold mb-1.5">Commentaire sur la composition de cette séance</label>
+      <textarea id="commentaire-composition" placeholder="Ex : cette semaine on insiste sur le haut du corps, garde de la marge sur le squat..." rows="2" class="w-full px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></textarea>
+      <button id="save-commentaire-btn" class="mt-2 text-sm px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white font-medium">Enregistrer le commentaire</button>
+      <span id="commentaire-confirm" class="hidden text-xs text-[color:var(--accent)] font-medium ml-2">Enregistré ✓</span>
+    </div>
+
+    <p class="text-[10px] text-[color:var(--fg-40)] mb-1.5">💡 Glisse la poignée ⣿ pour réordonner les exercices de ce jour.</p>
     <div id="existing-list" class="flex flex-col gap-2 mb-4"></div>
 
     <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5">
+
+      <div class="flex items-center gap-4 mb-4">
+        <label class="flex items-center gap-2 text-sm cursor-pointer">
+          <input type="radio" name="ex-categorie" value="echauffement" id="cat-echauffement" class="accent-orange-500">
+          🔥 Échauffement
+        </label>
+        <label class="flex items-center gap-2 text-sm cursor-pointer">
+          <input type="radio" name="ex-categorie" value="seance" id="cat-seance" checked class="accent-brand-blue">
+          🏋️ Séance
+        </label>
+      </div>
 
       <div class="flex flex-col sm:flex-row gap-1.5 mb-2">
         <input type="text" placeholder="Nom de l'exercice" id="ex-exercice" class="flex-1 px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
@@ -59,12 +77,17 @@
       <p class="text-[10px] text-[color:var(--fg-40)] mb-3">💡 Remplit automatiquement le nom et le lien vidéo.</p>
 
       <div class="mb-3">
-        <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold mb-1.5">Séries</label>
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="block text-[10px] uppercase text-[color:var(--fg-40)] font-semibold">Séries</label>
+          <button type="button" id="open-record-picker-btn" class="hidden text-[10px] text-brand-blue hover:underline font-semibold">📊 Calculer depuis un record (%1RM)</button>
+        </div>
         <div class="grid grid-cols-3 gap-2">
           <input type="number" placeholder="Séries" id="ex-series" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
           <input type="text" placeholder="Répétitions" id="ex-reps" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
           <input type="text" placeholder="Charge" id="ex-charge" class="px-3 py-2 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
         </div>
+        <button type="button" id="toggle-sets-avances-btn" class="text-[11px] text-brand-blue hover:underline mt-1.5">+ Charge différente à chaque série</button>
+        <div id="sets-avances-container" class="hidden mt-2 flex flex-col gap-1.5"></div>
       </div>
 
       <div class="grid grid-cols-2 gap-2 mb-2">
@@ -110,10 +133,13 @@
 
     const btn = document.getElementById('save-exercise-btn');
     const existingList = document.getElementById('existing-list');
+    let seanceCourante = null;
+    let setsAvances = null;
 
     async function loadSeanceHeader() {
       const { data: seance } = await supabaseClient.from('seances').select('*').eq('id', seanceId).maybeSingle();
       if (!seance) { document.getElementById('seance-header').innerHTML = `<p class="text-sm text-red-500">Séance introuvable.</p>`; return; }
+      seanceCourante = seance;
       const badge = seance.type_seance === 'collective'
         ? `<span class="text-[10px] font-bold uppercase text-brand-blue-dark bg-brand-blue/10 px-2 py-1 rounded-full">Groupe</span>`
         : `<span class="text-[10px] font-bold uppercase text-amber-700 bg-amber-50 px-2 py-1 rounded-full">Indiv.</span>`;
@@ -121,24 +147,50 @@
         <div class="flex items-center gap-2 mb-1">${badge}<span class="text-xs text-[color:var(--fg-50)]">${new Date(seance.date_seance).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span></div>
         <h1 class="font-heading uppercase text-2xl font-bold leading-tight">${escapeHtml(seance.titre)}</h1>
       `;
+      document.getElementById('commentaire-composition').value = seance.commentaire_composition || '';
+
+      // Le calcul depuis un record n'a de sens que pour une séance individuelle (on connaît le joueur)
+      if (seance.type_seance === 'individuelle' && seance.joueur_id) {
+        document.getElementById('open-record-picker-btn').classList.remove('hidden');
+      }
     }
+
+    document.getElementById('save-commentaire-btn').addEventListener('click', async () => {
+      const commentaire_composition = document.getElementById('commentaire-composition').value.trim() || null;
+      await supabaseClient.from('seances').update({ commentaire_composition }).eq('id', seanceId);
+      const confirmEl = document.getElementById('commentaire-confirm');
+      confirmEl.classList.remove('hidden');
+      setTimeout(() => confirmEl.classList.add('hidden'), 2000);
+    });
 
     async function loadExercices() {
       const { data } = await supabaseClient.from('seance_exercices').select('*').eq('seance_id', seanceId).order('ordre', { ascending: true });
       const rows = data || [];
-      existingList.innerHTML = rows.map(ex => `
-        <div class="exercice-card rounded-lg border border-[color:var(--border)] p-3 flex items-center justify-between gap-3 cursor-pointer hover:border-brand-blue transition-colors" data-id="${ex.id}">
-          <div class="min-w-0">
-            <p class="text-sm font-semibold truncate">${escapeHtml(ex.exercice)}</p>
-            <p class="text-xs text-[color:var(--fg-50)] truncate">${ex.series || ''}${ex.series ? ' x ' : ''}${escapeHtml(ex.repetitions || '')}${ex.charge ? ' · ' + escapeHtml(ex.charge) : ''}${ex.lien_video ? ' · 🎥' : ''}</p>
-          </div>
-          <button class="delete-ex-btn text-[color:var(--fg-40)] hover:text-red-500 shrink-0 px-2" data-id="${ex.id}">✕</button>
-        </div>
-      `).join('');
 
-      existingList.querySelectorAll('.exercice-card').forEach(card => {
-        card.addEventListener('click', (e) => {
-          if (e.target.closest('.delete-ex-btn')) return;
+      function renderGroupe(items, titre) {
+        if (!items.length) return '';
+        return `
+          <p class="text-[10px] uppercase font-bold text-[color:var(--fg-40)] tracking-widest mt-3 mb-1.5">${titre}</p>
+          ${items.map(ex => `
+            <div class="exercice-card rounded-lg border border-[color:var(--border)] p-3 flex items-center gap-2 hover:border-brand-blue transition-colors" data-id="${ex.id}" draggable="true">
+              <span class="drag-handle cursor-grab text-[color:var(--fg-30)] shrink-0 select-none" title="Glisser pour réordonner">⣿</span>
+              <div class="min-w-0 flex-1 cursor-pointer edit-zone">
+                <p class="text-sm font-semibold truncate">${escapeHtml(ex.exercice)}</p>
+                <p class="text-xs text-[color:var(--fg-50)] truncate">${ex.sets ? 'Charges variables' : (ex.series || '') + (ex.series ? ' x ' : '') + escapeHtml(ex.repetitions || '')}${ex.charge && !ex.sets ? ' · ' + escapeHtml(ex.charge) : ''}${ex.lien_video ? ' · 🎥' : ''}</p>
+              </div>
+              <button class="delete-ex-btn text-[color:var(--fg-40)] hover:text-red-500 shrink-0 px-2" data-id="${ex.id}">✕</button>
+            </div>
+          `).join('')}
+        `;
+      }
+
+      const echauffement = rows.filter(r => r.categorie === 'echauffement');
+      const seanceEx = rows.filter(r => r.categorie !== 'echauffement');
+      existingList.innerHTML = renderGroupe(echauffement, '🔥 Échauffement') + renderGroupe(seanceEx, '🏋️ Séance');
+
+      existingList.querySelectorAll('.edit-zone').forEach(zone => {
+        zone.addEventListener('click', () => {
+          const card = zone.closest('.exercice-card');
           const ex = rows.find(r => r.id === card.dataset.id);
           fillForm(ex);
         });
@@ -148,6 +200,24 @@
           e.stopPropagation();
           if (!confirm('Supprimer cet exercice ?')) return;
           await supabaseClient.from('seance_exercices').delete().eq('id', delBtn.dataset.id);
+          loadExercices();
+        });
+      });
+
+      // Glisser-déposer pour réordonner (au sein d'une même section)
+      let dragged = null;
+      existingList.querySelectorAll('.exercice-card').forEach(card => {
+        card.addEventListener('dragstart', () => { dragged = card; card.classList.add('opacity-40'); });
+        card.addEventListener('dragend', () => { card.classList.remove('opacity-40'); });
+        card.addEventListener('dragover', (e) => e.preventDefault());
+        card.addEventListener('drop', async (e) => {
+          e.preventDefault();
+          if (!dragged || dragged === card) return;
+          card.parentNode.insertBefore(dragged, card);
+          const idsEnOrdre = Array.from(existingList.querySelectorAll('.exercice-card')).map(c => c.dataset.id);
+          for (let i = 0; i < idsEnOrdre.length; i++) {
+            await supabaseClient.from('seance_exercices').update({ ordre: i }).eq('id', idsEnOrdre[i]);
+          }
           loadExercices();
         });
       });
@@ -163,6 +233,18 @@
       document.getElementById('ex-tempo').value = ex.tempo || '';
       document.getElementById('ex-video').value = ex.lien_video || '';
       document.getElementById('ex-description').value = ex.description || '';
+      document.getElementById(ex.categorie === 'echauffement' ? 'cat-echauffement' : 'cat-seance').checked = true;
+
+      if (ex.sets && Array.isArray(ex.sets)) {
+        setsAvances = ex.sets;
+        renderSetsAvances();
+        document.getElementById('sets-avances-container').classList.remove('hidden');
+      } else {
+        setsAvances = null;
+        document.getElementById('sets-avances-container').classList.add('hidden');
+        document.getElementById('sets-avances-container').innerHTML = '';
+      }
+
       btn.dataset.editingId = ex.id;
       btn.textContent = 'Mettre à jour cet exercice';
       document.getElementById('cancel-edit-btn').classList.remove('hidden');
@@ -171,12 +253,45 @@
 
     function resetForm() {
       ['ex-exercice','ex-series','ex-reps','ex-charge','ex-repos','ex-rpe','ex-tempo','ex-video','ex-description'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('cat-seance').checked = true;
+      setsAvances = null;
+      document.getElementById('sets-avances-container').classList.add('hidden');
+      document.getElementById('sets-avances-container').innerHTML = '';
       btn.dataset.editingId = '';
       btn.textContent = '+ Ajouter cet exercice';
       document.getElementById('cancel-edit-btn').classList.add('hidden');
     }
 
     document.getElementById('cancel-edit-btn').addEventListener('click', resetForm);
+
+    // Sets avancés (charge différente à chaque série)
+    document.getElementById('toggle-sets-avances-btn').addEventListener('click', () => {
+      const nbSeries = parseInt(document.getElementById('ex-series').value) || 3;
+      if (!setsAvances) setsAvances = Array.from({ length: nbSeries }, () => ({ reps: '', charge: '' }));
+      renderSetsAvances();
+      document.getElementById('sets-avances-container').classList.toggle('hidden');
+    });
+
+    function renderSetsAvances() {
+      const container = document.getElementById('sets-avances-container');
+      container.innerHTML = setsAvances.map((s, i) => `
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-[color:var(--fg-40)] w-12 shrink-0">Série ${i+1}</span>
+          <input type="text" placeholder="Reps" value="${escapeHtml(s.reps || '')}" data-idx="${i}" data-field="reps" class="set-avance-input flex-1 px-2 py-1.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
+          <input type="text" placeholder="Charge" value="${escapeHtml(s.charge || '')}" data-idx="${i}" data-field="charge" class="set-avance-input flex-1 px-2 py-1.5 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)] text-xs outline-none focus:border-brand-blue">
+        </div>
+      `).join('') + `<button type="button" id="add-set-avance-btn" class="text-[11px] text-brand-blue hover:underline text-left">+ Ajouter une série</button>`;
+
+      container.querySelectorAll('.set-avance-input').forEach(input => {
+        input.addEventListener('input', (e) => {
+          setsAvances[e.target.dataset.idx][e.target.dataset.field] = e.target.value;
+        });
+      });
+      document.getElementById('add-set-avance-btn').addEventListener('click', () => {
+        setsAvances.push({ reps: '', charge: '' });
+        renderSetsAvances();
+      });
+    }
 
     btn.addEventListener('click', async () => {
       const exercice = document.getElementById('ex-exercice').value.trim();
@@ -185,6 +300,7 @@
       const payload = {
         seance_id: seanceId,
         exercice,
+        categorie: document.querySelector('input[name="ex-categorie"]:checked').value,
         series: document.getElementById('ex-series').value || null,
         repetitions: document.getElementById('ex-reps').value.trim() || null,
         charge: document.getElementById('ex-charge').value.trim() || null,
@@ -192,7 +308,8 @@
         rpe: document.getElementById('ex-rpe').value.trim() || null,
         tempo: document.getElementById('ex-tempo').value.trim() || null,
         lien_video: document.getElementById('ex-video').value.trim() || null,
-        description: document.getElementById('ex-description').value.trim() || null
+        description: document.getElementById('ex-description').value.trim() || null,
+        sets: (setsAvances && !document.getElementById('sets-avances-container').classList.contains('hidden')) ? setsAvances : null
       };
 
       const editingId = btn.dataset.editingId;
@@ -278,6 +395,50 @@
 
     document.getElementById('bank-picker-search').addEventListener('input', (e) => renderBankPicker(e.target.value.trim().toLowerCase()));
     document.getElementById('close-bank-picker-btn').addEventListener('click', () => document.getElementById('bank-picker-panel').classList.add('hidden'));
+
+    // Calcul de charge depuis un record (%1RM)
+    let derniersTestsJoueur = [];
+
+    document.getElementById('open-record-picker-btn').addEventListener('click', async () => {
+      document.getElementById('record-picker-panel').classList.remove('hidden');
+      const { data } = await supabaseClient.from('tests_physiques').select('*').eq('joueur_id', seanceCourante.joueur_id).order('date_test', { ascending: false });
+      const rows = data || [];
+      const dernierParType = {};
+      rows.forEach(t => { if (!dernierParType[t.type_test]) dernierParType[t.type_test] = t; });
+      derniersTestsJoueur = Object.values(dernierParType);
+
+      const select = document.getElementById('record-mouvement-select');
+      select.innerHTML = derniersTestsJoueur.length
+        ? derniersTestsJoueur.map(t => `<option value="${t.type_test}">${t.type_test}</option>`).join('')
+        : `<option value="">Aucun test enregistré pour ce joueur</option>`;
+      updateDerniereValeur();
+    });
+
+    document.getElementById('record-mouvement-select').addEventListener('change', updateDerniereValeur);
+    document.getElementById('record-pourcentage').addEventListener('input', updateDerniereValeur);
+
+    function updateDerniereValeur() {
+      const type = document.getElementById('record-mouvement-select').value;
+      const test = derniersTestsJoueur.find(t => t.type_test === type);
+      const pourcentage = parseFloat(document.getElementById('record-pourcentage').value) || 0;
+      if (!test) { document.getElementById('record-derniere-valeur').textContent = ''; return; }
+      const charge = +(test.valeur * pourcentage / 100).toFixed(1);
+      document.getElementById('record-derniere-valeur').textContent = `Dernier test : ${test.valeur} ${test.unite} → ${pourcentage}% = ${charge} ${test.unite}`;
+    }
+
+    document.getElementById('apply-record-btn').addEventListener('click', () => {
+      const type = document.getElementById('record-mouvement-select').value;
+      const test = derniersTestsJoueur.find(t => t.type_test === type);
+      const pourcentage = parseFloat(document.getElementById('record-pourcentage').value) || 0;
+      if (!test) { alert('Sélectionne un mouvement testé.'); return; }
+      const charge = +(test.valeur * pourcentage / 100).toFixed(1);
+      document.getElementById('ex-charge').value = `${charge} ${test.unite}`;
+      document.getElementById('record-picker-panel').classList.add('hidden');
+    });
+
+    document.getElementById('close-record-picker-btn').addEventListener('click', () => {
+      document.getElementById('record-picker-panel').classList.add('hidden');
+    });
   </script>
   <div id="bank-picker-panel" class="hidden fixed inset-0 z-50 bg-black/50 flex items-start sm:items-center justify-center p-4 overflow-y-auto">
     <div class="bg-[color:var(--bg)] rounded-2xl border border-[color:var(--border)] max-w-lg w-full p-6 my-8 max-h-[85vh] flex flex-col">
@@ -288,6 +449,23 @@
       <input type="text" id="bank-picker-search" placeholder="Rechercher un exercice..." class="w-full px-3 py-2.5 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue mb-4">
       <div id="bank-picker-list" class="flex-1 overflow-y-auto flex flex-col gap-4"></div>
       <a href="admin-banque-exercices.html" target="_blank" class="text-xs text-brand-blue hover:underline mt-4">Gérer la banque d'exercices →</a>
+    </div>
+  </div>
+  <div id="record-picker-panel" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    <div class="bg-[color:var(--bg)] rounded-2xl border border-[color:var(--border)] max-w-sm w-full p-6">
+      <h2 class="font-heading uppercase text-sm font-bold mb-1">📊 Calculer depuis un record</h2>
+      <p class="text-xs text-[color:var(--fg-50)] mb-4">Charge calculée automatiquement en % du dernier test du joueur.</p>
+      <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Mouvement testé</label>
+      <select id="record-mouvement-select" class="w-full mt-1 mb-3 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <option value="">Chargement...</option>
+      </select>
+      <p id="record-derniere-valeur" class="text-xs text-[color:var(--fg-50)] mb-3"></p>
+      <label class="text-[11px] text-[color:var(--fg-50)] font-medium">Pourcentage (%1RM)</label>
+      <input type="number" id="record-pourcentage" value="75" class="w-full mt-1 mb-4 px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+      <div class="flex items-center gap-2">
+        <button id="apply-record-btn" class="flex-1 px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-sm font-semibold">Appliquer la charge</button>
+        <button id="close-record-picker-btn" class="px-4 py-2 rounded-lg border border-[color:var(--border)] text-sm">Annuler</button>
+      </div>
     </div>
   </div>
 
