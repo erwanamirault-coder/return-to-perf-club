@@ -147,10 +147,21 @@
     }
   }
 
+  const niveauStyle = {
+    'Excellent': ['bg-yellow-50', 'text-yellow-700'],
+    'Bon': ['bg-gray-100', 'text-gray-600'],
+    'Correcte': ['bg-orange-50', 'text-orange-600'],
+    'Moyen -': ['bg-amber-50', 'text-amber-700'],
+    'Insuffisant': ['bg-red-50', 'text-red-600']
+  };
+
   async function renderComparatifMouvements(equipeId, joueurActuelId, isAdmin) {
-    const { data: joueursEquipe } = await supabaseClient.from('joueurs').select('id').eq('equipe_id', equipeId);
-    const ids = (joueursEquipe || []).map(j => j.id);
+    const { data: joueursEquipe } = await supabaseClient.from('joueurs').select('id, prenom, nom').eq('equipe_id', equipeId);
+    const joueurs = joueursEquipe || [];
+    const ids = joueurs.map(j => j.id);
     if (!ids.length) { document.getElementById('mouvements-empty').classList.remove('hidden'); return; }
+    const nomParId = {};
+    joueurs.forEach(j => { nomParId[j.id] = `${j.prenom} ${j.nom}`; });
 
     const { data: tests } = await supabaseClient.from('tests_physiques').select('*').in('joueur_id', ids).order('date_test', { ascending: false });
     const rows = tests || [];
@@ -168,6 +179,13 @@
       parType[t.type_test].push(t);
     });
 
+    // Récupère le niveau (Excellent/Bon/...) de chaque test via la vue comparatif
+    let niveauParJoueurType = {};
+    if (isAdmin) {
+      const { data: compRows } = await supabaseClient.from('v_comparatif_joueur').select('*').in('joueur_id', ids);
+      (compRows || []).forEach(c => { niveauParJoueurType[c.joueur_id + '|' + c.type_test] = c.niveau; });
+    }
+
     const container = document.getElementById('mouvements-list');
     container.innerHTML = '';
 
@@ -180,14 +198,26 @@
         const sorted = [...valeurs].sort((a,b) => b.valeur - a.valeur);
         card.innerHTML = `
           <h3 class="font-heading text-sm font-bold uppercase tracking-wide mb-2">${escapeHtml(type)} <span class="text-[color:var(--fg-40)] font-normal normal-case">— moyenne ${moyenne} ${escapeHtml(unite)}</span></h3>
-          <canvas height="90"></canvas>
+          <div class="flex flex-col divide-y divide-[color:var(--border)]">
+            ${sorted.map((v, i) => {
+              const niveau = niveauParJoueurType[v.joueur_id + '|' + type];
+              const [bg, text] = niveauStyle[niveau] || ['bg-[color:var(--card)]', 'text-[color:var(--fg-40)]'];
+              return `
+                <div class="flex items-center justify-between gap-3 py-2">
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <span class="text-xs font-bold text-[color:var(--fg-40)] w-5 shrink-0">${i+1}</span>
+                    <span class="text-sm font-medium truncate">${escapeHtml(nomParId[v.joueur_id] || 'Joueur')}</span>
+                  </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-sm font-semibold text-brand-blue-dark">${v.valeur} ${escapeHtml(unite)}</span>
+                    ${niveau ? `<span class="text-[10px] font-bold px-2 py-1 rounded-full ${bg} ${text}">${escapeHtml(niveau)}</span>` : ''}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
         `;
         container.appendChild(card);
-        new Chart(card.querySelector('canvas'), {
-          type: 'bar',
-          data: { labels: sorted.map(v => v.joueur_id.slice(0,4)), datasets: [{ data: sorted.map(v => v.valeur), backgroundColor: '#2D7AED', borderRadius: 4 }] },
-          options: { plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#F1F5F9' } }, x: { grid: { display: false } } } }
-        });
       } else {
         const saValeur = valeurs.find(v => v.joueur_id === joueurActuelId);
         card.innerHTML = `
