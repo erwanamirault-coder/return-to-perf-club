@@ -101,6 +101,13 @@
     </div>
   </div>
 
+  <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-5 mb-6">
+    <h3 class="font-heading text-sm font-semibold text-[color:var(--fg-70)] mb-1">Profil athlétique</h3>
+    <p class="text-xs text-[color:var(--fg-40)] mb-4">Toi (bleu) vs moyenne de l'équipe ou cible du poste si renseignée (gris) — 100% = niveau de référence.</p>
+    <canvas id="profilChart" height="220"></canvas>
+    <p id="profil-empty" class="hidden text-xs text-[color:var(--fg-40)] text-center py-10">Pas encore assez de tests enregistrés pour établir un profil.</p>
+  </div>
+
   <div class="grid sm:grid-cols-2 gap-4 mb-6">
     <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-5">
       <h3 class="font-heading text-sm font-semibold text-[color:var(--fg-70)] mb-3">Charge d'entraînement — 6 semaines</h3>
@@ -193,6 +200,7 @@
       .order('date_test', { ascending: false });
 
     renderTests(testRows || []);
+    await renderProfilRadar(joueur, testRows || []);
 
     // Monotonie & Strain (vue calculée côté SQL)
     const { data: msRows } = await supabaseClient.from('v_monotonie_strain').select('*').eq('joueur_id', joueurId).maybeSingle();
@@ -293,6 +301,108 @@
     document.getElementById('fatigue-value').textContent = moyFatigue + '/7';
   }
 
+  // Unités où une valeur plus basse = meilleure performance (temps)
+  const uniteInversee = ['s'];
+
+  async function renderProfilRadar(joueur, testsJoueur) {
+    if (!testsJoueur.length) { document.getElementById('profil-empty').classList.remove('hidden'); return; }
+
+    // Récupère le catalogue (mouvement -> catégorie) et les référentiels du poste du joueur
+    const [{ data: catalogue }, { data: referentiels }, { data: joueursEquipe }] = await Promise.all([
+      supabaseClient.from('types_test').select('code, categorie'),
+      joueur.poste ? supabaseClient.from('referentiels_performance').select('*').eq('poste', joueur.poste) : Promise.resolve({ data: [] }),
+      joueur.equipe_id ? supabaseClient.from('joueurs').select('id').eq('equipe_id', joueur.equipe_id) : Promise.resolve({ data: [] })
+    ]);
+
+    const categorieParCode = {};
+    (catalogue || []).forEach(t => { categorieParCode[t.code] = t.categorie; });
+
+    const refParType = {};
+    (referentiels || []).forEach(r => {
+      // Filtre par tranche de poids si définie sur ce référentiel
+      if (r.poids_min && joueur.poids_reference < r.poids_min) return;
+      if (r.poids_max && joueur.poids_reference > r.poids_max) return;
+      const base = r.seuil_bon ?? r.valeur_cible;
+      const cible = r.ratio_poids_corps && joueur.poids_reference ? base * joueur.poids_reference : base;
+      refParType[r.type_test] = cible;
+    });
+
+    // Moyenne d'équipe par mouvement (fallback si pas de référentiel), calculée sur la dernière valeur de chaque coéquipier
+    const idsEquipe = (joueursEquipe || []).map(j => j.id);
+    let moyenneEquipeParType = {};
+    if (idsEquipe.length) {
+      const { data: testsEquipe } = await supabaseClient.from('tests_physiques').select('joueur_id, type_test, valeur, date_test').in('joueur_id', idsEquipe).order('date_test', { ascending: false });
+      const derniereParJoueurType = {};
+      (testsEquipe || []).forEach(t => {
+        const key = t.joueur_id + '|' + t.type_test;
+        if (!derniereParJoueurType[key]) derniereParJoueurType[key] = t.valeur;
+      });
+      const sommeParType = {};
+      Object.entries(derniereParJoueurType).forEach(([key, valeur]) => {
+        const type_test = key.split('|')[1];
+        if (!sommeParType[type_test]) sommeParType[type_test] = [];
+        sommeParType[type_test].push(parseFloat(valeur));
+      });
+      Object.entries(sommeParType).forEach(([type_test, valeurs]) => {
+        moyenneEquipeParType[type_test] = valeurs.reduce((a,b) => a+b, 0) / valeurs.length;
+      });
+    }
+
+    // Dernière valeur du joueur par mouvement
+    const derniereDuJoueur = {};
+    testsJoueur.forEach(t => { if (!derniereDuJoueur[t.type_test]) derniereDuJoueur[t.type_test] = t; });
+
+    // Regroupe les ratios par catégorie
+    const ratiosParCategorie = {};
+    Object.values(derniereDuJoueur).forEach(t => {
+      const categorie = categorieParCode[t.type_test];
+      if (!categorie) return;
+      const cible = refParType[t.type_test] !== undefined ? refParType[t.type_test] : moyenneEquipeParType[t.type_test];
+      if (!cible) return;
+
+      const inverse = uniteInversee.includes(t.unite);
+      const ratio = inverse ? (cible / parseFloat(t.valeur)) : (parseFloat(t.valeur) / cible);
+      if (!ratiosParCategorie[categorie]) ratiosParCategorie[categorie] = [];
+      ratiosParCategorie[categorie].push(ratio);
+    });
+
+    const categories = Object.keys(ratiosParCategorie);
+    if (categories.length < 3) { document.getElementById('profil-empty').classList.remove('hidden'); return; }
+
+    const scores = categories.map(cat => {
+      const moy = ratiosParCategorie[cat].reduce((a,b) => a+b, 0) / ratiosParCategorie[cat].length;
+      return Math.round(Math.min(moy, 1.5) * 100);
+    });
+
+    new Chart(document.getElementById('profilChart'), {
+      type: 'radar',
+      data: {
+        labels: categories,
+        datasets: [
+          {
+            label: 'Toi',
+            data: scores,
+            borderColor: '#2D7AED',
+            backgroundColor: 'rgba(45,122,237,0.15)',
+            pointBackgroundColor: '#2D7AED'
+          },
+          {
+            label: 'Référence (100%)',
+            data: categories.map(() => 100),
+            borderColor: '#CBD5E1',
+            backgroundColor: 'transparent',
+            borderDash: [4,4],
+            pointRadius: 0
+          }
+        ]
+      },
+      options: {
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
+        scales: { r: { min: 0, suggestedMax: 130, ticks: { stepSize: 25, backdropColor: 'transparent', font: { size: 10 } }, pointLabels: { font: { size: 11 } }, grid: { color: '#F1F5F9' } } }
+      }
+    });
+  }
+
   function renderTests(rows) {
     if (rows.length === 0) {
       document.getElementById('tests-empty').classList.remove('hidden');
@@ -325,8 +435,16 @@
     }).join('');
   }
 
+  const niveauStyle = {
+    'Excellent': ['bg-yellow-50', 'text-yellow-700'],
+    'Bon': ['bg-gray-100', 'text-gray-600'],
+    'Correcte': ['bg-orange-50', 'text-orange-600'],
+    'Moyen -': ['bg-amber-50', 'text-amber-700'],
+    'Insuffisant': ['bg-red-50', 'text-red-600']
+  };
+
   function renderComparatif(rows) {
-    const avecRef = rows.filter(r => r.valeur_cible !== null);
+    const avecRef = rows.filter(r => r.niveau !== null);
     if (avecRef.length === 0) {
       document.getElementById('comparatif-empty').classList.remove('hidden');
       return;
@@ -335,13 +453,12 @@
     avecRef.forEach(r => { if (!parType[r.type_test]) parType[r.type_test] = r; });
 
     document.getElementById('comparatif-list').innerHTML = Object.values(parType).map(r => {
-      const ecart = r.ecart_pourcent;
-      const positif = ecart >= 0;
+      const [bg, text] = niveauStyle[r.niveau] || ['bg-gray-50', 'text-gray-500'];
       return `
         <div class="flex items-center justify-between text-sm py-2 border-b border-[color:var(--border)] last:border-0">
           <span class="font-medium">${escapeHtml(r.type_test)}</span>
-          <span class="text-[color:var(--fg-50)]">${r.valeur_joueur} ${escapeHtml(r.unite)} <span class="text-[color:var(--fg-40)]">(cible ${r.valeur_cible})</span></span>
-          <span class="font-semibold ${positif ? 'text-green-600' : 'text-amber-500'}">${positif ? '+' : ''}${ecart}%</span>
+          <span class="text-[color:var(--fg-50)]">${r.valeur_joueur} ${escapeHtml(r.unite)}${r.ratio_poids_corps ? ' (' + r.valeur_comparee + '× poids)' : ''}</span>
+          <span class="font-semibold text-xs px-2.5 py-1 rounded-full ${bg} ${text}">${escapeHtml(r.niveau)}</span>
         </div>
       `;
     }).join('');
