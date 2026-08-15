@@ -151,6 +151,12 @@
       </div>
     </div>
 
+    <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5 mb-6">
+      <h2 class="font-heading uppercase text-[11px] font-bold text-[color:var(--fg-50)] tracking-widest mb-1">Couverture des mouvements</h2>
+      <p class="text-xs text-[color:var(--fg-40)] mb-3">✅ = au moins un barème existe pour ce mouvement · ❌ = aucun barème, la comparaison ne pourra rien afficher.</p>
+      <div id="couverture-container" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-1.5"></div>
+    </div>
+
     <div class="mb-4">
       <select id="filtre-niveau" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
         <option value="">Tous les niveaux</option>
@@ -172,9 +178,12 @@
     const saveBtn = document.getElementById('save-btn');
     let tousLesReferentiels = [];
 
+    let catalogueComplet = [];
+
     async function loadCatalogueTests() {
       const { data } = await supabaseClient.from('types_test').select('*').eq('actif', true).order('categorie').order('ordre');
       const rows = data || [];
+      catalogueComplet = rows;
       const parCategorie = {};
       rows.forEach(t => { if (!parCategorie[t.categorie]) parCategorie[t.categorie] = []; parCategorie[t.categorie].push(t); });
 
@@ -196,6 +205,20 @@
 
     document.getElementById('filtre-niveau').addEventListener('change', renderReferentiels);
 
+    function renderCouverture() {
+      const codesAvecBareme = new Set(tousLesReferentiels.map(r => r.type_test));
+      const container = document.getElementById('couverture-container');
+      container.innerHTML = catalogueComplet.map(t => {
+        const couvert = codesAvecBareme.has(t.code);
+        return `
+          <div class="flex items-center gap-2 text-xs px-2 py-1.5 rounded-lg ${couvert ? 'bg-green-50' : 'bg-red-50'}">
+            <span>${couvert ? '✅' : '❌'}</span>
+            <span class="${couvert ? 'text-green-700' : 'text-red-600'} font-medium truncate">${escapeHtml(t.nom)}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
     async function loadReferentiels() {
       const { data } = await supabaseClient.from('referentiels_performance').select('*').order('niveau').order('poste');
       tousLesReferentiels = data || [];
@@ -210,6 +233,7 @@
       const postes = [...new Set(tousLesReferentiels.map(r => r.poste))];
       document.getElementById('postes-existants').innerHTML = postes.map(p => `<option value="${escapeHtml(p)}">`).join('');
 
+      renderCouverture();
       renderReferentiels();
     }
 
