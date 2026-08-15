@@ -122,9 +122,14 @@
         <p class="text-[10px] text-[color:var(--fg-40)] mt-1">En dessous du seuil "Moyen-" = Insuffisant. Unité (kg, m/s...) choisie ci-dessus.</p>
       </div>
 
-      <label class="flex items-center gap-2 mb-3 text-xs text-[color:var(--fg-60)]">
+      <label class="flex items-center gap-2 mb-2 text-xs text-[color:var(--fg-60)]">
         <input type="checkbox" id="f-ratio-poids" class="rounded">
         Valeurs exprimées en multiple du poids de corps (ex: 1.22 = 1,22 × le poids du joueur)
+      </label>
+
+      <label class="flex items-center gap-2 mb-3 text-xs text-[color:var(--fg-60)]">
+        <input type="checkbox" id="f-formule-taille" class="rounded">
+        Ajustement à la taille du joueur (Broad Jump modifié : mesure − 0,77×taille + 1,365)
       </label>
 
       <div class="grid sm:grid-cols-2 gap-2 mb-3">
@@ -295,6 +300,7 @@
           document.getElementById('f-seuil-correct').value = r.seuil_correct ?? '';
           document.getElementById('f-seuil-moyen').value = r.seuil_moyen ?? '';
           document.getElementById('f-ratio-poids').checked = !!r.ratio_poids_corps;
+          document.getElementById('f-formule-taille').checked = !!r.formule_taille;
           document.getElementById('f-poids-min').value = r.poids_min || '';
           document.getElementById('f-poids-max').value = r.poids_max || '';
           document.getElementById('f-source').value = r.source || '';
@@ -323,6 +329,7 @@
       document.getElementById('f-seuil-correct').value = '';
       document.getElementById('f-seuil-moyen').value = '';
       document.getElementById('f-ratio-poids').checked = false;
+      document.getElementById('f-formule-taille').checked = false;
       document.getElementById('f-poids-min').value = '';
       document.getElementById('f-poids-max').value = '';
       document.getElementById('f-source').value = '';
@@ -344,6 +351,7 @@
       const seuil_correct = document.getElementById('f-seuil-correct').value || null;
       const seuil_moyen = document.getElementById('f-seuil-moyen').value || null;
       const ratio_poids_corps = document.getElementById('f-ratio-poids').checked;
+      const formule_taille = document.getElementById('f-formule-taille').checked;
       const poids_min = document.getElementById('f-poids-min').value || null;
       const poids_max = document.getElementById('f-poids-max').value || null;
       const source = document.getElementById('f-source').value.trim() || null;
@@ -351,7 +359,7 @@
 
       if (!niveau || !poste || !type_test || !seuil_bon) { status.textContent = 'Niveau, poste, mouvement et au moins le seuil "Bon" sont requis.'; return; }
 
-      const payload = { niveau, poste, type_test, unite, seuil_excellent, seuil_bon, seuil_correct, seuil_moyen, ratio_poids_corps, poids_min, poids_max, source };
+      const payload = { niveau, poste, type_test, unite, seuil_excellent, seuil_bon, seuil_correct, seuil_moyen, ratio_poids_corps, formule_taille, poids_min, poids_max, source };
       const editingId = saveBtn.dataset.editingId;
       let result;
       if (editingId) {
