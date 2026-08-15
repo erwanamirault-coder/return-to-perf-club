@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F4CA9">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon-32.png">
+<title>Tableau croisé — Admin — Erwan Amirault</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { brand: { black: '#000000', white: '#FFFFFF', blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' } } },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, .font-heading { font-family: 'Oswald', sans-serif; }
+  .niveau-cell { min-width: 90px; }
+  table { border-collapse: separate; border-spacing: 0; }
+  th, td { white-space: nowrap; }
+  th.sticky-col, td.sticky-col { position: sticky; left: 0; z-index: 5; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)]/95 backdrop-blur flex items-center justify-between px-6 sm:px-10 py-4 border-b border-[color:var(--border)]">
+    <a href="admin-equipe.html" class="flex items-center gap-3">
+      <img src="logo.png" alt="Erwan Amirault" class="h-7 w-auto">
+      <div class="leading-tight">
+        <p class="font-heading uppercase font-bold text-sm tracking-wide">Return To Perf</p>
+        <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-50)]">Tableau croisé</p>
+      </div>
+    </a>
+    <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+  </header>
+
+  <main class="px-6 py-10 max-w-6xl mx-auto">
+
+    <nav class="flex items-center gap-1 mb-8 overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0 border-b border-[color:var(--border)]">
+      <a href="admin-equipe.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Joueurs & séances</a>
+      <a href="admin-planning-semaine.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Planning semaine</a>
+      <a href="admin-performances.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Saisir des perfs</a>
+      <a href="admin-tableau-croise.html" class="shrink-0 text-sm font-semibold px-3 py-2.5 border-b-2 border-brand-blue text-[color:var(--accent)] whitespace-nowrap">Tableau croisé</a>
+      <a href="stats-equipe.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Stats équipe</a>
+      <a href="admin-retours-seances.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Retours séances</a>
+      <a href="admin-types-test.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Catalogue tests</a>
+      <a href="admin-referentiels.html" class="shrink-0 text-sm px-3 py-2.5 border-b-2 border-transparent text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors whitespace-nowrap">Référentiels</a>
+    </nav>
+
+    <div class="mb-6">
+      <h1 class="font-heading uppercase text-2xl font-bold leading-tight">Tableau croisé — Niveaux par joueur et par mouvement</h1>
+      <p class="text-sm text-[color:var(--fg-60)] mt-1">Se met à jour automatiquement dès qu'un test est rentré dans "Saisir des perfs".</p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3 mb-5">
+      <select id="equipe-select" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue"></select>
+      <select id="filtre-poste" class="px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+        <option value="">Tous les postes</option>
+      </select>
+
+      <div class="flex items-center gap-3 ml-auto text-[11px] text-[color:var(--fg-50)]">
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-[#FFF9C4] inline-block"></span> Excellent</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-[#E5E7EB] inline-block"></span> Bon</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-[#FDE4CC] inline-block"></span> Correcte</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-[#FEF3C7] inline-block"></span> Moyen-</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-[#FEE2E2] inline-block"></span> Insuffisant</span>
+      </div>
+    </div>
+
+    <div id="synthese-container" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6"></div>
+
+    <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] overflow-x-auto">
+      <table class="text-sm w-full">
+        <thead id="table-head"></thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+    <p id="table-empty" class="hidden text-sm text-[color:var(--fg-40)] text-center py-10">Aucun test enregistré pour ce groupe pour l'instant.</p>
+
+  </main>
+
+  <script src="supabase-config.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    const equipeSelect = document.getElementById('equipe-select');
+    let equipeActive = null;
+
+    const NIVEAU_COLORS = {
+      'Excellent': ['#FFF9C4', '#854D0E'],
+      'Bon': ['#E5E7EB', '#4B5563'],
+      'Correcte': ['#FDE4CC', '#C2410C'],
+      'Moyen -': ['#FEF3C7', '#92400E'],
+      'Insuffisant': ['#FEE2E2', '#B91C1C'],
+    };
+    const NIVEAU_SCORE = { 'Excellent': 5, 'Bon': 4, 'Correcte': 3, 'Moyen -': 2, 'Insuffisant': 1 };
+
+    function escapeHtml(s) {
+      return (s || '').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    async function loadEquipes() {
+      const { data } = await supabaseClient.from('equipes').select('*').order('created_at', { ascending: false });
+      const equipes = data || [];
+      equipeSelect.innerHTML = equipes.map(e => `<option value="${e.id}">${escapeHtml(e.nom)} — ${escapeHtml(e.saison)}</option>`).join('');
+      if (equipes.length) equipeActive = equipes[0].id;
+    }
+
+    equipeSelect.addEventListener('change', () => { equipeActive = equipeSelect.value; loadTableauCroise(); });
+    document.getElementById('filtre-poste').addEventListener('change', renderTout);
+
+    let joueursCache = [];
+    let comparatifCache = [];
+    let mouvementsCache = [];
+
+    async function loadTableauCroise() {
+      const { data: joueurs } = await supabaseClient.from('joueurs').select('id, prenom, nom, poste').eq('equipe_id', equipeActive).order('nom');
+      joueursCache = joueurs || [];
+      if (!joueursCache.length) { document.getElementById('table-empty').classList.remove('hidden'); document.getElementById('table-body').innerHTML = ''; document.getElementById('table-head').innerHTML = ''; return; }
+
+      const postes = [...new Set(joueursCache.map(j => j.poste).filter(Boolean))];
+      document.getElementById('filtre-poste').innerHTML = `<option value="">Tous les postes</option>` + postes.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+
+      const ids = joueursCache.map(j => j.id);
+      const { data: comp } = await supabaseClient.from('v_comparatif_joueur').select('*').in('joueur_id', ids);
+      comparatifCache = (comp || []).filter(c => c.niveau !== null);
+
+      const seen = new Set();
+      comparatifCache = comparatifCache.filter(c => {
+        const key = c.joueur_id + '|' + c.type_test;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      mouvementsCache = [...new Set(comparatifCache.map(c => c.type_test))];
+
+      if (!mouvementsCache.length) { document.getElementById('table-empty').classList.remove('hidden'); document.getElementById('table-body').innerHTML = ''; document.getElementById('table-head').innerHTML = ''; return; }
+      document.getElementById('table-empty').classList.add('hidden');
+
+      renderTout();
+    }
+
+    function renderTout() {
+      const filtrePoste = document.getElementById('filtre-poste').value;
+      const joueursAffiches = filtrePoste ? joueursCache.filter(j => j.poste === filtrePoste) : joueursCache;
+
+      renderSynthese(joueursAffiches);
+      renderTable(joueursAffiches);
+    }
+
+    function renderSynthese(joueurs) {
+      const container = document.getElementById('synthese-container');
+      container.innerHTML = joueurs.map(j => {
+        const resultats = comparatifCache.filter(c => c.joueur_id === j.id);
+        if (!resultats.length) {
+          return `
+            <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-3">
+              <p class="text-sm font-semibold truncate">${escapeHtml(j.prenom)} ${escapeHtml(j.nom)}</p>
+              <p class="text-[11px] text-[color:var(--fg-40)] mt-1">Aucun test</p>
+            </div>
+          `;
+        }
+        const scoreMoyen = resultats.reduce((s, c) => s + (NIVEAU_SCORE[c.niveau] || 0), 0) / resultats.length;
+        const trie = Object.entries(NIVEAU_SCORE).sort((a,b) => b[1]-a[1]);
+        let niveauGlobal = trie[trie.length - 1][0];
+        for (const [n, s] of trie) { if (scoreMoyen >= s) { niveauGlobal = n; break; } }
+        const [bg, text] = NIVEAU_COLORS[niveauGlobal] || ['#F3F4F6', '#6B7280'];
+        return `
+          <div class="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-3">
+            <div class="flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <p class="text-sm font-semibold truncate">${escapeHtml(j.prenom)} ${escapeHtml(j.nom)}</p>
+                <p class="text-[11px] text-[color:var(--fg-40)]">${resultats.length} test(s) · ${escapeHtml(j.poste || '')}</p>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-1 rounded-full shrink-0" style="background:${bg};color:${text}">${escapeHtml(niveauGlobal)}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderTable(joueurs) {
+      const thead = document.getElementById('table-head');
+      const tbody = document.getElementById('table-body');
+
+      thead.innerHTML = `
+        <tr class="border-b border-[color:var(--border)]">
+          <th class="sticky-col bg-[color:var(--card)] text-left px-4 py-3 font-heading uppercase text-[11px] text-[color:var(--fg-50)] tracking-wide">Joueur</th>
+          ${mouvementsCache.map(m => `<th class="px-3 py-3 text-center font-heading uppercase text-[11px] text-[color:var(--fg-50)] tracking-wide niveau-cell">${escapeHtml(m)}</th>`).join('')}
+        </tr>
+      `;
+
+      tbody.innerHTML = joueurs.map(j => {
+        const cells = mouvementsCache.map(m => {
+          const c = comparatifCache.find(x => x.joueur_id === j.id && x.type_test === m);
+          if (!c) return `<td class="px-3 py-2 text-center text-[color:var(--fg-30)] text-xs niveau-cell">—</td>`;
+          const [bg, text] = NIVEAU_COLORS[c.niveau] || ['#F3F4F6', '#6B7280'];
+          return `
+            <td class="px-3 py-2 text-center niveau-cell">
+              <div class="rounded-lg px-2 py-1.5" style="background:${bg};color:${text}">
+                <p class="text-[11px] font-bold">${escapeHtml(c.niveau)}</p>
+                <p class="text-[10px] opacity-70">${c.valeur_joueur}${c.ratio_poids_corps ? ' (' + c.valeur_comparee + '×PC)' : ' ' + escapeHtml(c.unite || '')}</p>
+              </div>
+            </td>
+          `;
+        }).join('');
+        return `
+          <tr class="border-b border-[color:var(--border)] last:border-0">
+            <td class="sticky-col bg-[color:var(--card)] px-4 py-2">
+              <p class="text-sm font-semibold truncate">${escapeHtml(j.prenom)} ${escapeHtml(j.nom)}</p>
+              <p class="text-[11px] text-[color:var(--fg-40)] truncate">${escapeHtml(j.poste || '')}</p>
+            </td>
+            ${cells}
+          </tr>
+        `;
+      }).join('');
+    }
+
+    (async function init() {
+      await loadEquipes();
+      if (equipeActive) { equipeSelect.value = equipeActive; loadTableauCroise(); }
+    })();
+  </script>
+
+</body>
+</html>
