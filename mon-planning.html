@@ -252,7 +252,7 @@
     };
     status.textContent = 'Enregistrement...';
     const { error } = await supabaseClient.from('wellness_quotidien').upsert(payload, { onConflict: 'joueur_id,date_saisie' });
-    if (error) { status.textContent = 'Erreur : ' + error.message; return; }
+    if (error) { status.textContent = 'Une erreur est survenue, réessaie dans un instant.'; console.error('[wellness]', error.message); return; }
     status.textContent = 'Enregistré ✓';
   });
 
@@ -346,7 +346,7 @@
         const commentaire = card.querySelector('.commentaire-input').value.trim() || null;
         if (rpe === '' || !duree_reelle_min) { alert('Renseigne le RPE et la durée.'); return; }
         const { error } = await supabaseClient.from('seances_rpe').insert({ seance_id, joueur_id: joueur.id, rpe, duree_reelle_min, commentaire });
-        if (error) { alert('Erreur : ' + error.message); return; }
+        if (error) { alert('Une erreur est survenue, réessaie dans un instant.'); console.error('[rpe]', error.message); return; }
         await loadSemaine();
       });
     });
