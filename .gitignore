@@ -1,0 +1,9 @@
+# Variables d'environnement / secrets — ne jamais committer
+.env
+.env.local
+.env.*.local
+
+# Dossiers systèmes / outils
+node_modules/
+.vercel
+.DS_Store
