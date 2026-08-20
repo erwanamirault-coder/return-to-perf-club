@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrossFit — Espace admin</title>
+<meta name="theme-color" content="#0F4CA9">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon-32.png">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000', white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, h3, .font-heading { font-family: 'Oswald', sans-serif; }
+  .tab-btn { padding: 8px 14px; border-radius: 9999px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); color: var(--fg-60); white-space: nowrap; }
+  .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .field-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--fg-50); margin-bottom: 4px; display: block; }
+  input[type=text], input[type=date], input[type=email], select, textarea {
+    width: 100%; padding: 8px 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); font-size: 13.5px; outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  .badge-format { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 9999px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); }
+  .icon-btn { font-size: 12px; font-weight: 600; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)]/95 backdrop-blur flex items-center justify-between px-6 sm:px-10 py-4 border-b border-[color:var(--border)]">
+    <a href="admin.html" class="flex items-center gap-3">
+      <img src="logo.png" alt="Erwan Amirault" class="h-7 w-auto">
+      <div class="leading-tight">
+        <p class="font-heading uppercase font-bold text-sm tracking-wide">Return To Perf</p>
+        <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-50)]">CrossFit — Espace coach</p>
+      </div>
+    </a>
+    <div class="flex items-center gap-5 text-sm">
+      <a href="admin.html" class="hidden sm:inline text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">← Retour admin</a>
+      <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+    </div>
+  </header>
+
+  <div id="denied" class="hidden max-w-md mx-auto mt-24 text-center px-6">
+    <p class="text-sm text-[color:var(--fg-50)]">Accès réservé à l'administrateur.</p>
+  </div>
+
+  <main id="main-content" class="px-6 py-10 max-w-4xl mx-auto hidden">
+
+    <div class="mb-6">
+      <h1 class="font-heading uppercase text-2xl font-bold leading-tight">CrossFit</h1>
+      <p class="text-sm text-[color:var(--fg-60)] mt-1">Membres, programmation des WOD et suivi des retours.</p>
+    </div>
+
+    <div class="flex gap-2 mb-8 overflow-x-auto pb-1">
+      <button class="tab-btn active" data-tab="membres">👥 Membres</button>
+      <button class="tab-btn" data-tab="programmation">📋 Programmation</button>
+      <button class="tab-btn" data-tab="suivi">📊 Suivi</button>
+    </div>
+
+    <!-- ================= TAB MEMBRES ================= -->
+    <section id="tab-membres" class="tab-panel">
+      <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5 mb-6">
+        <h2 class="font-heading uppercase text-sm font-bold mb-3 tracking-wide">Ajouter des membres</h2>
+        <p class="text-xs text-[color:var(--fg-50)] mb-3">Nom, prénom, email — c'est cet email qui permettra à la personne d'accéder à ses séances une fois son compte créé sur le site.</p>
+        <div id="bulk-membres-rows" class="flex flex-col gap-2 mb-3"></div>
+        <div class="flex gap-2">
+          <button id="add-membre-row-btn" type="button" class="px-3 py-2 rounded-lg border border-[color:var(--border)] text-xs font-semibold hover:border-brand-blue transition-colors">+ Ligne</button>
+          <button id="save-membres-btn" type="button" class="px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-xs font-semibold">Enregistrer les membres</button>
+        </div>
+        <p id="save-membres-status" class="hidden text-xs text-[color:var(--accent)] font-medium mt-2"></p>
+      </div>
+
+      <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5">
+        <h2 class="font-heading uppercase text-sm font-bold mb-3 tracking-wide">Membres inscrits (<span id="membres-count">0</span>)</h2>
+        <div id="membres-list" class="flex flex-col divide-y divide-[color:var(--border)]"></div>
+        <p id="membres-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] py-6">Aucun membre pour le moment.</p>
+      </div>
+    </section>
+
+    <!-- ================= TAB PROGRAMMATION ================= -->
+    <section id="tab-programmation" class="tab-panel hidden">
+      <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5 mb-6">
+        <h2 class="font-heading uppercase text-sm font-bold mb-4 tracking-wide" id="wod-form-title">Nouveau WOD</h2>
+
+        <div class="grid sm:grid-cols-2 gap-3 mb-4">
+          <div>
+            <label class="field-label">Date de la séance</label>
+            <input type="date" id="wod-date">
+          </div>
+          <div>
+            <label class="field-label">Titre</label>
+            <input type="text" id="wod-titre" placeholder="Ex: WOD du jeudi">
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="field-label">Visibilité</label>
+          <div class="flex gap-4 text-sm mb-2">
+            <label class="flex items-center gap-1.5"><input type="radio" name="wod-visibilite" value="tous" checked> Toute l'équipe</label>
+            <label class="flex items-center gap-1.5"><input type="radio" name="wod-visibilite" value="specifique"> Membres spécifiques</label>
+          </div>
+          <div id="wod-membres-select" class="hidden flex flex-wrap gap-2 p-3 rounded-lg bg-[color:var(--bg)] border border-[color:var(--border)]"></div>
+        </div>
+
+        <label class="field-label">Blocs de la séance</label>
+        <div id="blocs-container" class="flex flex-col gap-4 mb-3"></div>
+        <button id="add-bloc-btn" type="button" class="w-full px-3 py-2.5 rounded-lg border border-dashed border-[color:var(--border-strong)] text-xs font-semibold hover:border-brand-blue hover:text-brand-blue transition-colors mb-4">+ Ajouter un bloc (échauffement, force, WOD, accessoire...)</button>
+
+        <div class="mb-4">
+          <label class="field-label">Notes générales pour l'équipe</label>
+          <textarea id="wod-notes" rows="2" placeholder="Consignes générales, rappel matériel, etc."></textarea>
+        </div>
+
+        <div class="flex gap-2">
+          <button id="save-wod-btn" type="button" class="px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-xs font-semibold">Enregistrer le WOD</button>
+          <button id="cancel-wod-edit-btn" type="button" class="hidden px-4 py-2 rounded-lg border border-[color:var(--border)] text-xs font-semibold hover:border-brand-blue transition-colors">Annuler la modification</button>
+        </div>
+        <p id="save-wod-status" class="hidden text-xs text-[color:var(--accent)] font-medium mt-2"></p>
+      </div>
+
+      <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5">
+        <h2 class="font-heading uppercase text-sm font-bold mb-3 tracking-wide">WOD programmés</h2>
+        <div id="wods-list" class="flex flex-col gap-3"></div>
+        <p id="wods-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] py-6">Aucun WOD programmé pour le moment.</p>
+      </div>
+    </section>
+
+    <!-- ================= TAB SUIVI ================= -->
+    <section id="tab-suivi" class="tab-panel hidden">
+      <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:p-5">
+        <h2 class="font-heading uppercase text-sm font-bold mb-3 tracking-wide">Retours par séance</h2>
+        <select id="suivi-wod-select" class="mb-4"></select>
+        <div id="suivi-table" class="flex flex-col divide-y divide-[color:var(--border)]"></div>
+        <p id="suivi-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] py-6">Sélectionne un WOD pour voir les retours.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="theme.js"></script>
+  <script src="supabase-config.js"></script>
+  <script>
+    const ADMIN_EMAIL = "erwan20b@gmail.com";
+
+    const CROSSFIT_FORMATS = [
+      { value: 'LIBRE', label: 'Libre / texte' },
+      { value: 'AMRAP', label: 'AMRAP' },
+      { value: 'EMOM', label: 'EMOM' },
+      { value: 'EMOM_MONTANT', label: 'EMOM montant' },
+      { value: 'FOR_TIME', label: 'For Time' },
+      { value: 'CHIPPER', label: 'Chipper' },
+      { value: 'TABATA', label: 'Tabata' },
+      { value: 'DEATH_BY', label: 'Death By' },
+      { value: 'MAX_EFFORT', label: 'Max Effort / Charge lourde' },
+      { value: 'RONDS_FOR_TIME', label: 'X Rounds For Time' },
+      { value: 'INTERVAL', label: 'Intervalle (repos donné)' },
+      { value: 'ECHAUFFEMENT', label: 'Échauffement' }
+    ];
+
+    let allMembres = [];
+    let allWods = [];
+    let editingWodId = null;
+
+    // ---------- Onglets ----------
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+        document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+      });
+    });
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str).replace(/[&<>"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]));
+    }
+
+    // ===================================================================
+    // MEMBRES
+    // ===================================================================
+    function addMembreRow(nom, prenom, email) {
+      const wrap = document.getElementById('bulk-membres-rows');
+      const row = document.createElement('div');
+      row.className = 'grid grid-cols-[1fr_1fr_1.4fr_auto] gap-2 items-center membre-bulk-row';
+      row.innerHTML = `
+        <input type="text" placeholder="Nom" class="mb-nom">
+        <input type="text" placeholder="Prénom" class="mb-prenom">
+        <input type="email" placeholder="Email" class="mb-email">
+        <button type="button" class="rm-row-btn text-red-400 hover:text-red-300 text-xs px-1" title="Retirer cette ligne">✕</button>
+      `;
+      row.querySelector('.mb-nom').value = nom || '';
+      row.querySelector('.mb-prenom').value = prenom || '';
+      row.querySelector('.mb-email').value = email || '';
+      row.querySelector('.rm-row-btn').addEventListener('click', () => row.remove());
+      wrap.appendChild(row);
+    }
+    document.getElementById('add-membre-row-btn').addEventListener('click', () => addMembreRow());
+    addMembreRow(); addMembreRow(); addMembreRow();
+
+    document.getElementById('save-membres-btn').addEventListener('click', async () => {
+      const rows = Array.from(document.querySelectorAll('.membre-bulk-row')).map(row => ({
+        nom: row.querySelector('.mb-nom').value.trim(),
+        prenom: row.querySelector('.mb-prenom').value.trim(),
+        email: row.querySelector('.mb-email').value.trim().toLowerCase()
+      })).filter(r => r.nom || r.prenom || r.email);
+
+      const invalid = rows.find(r => !r.nom || !r.prenom || !r.email || !r.email.includes('@'));
+      if (invalid) { alert("Chaque ligne remplie doit avoir un nom, un prénom et un email valide."); return; }
+      if (!rows.length) { alert("Ajoute au moins une ligne complète."); return; }
+
+      const { error } = await supabaseClient.from('crossfit_membres').upsert(rows, { onConflict: 'email' });
+      if (error) { alert("Erreur : " + error.message); return; }
+
+      document.querySelectorAll('.membre-bulk-row').forEach(row => row.remove());
+      addMembreRow(); addMembreRow(); addMembreRow();
+      const status = document.getElementById('save-membres-status');
+      status.textContent = rows.length + ' membre(s) enregistré(s) ✓';
+      status.classList.remove('hidden');
+      setTimeout(() => status.classList.add('hidden'), 3000);
+      loadMembres();
+    });
+
+    async function loadMembres() {
+      const { data, error } = await supabaseClient.from('crossfit_membres').select('*').order('nom', { ascending: true });
+      if (error) { console.error(error); return; }
+      allMembres = data || [];
+      renderMembresList();
+      renderWodMembresCheckboxes();
+    }
+
+    function renderMembresList() {
+      const list = document.getElementById('membres-list');
+      const empty = document.getElementById('membres-empty');
+      document.getElementById('membres-count').textContent = allMembres.length;
+      list.innerHTML = '';
+      if (!allMembres.length) { empty.classList.remove('hidden'); return; }
+      empty.classList.add('hidden');
+      allMembres.forEach(m => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between py-2.5';
+        row.innerHTML = `
+          <div>
+            <p class="text-sm font-semibold">${escapeHtml(m.prenom)} ${escapeHtml(m.nom)}</p>
+            <p class="text-xs text-[color:var(--fg-50)]">${escapeHtml(m.email)}</p>
+          </div>
+          <button class="del-membre-btn text-red-400 hover:text-red-300 text-xs font-semibold" data-id="${m.id}">Supprimer</button>
+        `;
+        row.querySelector('.del-membre-btn').addEventListener('click', async () => {
+          if (!confirm(`Retirer ${m.prenom} ${m.nom} de l'espace CrossFit ?`)) return;
+          const { error } = await supabaseClient.from('crossfit_membres').delete().eq('id', m.id);
+          if (error) { alert("Erreur : " + error.message); return; }
+          loadMembres();
+        });
+        list.appendChild(row);
+      });
+    }
+
+    function renderWodMembresCheckboxes() {
+      const wrap = document.getElementById('wod-membres-select');
+      wrap.innerHTML = allMembres.map(m => `
+        <label class="flex items-center gap-1.5 text-xs px-2 py-1 rounded-full border border-[color:var(--border)] cursor-pointer">
+          <input type="checkbox" class="wod-membre-checkbox" value="${m.id}"> ${escapeHtml(m.prenom)} ${escapeHtml(m.nom)}
+        </label>
+      `).join('') || `<p class="text-xs text-[color:var(--fg-40)]">Ajoute d'abord des membres.</p>`;
+    }
+
+    document.querySelectorAll('input[name="wod-visibilite"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        document.getElementById('wod-membres-select').classList.toggle('hidden', document.querySelector('input[name="wod-visibilite"]:checked').value !== 'specifique');
+      });
+    });
+
+    // ===================================================================
+    // BLOCS DE SÉANCE
+    // ===================================================================
+    function addBloc(bloc) {
+      bloc = bloc || {};
+      const container = document.getElementById('blocs-container');
+      const div = document.createElement('div');
+      div.className = 'bloc-card rounded-xl border border-[color:var(--border)] p-3 sm:p-4 bg-[color:var(--bg)]';
+      div.innerHTML = `
+        <div class="flex items-center justify-between mb-3 gap-2">
+          <input type="text" placeholder="Titre du bloc (ex: Partie 1 — WOD)" class="bloc-titre flex-1 font-semibold">
+          <button type="button" class="rm-bloc-btn text-red-400 hover:text-red-300 text-xs shrink-0 px-1" title="Supprimer ce bloc">✕ Bloc</button>
+        </div>
+        <div class="grid sm:grid-cols-3 gap-2 mb-3">
+          <div>
+            <label class="field-label">Format</label>
+            <select class="bloc-format">
+              ${CROSSFIT_FORMATS.map(f => `<option value="${f.value}">${f.label}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label class="field-label">Durée / rounds</label>
+            <input type="text" placeholder="Ex: 12 min, 5 rounds" class="bloc-duree">
+          </div>
+          <div>
+            <label class="field-label">Time cap</label>
+            <input type="text" placeholder="Ex: 15 min" class="bloc-timecap">
+          </div>
+        </div>
+        <div class="flex gap-2 mb-3">
+          <button type="button" class="mode-btn-struct px-2.5 py-1 rounded-md text-xs font-semibold border border-brand-blue bg-brand-blue text-white">Liste d'exercices</button>
+          <button type="button" class="mode-btn-libre px-2.5 py-1 rounded-md text-xs font-semibold border border-[color:var(--border)]">Texte libre</button>
+        </div>
+        <div class="bloc-exercices-wrap">
+          <div class="bloc-exercices-list flex flex-col gap-2 mb-2"></div>
+          <button type="button" class="add-exercice-btn text-xs font-semibold text-brand-blue hover:underline">+ Ajouter un exercice</button>
+        </div>
+        <textarea class="bloc-texte-libre hidden" rows="3" placeholder="Décris le bloc librement (ex: 3 tours de 400m run + 20 burpees...)"></textarea>
+      `;
+
+      div.querySelector('.bloc-titre').value = bloc.titre || '';
+      div.querySelector('.bloc-format').value = bloc.format || 'AMRAP';
+      div.querySelector('.bloc-duree').value = bloc.duree || '';
+      div.querySelector('.bloc-timecap').value = bloc.time_cap || '';
+      div.querySelector('.bloc-texte-libre').value = bloc.texte_libre || '';
+
+      div.querySelector('.rm-bloc-btn').addEventListener('click', () => div.remove());
+
+      const structBtn = div.querySelector('.mode-btn-struct');
+      const libreBtn = div.querySelector('.mode-btn-libre');
+      const exWrap = div.querySelector('.bloc-exercices-wrap');
+      const libreArea = div.querySelector('.bloc-texte-libre');
+      function setMode(mode) {
+        div.dataset.mode = mode;
+        if (mode === 'libre') {
+          exWrap.classList.add('hidden'); libreArea.classList.remove('hidden');
+          libreBtn.className = 'mode-btn-libre px-2.5 py-1 rounded-md text-xs font-semibold border border-brand-blue bg-brand-blue text-white';
+          structBtn.className = 'mode-btn-struct px-2.5 py-1 rounded-md text-xs font-semibold border border-[color:var(--border)]';
+        } else {
+          exWrap.classList.remove('hidden'); libreArea.classList.add('hidden');
+          structBtn.className = 'mode-btn-struct px-2.5 py-1 rounded-md text-xs font-semibold border border-brand-blue bg-brand-blue text-white';
+          libreBtn.className = 'mode-btn-libre px-2.5 py-1 rounded-md text-xs font-semibold border border-[color:var(--border)]';
+        }
+      }
+      structBtn.addEventListener('click', () => setMode('structure'));
+      libreBtn.addEventListener('click', () => setMode('libre'));
+
+      div.querySelector('.add-exercice-btn').addEventListener('click', () => addExerciceRow(div));
+      (bloc.exercices && bloc.exercices.length ? bloc.exercices : [null]).forEach(ex => addExerciceRow(div, ex));
+      setMode(bloc.mode || (bloc.texte_libre && !(bloc.exercices && bloc.exercices.length) ? 'libre' : 'structure'));
+
+      container.appendChild(div);
+    }
+    document.getElementById('add-bloc-btn').addEventListener('click', () => addBloc());
+
+    function addExerciceRow(blocDiv, ex) {
+      ex = ex || {};
+      const list = blocDiv.querySelector('.bloc-exercices-list');
+      const row = document.createElement('div');
+      row.className = 'grid grid-cols-[1.4fr_0.7fr_0.9fr_1fr_auto] gap-1.5 items-center';
+      row.innerHTML = `
+        <input type="text" placeholder="Exercice" class="ex-nom text-xs">
+        <input type="text" placeholder="Reps/cal/m" class="ex-reps text-xs">
+        <input type="text" placeholder="Charge" class="ex-charge text-xs">
+        <input type="text" placeholder="Lien vidéo (optionnel)" class="ex-video text-xs">
+        <button type="button" class="rm-ex-btn text-red-400 hover:text-red-300 text-xs px-1" title="Supprimer">✕</button>
+      `;
+      row.querySelector('.ex-nom').value = ex.nom || '';
+      row.querySelector('.ex-reps').value = ex.reps || '';
+      row.querySelector('.ex-charge').value = ex.charge || '';
+      row.querySelector('.ex-video').value = ex.lien_video || '';
+      row.querySelector('.rm-ex-btn').addEventListener('click', () => row.remove());
+      list.appendChild(row);
+    }
+
+    function getBlocsFromForm() {
+      return Array.from(document.querySelectorAll('.bloc-card')).map(div => {
+        const mode = div.dataset.mode || 'structure';
+        const exercices = mode === 'structure'
+          ? Array.from(div.querySelectorAll('.bloc-exercices-list > div')).map(row => ({
+              nom: row.querySelector('.ex-nom').value.trim(),
+              reps: row.querySelector('.ex-reps').value.trim(),
+              charge: row.querySelector('.ex-charge').value.trim(),
+              lien_video: row.querySelector('.ex-video').value.trim()
+            })).filter(e => e.nom || e.reps || e.charge)
+          : [];
+        return {
+          titre: div.querySelector('.bloc-titre').value.trim(),
+          format: div.querySelector('.bloc-format').value,
+          duree: div.querySelector('.bloc-duree').value.trim(),
+          time_cap: div.querySelector('.bloc-timecap').value.trim(),
+          mode: mode,
+          texte_libre: mode === 'libre' ? div.querySelector('.bloc-texte-libre').value.trim() : '',
+          exercices: exercices
+        };
+      }).filter(b => b.titre || b.exercices.length || b.texte_libre);
+    }
+
+    // ===================================================================
+    // WOD — sauvegarde / liste / édition / duplication / suppression
+    // ===================================================================
+    function resetWodForm() {
+      editingWodId = null;
+      document.getElementById('wod-form-title').textContent = 'Nouveau WOD';
+      document.getElementById('wod-date').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('wod-titre').value = '';
+      document.getElementById('wod-notes').value = '';
+      document.querySelector('input[name="wod-visibilite"][value="tous"]').checked = true;
+      document.getElementById('wod-membres-select').classList.add('hidden');
+      document.querySelectorAll('.wod-membre-checkbox').forEach(cb => cb.checked = false);
+      document.getElementById('blocs-container').innerHTML = '';
+      addBloc({ titre: 'WOD', format: 'AMRAP' });
+      document.getElementById('cancel-wod-edit-btn').classList.add('hidden');
+    }
+    document.getElementById('cancel-wod-edit-btn').addEventListener('click', resetWodForm);
+
+    document.getElementById('save-wod-btn').addEventListener('click', async () => {
+      const date_seance = document.getElementById('wod-date').value;
+      if (!date_seance) { alert("Choisis une date."); return; }
+      const titre = document.getElementById('wod-titre').value.trim() || 'WOD';
+      const notes_coach = document.getElementById('wod-notes').value.trim();
+      const visible_a_tous = document.querySelector('input[name="wod-visibilite"]:checked').value === 'tous';
+      const blocs = getBlocsFromForm();
+      if (!blocs.length) { alert("Ajoute au moins un bloc avec un titre, des exercices ou un texte libre."); return; }
+
+      const payload = { date_seance, titre, notes_coach, visible_a_tous, blocs, updated_at: new Date().toISOString() };
+
+      let wodId = editingWodId;
+      if (wodId) {
+        const { error } = await supabaseClient.from('crossfit_wods').update(payload).eq('id', wodId);
+        if (error) { alert("Erreur : " + error.message); return; }
+      } else {
+        const { data, error } = await supabaseClient.from('crossfit_wods').insert(payload).select().single();
+        if (error) { alert("Erreur : " + error.message); return; }
+        wodId = data.id;
+      }
+
+      // Synchronise les assignations spécifiques
+      await supabaseClient.from('crossfit_wod_membres').delete().eq('wod_id', wodId);
+      if (!visible_a_tous) {
+        const selectedIds = Array.from(document.querySelectorAll('.wod-membre-checkbox:checked')).map(cb => cb.value);
+        if (selectedIds.length) {
+          await supabaseClient.from('crossfit_wod_membres').insert(selectedIds.map(mid => ({ wod_id: wodId, membre_id: mid })));
+        }
+      }
+
+      const status = document.getElementById('save-wod-status');
+      status.textContent = 'WOD enregistré ✓';
+      status.classList.remove('hidden');
+      setTimeout(() => status.classList.add('hidden'), 3000);
+      resetWodForm();
+      loadWods();
+    });
+
+    async function loadWods() {
+      const { data, error } = await supabaseClient.from('crossfit_wods').select('*').order('date_seance', { ascending: false });
+      if (error) { console.error(error); return; }
+      allWods = data || [];
+      renderWodsList();
+      renderSuiviSelect();
+    }
+
+    function formatDateFr(d) {
+      const date = new Date(d + 'T00:00:00');
+      return date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function renderWodsList() {
+      const list = document.getElementById('wods-list');
+      const empty = document.getElementById('wods-empty');
+      list.innerHTML = '';
+      if (!allWods.length) { empty.classList.remove('hidden'); return; }
+      empty.classList.add('hidden');
+      allWods.forEach(w => {
+        const formats = (w.blocs || []).map(b => b.format).filter((v, i, a) => a.indexOf(v) === i);
+        const row = document.createElement('div');
+        row.className = 'rounded-lg border border-[color:var(--border)] p-3';
+        row.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <p class="text-sm font-semibold">${escapeHtml(w.titre)} <span class="text-[color:var(--fg-40)] font-normal">— ${formatDateFr(w.date_seance)}</span></p>
+              <div class="flex flex-wrap gap-1 mt-1">
+                ${formats.map(f => `<span class="badge-format">${escapeHtml((CROSSFIT_FORMATS.find(x => x.value === f) || {}).label || f)}</span>`).join('')}
+                ${!w.visible_a_tous ? `<span class="badge-format" style="background:color-mix(in srgb, orange 20%, transparent); color:#c2740a;">Ciblé</span>` : ''}
+              </div>
+            </div>
+            <div class="flex flex-col items-end gap-1 shrink-0 text-xs">
+              <button class="edit-wod-btn icon-btn text-brand-blue hover:underline" data-id="${w.id}">Modifier</button>
+              <button class="dup-wod-btn icon-btn text-brand-blue hover:underline" data-id="${w.id}">Dupliquer</button>
+              <button class="del-wod-btn icon-btn text-red-400 hover:underline" data-id="${w.id}">Supprimer</button>
+            </div>
+          </div>
+        `;
+        row.querySelector('.edit-wod-btn').addEventListener('click', () => editWod(w));
+        row.querySelector('.dup-wod-btn').addEventListener('click', () => duplicateWod(w));
+        row.querySelector('.del-wod-btn').addEventListener('click', async () => {
+          if (!confirm(`Supprimer le WOD "${w.titre}" du ${formatDateFr(w.date_seance)} ?`)) return;
+          const { error } = await supabaseClient.from('crossfit_wods').delete().eq('id', w.id);
+          if (error) { alert("Erreur : " + error.message); return; }
+          loadWods();
+        });
+        list.appendChild(row);
+      });
+    }
+
+    async function editWod(w) {
+      editingWodId = w.id;
+      document.getElementById('wod-form-title').textContent = 'Modifier le WOD';
+      document.getElementById('wod-date').value = w.date_seance;
+      document.getElementById('wod-titre').value = w.titre || '';
+      document.getElementById('wod-notes').value = w.notes_coach || '';
+      document.querySelector(`input[name="wod-visibilite"][value="${w.visible_a_tous ? 'tous' : 'specifique'}"]`).checked = true;
+      document.getElementById('wod-membres-select').classList.toggle('hidden', w.visible_a_tous);
+
+      document.querySelectorAll('.wod-membre-checkbox').forEach(cb => cb.checked = false);
+      if (!w.visible_a_tous) {
+        const { data } = await supabaseClient.from('crossfit_wod_membres').select('membre_id').eq('wod_id', w.id);
+        (data || []).forEach(row => {
+          const cb = document.querySelector(`.wod-membre-checkbox[value="${row.membre_id}"]`);
+          if (cb) cb.checked = true;
+        });
+      }
+
+      document.getElementById('blocs-container').innerHTML = '';
+      (w.blocs || []).forEach(b => addBloc(b));
+      if (!(w.blocs || []).length) addBloc();
+
+      document.getElementById('cancel-wod-edit-btn').classList.remove('hidden');
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('.tab-btn[data-tab="programmation"]').classList.add('active');
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById('tab-programmation').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function duplicateWod(w) {
+      const newDate = prompt("Dupliquer ce WOD à quelle date ? (AAAA-MM-JJ)", w.date_seance);
+      if (!newDate) return;
+      const payload = { date_seance: newDate, titre: w.titre, notes_coach: w.notes_coach, visible_a_tous: w.visible_a_tous, blocs: w.blocs };
+      const { data, error } = await supabaseClient.from('crossfit_wods').insert(payload).select().single();
+      if (error) { alert("Erreur : " + error.message); return; }
+      if (!w.visible_a_tous) {
+        const { data: assigns } = await supabaseClient.from('crossfit_wod_membres').select('membre_id').eq('wod_id', w.id);
+        if (assigns && assigns.length) {
+          await supabaseClient.from('crossfit_wod_membres').insert(assigns.map(a => ({ wod_id: data.id, membre_id: a.membre_id })));
+        }
+      }
+      loadWods();
+    }
+
+    // ===================================================================
+    // SUIVI DES RETOURS
+    // ===================================================================
+    function renderSuiviSelect() {
+      const sel = document.getElementById('suivi-wod-select');
+      const current = sel.value;
+      sel.innerHTML = `<option value="">— Choisir un WOD —</option>` + allWods.map(w => `<option value="${w.id}">${formatDateFr(w.date_seance)} — ${escapeHtml(w.titre)}</option>`).join('');
+      if (current) sel.value = current;
+    }
+    document.getElementById('suivi-wod-select').addEventListener('change', loadSuivi);
+
+    async function loadSuivi() {
+      const wodId = document.getElementById('suivi-wod-select').value;
+      const table = document.getElementById('suivi-table');
+      const empty = document.getElementById('suivi-empty');
+      table.innerHTML = '';
+      if (!wodId) { empty.classList.remove('hidden'); return; }
+      empty.classList.add('hidden');
+
+      const wod = allWods.find(w => w.id === wodId);
+      let cibles = allMembres;
+      if (wod && !wod.visible_a_tous) {
+        const { data: assigns } = await supabaseClient.from('crossfit_wod_membres').select('membre_id').eq('wod_id', wodId);
+        const ids = (assigns || []).map(a => a.membre_id);
+        cibles = allMembres.filter(m => ids.includes(m.id));
+      }
+
+      const { data: retours } = await supabaseClient.from('crossfit_retours').select('*').eq('wod_id', wodId);
+      const retoursByMembre = {};
+      (retours || []).forEach(r => { retoursByMembre[r.membre_id] = r; });
+
+      if (!cibles.length) { table.innerHTML = `<p class="text-sm text-[color:var(--fg-40)] py-4 text-center">Aucun membre ciblé par ce WOD.</p>`; return; }
+
+      cibles.forEach(m => {
+        const r = retoursByMembre[m.id];
+        const row = document.createElement('div');
+        row.className = 'py-2.5';
+        row.innerHTML = r ? `
+          <p class="text-sm font-semibold">${escapeHtml(m.prenom)} ${escapeHtml(m.nom)}</p>
+          <p class="text-xs text-[color:var(--fg-60)] mt-0.5">${escapeHtml(r.resultat || '—')}${r.rpe ? ` · RPE ${escapeHtml(r.rpe)}` : ''}${r.ressenti ? ` · ${escapeHtml(r.ressenti)}` : ''}</p>
+          ${r.commentaire ? `<p class="text-xs text-[color:var(--fg-40)] italic mt-0.5">${escapeHtml(r.commentaire)}</p>` : ''}
+        ` : `
+          <p class="text-sm font-semibold">${escapeHtml(m.prenom)} ${escapeHtml(m.nom)}</p>
+          <p class="text-xs text-[color:var(--fg-40)] mt-0.5">En attente de retour</p>
+        `;
+        table.appendChild(row);
+      });
+    }
+
+    // ===================================================================
+    // ACCÈS
+    // ===================================================================
+    async function checkAccess() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user || user.email !== ADMIN_EMAIL) {
+        document.getElementById('denied').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('main-content').classList.remove('hidden');
+      resetWodForm();
+      await loadMembres();
+      await loadWods();
+    }
+    checkAccess();
+  </script>
+</body>
+</html>
