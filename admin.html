@@ -1854,7 +1854,9 @@
               </div>
               <div class="text-xs text-[color:var(--fg-50)] mt-0.5">
                 ${(exo.sets && Array.isArray(exo.sets) && exo.sets.length)
-                  ? exo.sets.map((s, i) => `${i > 0 ? ' · ' : ''}S${i + 1}: ${escapeHtml(s.repetitions || '—')}${s.charge ? ` @ ${escapeHtml(s.charge)}` : ''}`).join('')
+                  ? (exo.sets.every(s => s.repetitions === exo.sets[0].repetitions && s.charge === exo.sets[0].charge)
+                      ? `${exo.sets.length} séries de ${escapeHtml(exo.sets[0].repetitions || '—')}${exo.sets[0].charge ? ` @ ${escapeHtml(exo.sets[0].charge)}` : ''}`
+                      : exo.sets.map((s, i) => `${i > 0 ? ' · ' : ''}S${i + 1}: ${escapeHtml(s.repetitions || '—')}${s.charge ? ` @ ${escapeHtml(s.charge)}` : ''}`).join(''))
                   : `${escapeHtml(exo.series)}x${escapeHtml(exo.repetitions)}${(exo.charge !== null && exo.charge !== undefined) ? ` · ${escapeHtml(exo.charge)}kg` : ''}`
                 }${exo.temps_repos ? ` · repos ${escapeHtml(exo.temps_repos)}` : ''}${exo.rpe ? ` · RPE ${escapeHtml(exo.rpe)}` : ''}${exo.tempo ? ` · tempo ${escapeHtml(exo.tempo)}` : ''}
               </div>
