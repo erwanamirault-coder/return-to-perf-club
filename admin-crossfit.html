@@ -124,7 +124,14 @@
 
         <label class="field-label">Blocs de la séance</label>
         <div id="blocs-container" class="flex flex-col gap-4 mb-3"></div>
-        <button id="add-bloc-btn" type="button" class="w-full px-3 py-2.5 rounded-lg border border-dashed border-[color:var(--border-strong)] text-xs font-semibold hover:border-brand-blue hover:text-brand-blue transition-colors mb-4">+ Ajouter un bloc (échauffement, force, WOD, accessoire...)</button>
+
+        <div class="flex flex-wrap gap-2 mb-2">
+          <button type="button" class="quick-bloc-btn px-3 py-1.5 rounded-full border border-[color:var(--border)] text-xs font-semibold hover:border-brand-blue hover:text-brand-blue transition-colors" data-titre="Warm Up" data-format="ECHAUFFEMENT">+ Warm Up</button>
+          <button type="button" class="quick-bloc-btn px-3 py-1.5 rounded-full border border-[color:var(--border)] text-xs font-semibold hover:border-brand-blue hover:text-brand-blue transition-colors" data-titre="Skill" data-format="LIBRE">+ Skill</button>
+          <button type="button" class="quick-bloc-btn px-3 py-1.5 rounded-full border border-[color:var(--border)] text-xs font-semibold hover:border-brand-blue hover:text-brand-blue transition-colors" data-titre="WOD" data-format="AMRAP">+ WOD</button>
+          <button type="button" class="quick-bloc-btn px-3 py-1.5 rounded-full border border-[color:var(--border)] text-xs font-semibold hover:border-brand-blue hover:text-brand-blue transition-colors" data-titre="Mobilité" data-format="LIBRE">+ Mobilité</button>
+        </div>
+        <button id="add-bloc-btn" type="button" class="w-full px-3 py-2.5 rounded-lg border border-dashed border-[color:var(--border-strong)] text-xs font-semibold hover:border-brand-blue hover:text-brand-blue transition-colors mb-4">+ Bloc vierge</button>
 
         <div class="mb-4">
           <label class="field-label">Notes générales pour l'équipe</label>
@@ -389,6 +396,9 @@
       container.appendChild(div);
     }
     document.getElementById('add-bloc-btn').addEventListener('click', () => addBloc());
+    document.querySelectorAll('.quick-bloc-btn').forEach(btn => {
+      btn.addEventListener('click', () => addBloc({ titre: btn.dataset.titre, format: btn.dataset.format }));
+    });
 
     function addExerciceRow(blocDiv, ex) {
       ex = ex || {};
@@ -421,7 +431,7 @@
       row.querySelector('.ex-temps').value = ex.estimation_temps || '';
       row.querySelector('.ex-video').value = ex.lien_video || '';
       row.querySelector('.rm-ex-btn').addEventListener('click', () => row.remove());
-      row.querySelector('.pick-video-btn').addEventListener('click', () => openVideoPicker(row));
+      row.querySelector('.pick-video-btn').addEventListener('click', () => openVideoPicker(row.querySelector('.ex-nom'), row.querySelector('.ex-video')));
 
       const optToggle = row.querySelector('.toggle-options-btn');
       const optList = row.querySelector('.ex-options-list');
@@ -444,20 +454,26 @@
       opt = opt || {};
       const list = exRow.querySelector('.ex-options-list');
       const row = document.createElement('div');
-      row.className = 'grid grid-cols-[1.4fr_1fr_auto] gap-1.5 items-center';
+      row.className = 'grid grid-cols-[1.3fr_1fr_auto_auto] gap-1.5 items-center';
       row.innerHTML = `
         <input type="text" placeholder="Ex: genoux au sol, élastique fin..." class="opt-desc text-xs">
-        <input type="text" placeholder="Lien vidéo (optionnel)" class="opt-video text-xs">
+        <input type="text" placeholder="Lien vidéo" class="opt-video text-xs">
+        <button type="button" class="pick-video-btn shrink-0 w-6 h-6 rounded-md border border-[color:var(--border)] flex items-center justify-center hover:border-brand-blue hover:text-brand-blue transition-colors" title="Choisir la vidéo dans la banque d'exercices">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3.5v11L16 14"/></svg>
+        </button>
         <button type="button" class="rm-opt-btn text-red-400 hover:text-red-300 text-xs px-1" title="Supprimer">✕</button>
       `;
       row.querySelector('.opt-desc').value = opt.description || '';
       row.querySelector('.opt-video').value = opt.lien_video || '';
       row.querySelector('.rm-opt-btn').addEventListener('click', () => row.remove());
+      row.querySelector('.pick-video-btn').addEventListener('click', () => openVideoPicker(null, row.querySelector('.opt-video')));
       list.appendChild(row);
     }
 
     // ---------- Sélecteur vidéo (banque d'exercices) ----------
-    let videoPickerTargetRow = null;
+    // Cible générique : un champ nom (optionnel, rempli seulement s'il est vide) + un champ lien vidéo
+    let videoPickerTargetNameInput = null;
+    let videoPickerTargetVideoInput = null;
     let bankExercicesCache = null;
 
     async function ensureBankLoaded() {
@@ -467,8 +483,9 @@
       return bankExercicesCache;
     }
 
-    async function openVideoPicker(row) {
-      videoPickerTargetRow = row;
+    async function openVideoPicker(nameInput, videoInput) {
+      videoPickerTargetNameInput = nameInput;
+      videoPickerTargetVideoInput = videoInput;
       document.getElementById('video-picker-overlay').classList.remove('hidden');
       document.getElementById('video-picker-search').value = '';
       document.getElementById('video-picker-search').focus();
@@ -477,7 +494,8 @@
     }
     function closeVideoPicker() {
       document.getElementById('video-picker-overlay').classList.add('hidden');
-      videoPickerTargetRow = null;
+      videoPickerTargetNameInput = null;
+      videoPickerTargetVideoInput = null;
     }
     function renderVideoPickerResults(bank, filter) {
       const f = filter.trim().toLowerCase();
@@ -493,10 +511,9 @@
       list.querySelectorAll('.video-pick-item').forEach(btn => {
         btn.addEventListener('click', () => {
           const item = filtered.find(b => String(b.id) === btn.dataset.id);
-          if (item && videoPickerTargetRow) {
-            const nomInput = videoPickerTargetRow.querySelector('.ex-nom');
-            if (!nomInput.value.trim()) nomInput.value = item.nom;
-            videoPickerTargetRow.querySelector('.ex-video').value = item.lien_video || '';
+          if (item) {
+            if (videoPickerTargetNameInput && !videoPickerTargetNameInput.value.trim()) videoPickerTargetNameInput.value = item.nom;
+            if (videoPickerTargetVideoInput) videoPickerTargetVideoInput.value = item.lien_video || '';
           }
           closeVideoPicker();
         });
@@ -555,29 +572,33 @@
     }
     document.getElementById('cancel-wod-edit-btn').addEventListener('click', resetWodForm);
 
-    document.getElementById('save-wod-btn').addEventListener('click', async () => {
+    async function saveWod(opts) {
+      opts = opts || {};
       const date_seance = document.getElementById('wod-date').value;
-      if (!date_seance) { alert("Choisis une date."); return; }
+      if (!date_seance) { if (!opts.silent) alert("Choisis une date."); return; }
       const titre = document.getElementById('wod-titre').value.trim() || 'WOD';
       const notes_coach = document.getElementById('wod-notes').value.trim();
       const visible_a_tous = document.querySelector('input[name="wod-visibilite"]:checked').value === 'tous';
       const blocs = getBlocsFromForm();
-      if (!blocs.length) { alert("Ajoute au moins un bloc avec un titre, des exercices ou un texte libre."); return; }
+      if (!blocs.length) { if (!opts.silent) alert("Ajoute au moins un bloc avec un titre, des exercices ou un texte libre."); return; }
 
       const payload = { date_seance, titre, notes_coach, visible_a_tous, blocs, updated_at: new Date().toISOString() };
 
       let wodId = editingWodId;
       if (wodId) {
         const { data: updatedRows, error } = await supabaseClient.from('crossfit_wods').update(payload).eq('id', wodId).select();
-        if (error) { alert("Erreur : " + error.message); return; }
+        if (error) { if (!opts.silent) alert("Erreur : " + error.message); return; }
         if (!updatedRows || !updatedRows.length) {
-          alert("La modification n'a pas été enregistrée (0 ligne mise à jour). Vérifie que tu es bien connecté avec le compte admin (erwan20b@gmail.com), puis réessaie.");
+          if (!opts.silent) alert("La modification n'a pas été enregistrée (0 ligne mise à jour). Vérifie que tu es bien connecté avec le compte admin (erwan20b@gmail.com), puis réessaie.");
           return;
         }
       } else {
+        if (opts.silent) return; // pas d'autosave tant que le WOD n'a pas été créé une première fois
         const { data, error } = await supabaseClient.from('crossfit_wods').insert(payload).select().single();
         if (error) { alert("Erreur : " + error.message); return; }
         wodId = data.id;
+        editingWodId = wodId;
+        document.getElementById('cancel-wod-edit-btn').classList.remove('hidden');
       }
 
       // Synchronise les assignations spécifiques
@@ -590,11 +611,23 @@
       }
 
       const status = document.getElementById('save-wod-status');
-      status.textContent = 'WOD enregistré ✓';
+      status.textContent = opts.silent ? 'Enregistré automatiquement ✓' : 'WOD enregistré ✓';
       status.classList.remove('hidden');
-      setTimeout(() => status.classList.add('hidden'), 3000);
-      resetWodForm();
+      setTimeout(() => status.classList.add('hidden'), opts.silent ? 1500 : 3000);
+
+      if (!opts.silent) { resetWodForm(); }
       loadWods();
+    }
+
+    document.getElementById('save-wod-btn').addEventListener('click', () => saveWod({ silent: false }));
+
+    // Sauvegarde automatique dès qu'un champ change à l'intérieur d'un bloc (utile pour les adaptations),
+    // uniquement si on est en train de modifier un WOD déjà créé.
+    let autosaveTimer = null;
+    document.getElementById('blocs-container').addEventListener('input', () => {
+      if (!editingWodId) return;
+      clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(() => saveWod({ silent: true }), 900);
     });
 
     async function loadWods() {
