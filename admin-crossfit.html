@@ -313,6 +313,10 @@
       div.className = 'bloc-card rounded-xl border border-[color:var(--border)] p-3 sm:p-4 bg-[color:var(--bg)]';
       div.innerHTML = `
         <div class="flex items-center justify-between mb-3 gap-2">
+          <div class="flex flex-col shrink-0">
+            <button type="button" class="move-bloc-up-btn w-6 h-6 flex items-center justify-center text-[color:var(--fg-40)] hover:text-brand-blue text-xs leading-none" title="Monter ce bloc">▲</button>
+            <button type="button" class="move-bloc-down-btn w-6 h-6 flex items-center justify-center text-[color:var(--fg-40)] hover:text-brand-blue text-xs leading-none" title="Descendre ce bloc">▼</button>
+          </div>
           <input type="text" placeholder="Titre du bloc (ex: Partie 1 — WOD)" class="bloc-titre flex-1 font-semibold">
           <button type="button" class="rm-bloc-btn text-red-400 hover:text-red-300 text-xs shrink-0 px-1" title="Supprimer ce bloc">✕ Bloc</button>
         </div>
@@ -350,6 +354,14 @@
       div.querySelector('.bloc-texte-libre').value = bloc.texte_libre || '';
 
       div.querySelector('.rm-bloc-btn').addEventListener('click', () => div.remove());
+      div.querySelector('.move-bloc-up-btn').addEventListener('click', () => {
+        const prev = div.previousElementSibling;
+        if (prev) container.insertBefore(div, prev);
+      });
+      div.querySelector('.move-bloc-down-btn').addEventListener('click', () => {
+        const next = div.nextElementSibling;
+        if (next) container.insertBefore(next, div);
+      });
 
       const structBtn = div.querySelector('.mode-btn-struct');
       const libreBtn = div.querySelector('.mode-btn-libre');
@@ -384,16 +396,17 @@
       const row = document.createElement('div');
       row.className = 'ex-row rounded-lg border border-[color:var(--border)] p-2 bg-[color:var(--card)]';
       row.innerHTML = `
-        <div class="grid grid-cols-[1.5fr_0.65fr_0.75fr_auto] gap-1.5 items-center">
-          <div class="flex items-center gap-1">
-            <input type="text" placeholder="Exercice" class="ex-nom text-xs">
-            <button type="button" class="pick-video-btn shrink-0 w-6 h-6 rounded-md border border-[color:var(--border)] flex items-center justify-center hover:border-brand-blue hover:text-brand-blue transition-colors" title="Choisir la vidéo dans la banque d'exercices">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3.5v11L16 14"/></svg>
-            </button>
-          </div>
-          <input type="text" placeholder="Reps/cal/m" class="ex-reps text-xs">
+        <div class="flex items-center gap-1 mb-1.5">
+          <input type="text" placeholder="Exercice" class="ex-nom text-xs flex-1">
+          <button type="button" class="pick-video-btn shrink-0 w-6 h-6 rounded-md border border-[color:var(--border)] flex items-center justify-center hover:border-brand-blue hover:text-brand-blue transition-colors" title="Choisir la vidéo dans la banque d'exercices">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3.5v11L16 14"/></svg>
+          </button>
+          <button type="button" class="rm-ex-btn text-red-400 hover:text-red-300 text-xs px-1 shrink-0" title="Supprimer">✕</button>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5">
+          <input type="text" placeholder="Répétitions" class="ex-reps text-xs">
           <input type="text" placeholder="Charge Rx" class="ex-charge-rx text-xs">
-          <button type="button" class="rm-ex-btn text-red-400 hover:text-red-300 text-xs px-1" title="Supprimer">✕</button>
+          <input type="text" placeholder="≈ temps (optionnel)" class="ex-temps text-xs">
         </div>
         <input type="text" placeholder="Lien vidéo" class="ex-video text-xs mt-1.5">
 
@@ -405,6 +418,7 @@
       row.querySelector('.ex-nom').value = ex.nom || '';
       row.querySelector('.ex-reps').value = ex.reps || '';
       row.querySelector('.ex-charge-rx').value = ex.charge_rx || ex.charge || '';
+      row.querySelector('.ex-temps').value = ex.estimation_temps || '';
       row.querySelector('.ex-video').value = ex.lien_video || '';
       row.querySelector('.rm-ex-btn').addEventListener('click', () => row.remove());
       row.querySelector('.pick-video-btn').addEventListener('click', () => openVideoPicker(row));
@@ -503,6 +517,7 @@
               nom: row.querySelector('.ex-nom').value.trim(),
               reps: row.querySelector('.ex-reps').value.trim(),
               charge_rx: row.querySelector('.ex-charge-rx').value.trim(),
+              estimation_temps: row.querySelector('.ex-temps').value.trim(),
               lien_video: row.querySelector('.ex-video').value.trim(),
               options: Array.from(row.querySelectorAll('.opt-desc')).map((input, i) => ({
                 description: input.value.trim(),
