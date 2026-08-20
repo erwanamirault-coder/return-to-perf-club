@@ -66,7 +66,7 @@
   <main id="main-content" class="px-6 py-10 max-w-3xl mx-auto hidden">
 
     <div class="mb-6">
-      <h1 class="font-heading uppercase text-2xl font-bold leading-tight">Salut <span id="membre-prenom"></span> 👋</h1>
+      <h1 class="font-heading uppercase text-2xl font-bold leading-tight">Salut <span id="membre-prenom"></span></h1>
       <p class="text-sm text-[color:var(--fg-60)] mt-1">Voici tes séances CrossFit.</p>
     </div>
 
@@ -85,17 +85,9 @@
 
       <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-5 sm:p-6 mb-6">
         <h2 class="font-heading uppercase text-sm font-bold mb-3 tracking-wide">Mon retour</h2>
-        <div class="grid sm:grid-cols-2 gap-3 mb-3">
-          <div>
-            <label class="text-xs font-semibold text-[color:var(--fg-50)] mb-1 block">Résultat</label>
-            <input type="text" id="retour-resultat" placeholder="Ex: 12:34, 5 rounds + 3 reps, 220 reps...">
-          </div>
-          <div>
-            <label class="text-xs font-semibold text-[color:var(--fg-50)] mb-1 block">RPE</label>
-            <select id="retour-rpe">
-              <option value="">—</option>
-            </select>
-          </div>
+        <div class="mb-3">
+          <label class="text-xs font-semibold text-[color:var(--fg-50)] mb-1 block">Résultat</label>
+          <input type="text" id="retour-resultat" placeholder="Ex: 12:34, 5 rounds + 3 reps, 220 reps...">
         </div>
         <div class="mb-3">
           <label class="text-xs font-semibold text-[color:var(--fg-50)] mb-1 block">Ressenti</label>
@@ -144,10 +136,6 @@
       if (str === null || str === undefined) return '';
       return String(str).replace(/[&<>"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]));
     }
-
-    // Remplit le select RPE 1 à 10
-    document.getElementById('retour-rpe').innerHTML = `<option value="">—</option>` +
-      Array.from({ length: 10 }, (_, i) => i + 1).map(n => `<option value="${n}">${n}</option>`).join('');
 
     function formatDateFr(d, opts) {
       const date = new Date(d + 'T00:00:00');
@@ -216,33 +204,39 @@
 
       document.getElementById('wod-blocs').innerHTML = (w.blocs || []).map(b => `
         <div class="rounded-lg border border-[color:var(--border)] p-3.5">
-          <div class="flex items-center justify-between mb-2 gap-2">
+          <div class="flex items-center justify-between mb-1 gap-2">
             <p class="text-sm font-semibold">${escapeHtml(b.titre || '')}</p>
             <span class="badge-format">${escapeHtml(CROSSFIT_FORMAT_LABELS[b.format] || b.format || '')}</span>
           </div>
-          <p class="text-xs text-[color:var(--fg-50)] mb-2">
+          <p class="text-xs text-[color:var(--fg-50)] mb-3">
             ${b.duree ? `⏱ ${escapeHtml(b.duree)}` : ''}${b.duree && b.time_cap ? ' · ' : ''}${b.time_cap ? `Time cap ${escapeHtml(b.time_cap)}` : ''}
           </p>
           ${(b.exercices && b.exercices.length) ? `
-            <ul class="flex flex-col gap-2">
+            <div class="flex flex-col divide-y divide-[color:var(--border)]">
               ${b.exercices.map(ex => `
-                <li>
-                  <div class="text-sm flex items-center justify-between gap-2">
-                    <span>${ex.lien_video ? `<a href="${escapeHtml(ex.lien_video)}" target="_blank" class="text-brand-blue hover:underline">${escapeHtml(ex.nom)}</a>` : escapeHtml(ex.nom)}</span>
-                    <span class="text-[color:var(--fg-50)] text-xs whitespace-nowrap">${escapeHtml(ex.reps || '')}${(ex.charge_rx || ex.charge) ? ` · Rx ${escapeHtml(ex.charge_rx || ex.charge)}` : ''}</span>
+                <div class="py-2.5 first:pt-0 last:pb-0">
+                  <div class="flex items-baseline gap-3">
+                    <span class="font-heading font-bold text-brand-blue text-lg w-16 shrink-0 tabular-nums">${escapeHtml(ex.reps || '')}</span>
+                    <span class="text-[15px] font-semibold leading-snug flex-1">${ex.lien_video ? `<a href="${escapeHtml(ex.lien_video)}" target="_blank" class="hover:text-brand-blue hover:underline">${escapeHtml(ex.nom)}</a>` : escapeHtml(ex.nom)}</span>
+                    <span class="text-xs font-bold text-[color:var(--fg-60)] shrink-0 whitespace-nowrap">${
+                      ex.estimation_temps ? `≈ ${escapeHtml(ex.estimation_temps)}` : ((ex.charge_rx || ex.charge) ? `Rx ${escapeHtml(ex.charge_rx || ex.charge)}` : '')
+                    }</span>
                   </div>
                   ${(ex.options && ex.options.length) ? `
-                    <ul class="mt-1 pl-3 border-l-2 border-[color:var(--border)] flex flex-col gap-0.5">
-                      ${ex.options.map(opt => `
-                        <li class="text-xs text-[color:var(--fg-50)]">
-                          ${opt.lien_video ? `<a href="${escapeHtml(opt.lien_video)}" target="_blank" class="text-brand-blue hover:underline">${escapeHtml(opt.description)}</a>` : escapeHtml(opt.description)}
-                        </li>
-                      `).join('')}
-                    </ul>
+                    <details class="mt-1 ml-[76px]">
+                      <summary class="text-xs text-[color:var(--fg-40)] cursor-pointer select-none">Options</summary>
+                      <ul class="mt-1 flex flex-col gap-0.5">
+                        ${ex.options.map(opt => `
+                          <li class="text-xs text-[color:var(--fg-50)]">
+                            ${opt.lien_video ? `<a href="${escapeHtml(opt.lien_video)}" target="_blank" class="text-brand-blue hover:underline">${escapeHtml(opt.description)}</a>` : escapeHtml(opt.description)}
+                          </li>
+                        `).join('')}
+                      </ul>
+                    </details>
                   ` : ''}
-                </li>
+                </div>
               `).join('')}
-            </ul>
+            </div>
           ` : (b.texte_libre ? `<p class="text-sm whitespace-pre-line">${escapeHtml(b.texte_libre)}</p>` : '')}
         </div>
       `).join('');
@@ -261,7 +255,6 @@
       const { data } = await supabaseClient.from('crossfit_retours').select('*')
         .eq('wod_id', selectedWod.id).eq('membre_id', currentMembre.id).maybeSingle();
       document.getElementById('retour-resultat').value = data?.resultat || '';
-      document.getElementById('retour-rpe').value = data?.rpe || '';
       document.getElementById('retour-ressenti').value = data?.ressenti || '';
       document.getElementById('retour-commentaire').value = data?.commentaire || '';
     }
@@ -271,7 +264,6 @@
         wod_id: selectedWod.id,
         membre_id: currentMembre.id,
         resultat: document.getElementById('retour-resultat').value.trim(),
-        rpe: document.getElementById('retour-rpe').value,
         ressenti: document.getElementById('retour-ressenti').value,
         commentaire: document.getElementById('retour-commentaire').value.trim(),
         updated_at: new Date().toISOString()
@@ -298,7 +290,7 @@
         row.className = 'py-2 flex items-center justify-between gap-2';
         row.innerHTML = `
           <span class="text-sm font-medium">${escapeHtml(nomMembre)}</span>
-          <span class="text-sm text-[color:var(--fg-60)]">${escapeHtml(r.resultat || '—')}${r.rpe ? ` · RPE ${escapeHtml(r.rpe)}` : ''}</span>
+          <span class="text-sm text-[color:var(--fg-60)]">${escapeHtml(r.resultat || '—')}${r.ressenti ? ` · ${escapeHtml(r.ressenti)}` : ''}</span>
         `;
         wrap.appendChild(row);
       });
