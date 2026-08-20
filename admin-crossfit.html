@@ -158,8 +158,8 @@
   </main>
 
   <!-- Modal sélecteur vidéo (banque d'exercices) -->
-  <div id="video-picker-overlay" class="hidden fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4">
-    <div class="w-full max-w-md rounded-2xl bg-[color:var(--card)] border border-[color:var(--border)] p-4 sm:p-5 max-h-[80vh] flex flex-col">
+  <div id="video-picker-overlay" class="hidden fixed inset-0 z-[60] bg-black/50 flex items-start sm:items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-[color:var(--bg)] rounded-2xl border border-[color:var(--border)] max-w-md w-full p-4 sm:p-5 my-8 max-h-[80vh] flex flex-col">
       <div class="flex items-center justify-between mb-3">
         <h3 class="font-heading uppercase text-sm font-bold tracking-wide">Choisir une vidéo</h3>
         <button id="video-picker-close-btn" type="button" class="text-[color:var(--fg-40)] hover:text-[color:var(--fg)] text-lg leading-none">✕</button>
@@ -485,7 +485,7 @@
       const list = document.getElementById('video-picker-results');
       if (!filtered.length) { list.innerHTML = `<p class="text-xs text-[color:var(--fg-40)] text-center py-6">Aucun résultat.</p>`; return; }
       list.innerHTML = filtered.slice(0, 80).map(b => `
-        <button type="button" class="video-pick-item w-full text-left px-3 py-2 rounded-lg hover:bg-[color:var(--bg)] transition-colors flex items-center justify-between gap-2" data-id="${b.id}">
+        <button type="button" class="video-pick-item w-full text-left px-3 py-2 rounded-lg hover:bg-[color:var(--card)] transition-colors flex items-center justify-between gap-2" data-id="${b.id}">
           <span class="text-sm">${escapeHtml(b.nom)}</span>
           <span class="text-[10px] uppercase tracking-wide text-[color:var(--fg-40)]">${escapeHtml(b.categorie || '')}</span>
         </button>
