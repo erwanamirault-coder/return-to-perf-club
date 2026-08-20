@@ -411,7 +411,7 @@
         <input type="text" placeholder="Lien vidéo" class="ex-video text-xs mt-1.5">
 
         <div class="ex-options-wrap mt-1.5">
-          <button type="button" class="toggle-options-btn text-[11px] font-semibold text-[color:var(--fg-50)] hover:text-brand-blue transition-colors">+ Options pour ce mouvement</button>
+          <button type="button" class="toggle-options-btn text-[11px] font-semibold text-[color:var(--fg-50)] hover:text-brand-blue transition-colors">+ Ajouter une adaptation</button>
           <div class="ex-options-list hidden flex flex-col gap-1.5 mt-1.5 pl-2 border-l-2 border-[color:var(--border)]"></div>
         </div>
       `;
@@ -428,13 +428,13 @@
       optToggle.addEventListener('click', () => {
         const opening = optList.classList.contains('hidden');
         optList.classList.toggle('hidden');
-        optToggle.textContent = optList.classList.contains('hidden') ? '+ Options pour ce mouvement' : '− Masquer les options';
+        optToggle.textContent = optList.classList.contains('hidden') ? '+ Ajouter une adaptation' : '− Masquer l\'adaptation';
         if (opening && !optList.children.length) addOptionRow(row);
       });
       (ex.options || []).forEach(opt => addOptionRow(row, opt));
       if (ex.options && ex.options.length) {
         optList.classList.remove('hidden');
-        optToggle.textContent = '− Masquer les options';
+        optToggle.textContent = '− Masquer l\'adaptation';
       }
 
       list.appendChild(row);
@@ -446,7 +446,7 @@
       const row = document.createElement('div');
       row.className = 'grid grid-cols-[1.4fr_1fr_auto] gap-1.5 items-center';
       row.innerHTML = `
-        <input type="text" placeholder="Ex: Scaled — genoux au sol" class="opt-desc text-xs">
+        <input type="text" placeholder="Ex: genoux au sol, élastique fin..." class="opt-desc text-xs">
         <input type="text" placeholder="Lien vidéo (optionnel)" class="opt-video text-xs">
         <button type="button" class="rm-opt-btn text-red-400 hover:text-red-300 text-xs px-1" title="Supprimer">✕</button>
       `;
