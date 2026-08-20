@@ -352,6 +352,9 @@
           <button type="button" class="add-exercice-btn text-xs font-semibold text-brand-blue hover:underline">+ Ajouter un exercice</button>
         </div>
         <textarea class="bloc-texte-libre hidden" rows="3" placeholder="Décris le bloc librement (ex: 3 tours de 400m run + 20 burpees...)"></textarea>
+
+        <label class="field-label mt-3">Stratégie / intention (consignes générales pour ce bloc)</label>
+        <textarea class="bloc-strategie" rows="2" placeholder="Ex: partir doucement sur le 1er tour, viser un rythme régulier, garder du jus pour la fin..."></textarea>
       `;
 
       div.querySelector('.bloc-titre').value = bloc.titre || '';
@@ -359,6 +362,7 @@
       div.querySelector('.bloc-duree').value = bloc.duree || '';
       div.querySelector('.bloc-timecap').value = bloc.time_cap || '';
       div.querySelector('.bloc-texte-libre').value = bloc.texte_libre || '';
+      div.querySelector('.bloc-strategie').value = bloc.strategie || '';
 
       div.querySelector('.rm-bloc-btn').addEventListener('click', () => div.remove());
       div.querySelector('.move-bloc-up-btn').addEventListener('click', () => {
@@ -423,6 +427,7 @@
         <div class="ex-options-wrap mt-1.5">
           <button type="button" class="toggle-options-btn text-[11px] font-semibold text-[color:var(--fg-50)] hover:text-brand-blue transition-colors">+ Ajouter une adaptation</button>
           <div class="ex-options-list hidden flex flex-col gap-1.5 mt-1.5 pl-2 border-l-2 border-[color:var(--border)]"></div>
+          <button type="button" class="add-option-btn hidden text-[11px] font-semibold text-brand-blue hover:underline mt-1.5 ml-2">+ Ajouter une autre adaptation</button>
         </div>
       `;
       row.querySelector('.ex-nom').value = ex.nom || '';
@@ -435,15 +440,19 @@
 
       const optToggle = row.querySelector('.toggle-options-btn');
       const optList = row.querySelector('.ex-options-list');
+      const addOptBtn = row.querySelector('.add-option-btn');
       optToggle.addEventListener('click', () => {
         const opening = optList.classList.contains('hidden');
         optList.classList.toggle('hidden');
+        addOptBtn.classList.toggle('hidden');
         optToggle.textContent = optList.classList.contains('hidden') ? '+ Ajouter une adaptation' : '− Masquer l\'adaptation';
         if (opening && !optList.children.length) addOptionRow(row);
       });
+      addOptBtn.addEventListener('click', () => addOptionRow(row));
       (ex.options || []).forEach(opt => addOptionRow(row, opt));
       if (ex.options && ex.options.length) {
         optList.classList.remove('hidden');
+        addOptBtn.classList.remove('hidden');
         optToggle.textContent = '− Masquer l\'adaptation';
       }
 
@@ -454,16 +463,22 @@
       opt = opt || {};
       const list = exRow.querySelector('.ex-options-list');
       const row = document.createElement('div');
-      row.className = 'grid grid-cols-[1.3fr_1fr_auto_auto] gap-1.5 items-center';
+      row.className = 'rounded-md border border-[color:var(--border)] p-1.5';
       row.innerHTML = `
-        <input type="text" placeholder="Ex: genoux au sol, élastique fin..." class="opt-desc text-xs">
-        <input type="text" placeholder="Lien vidéo" class="opt-video text-xs">
-        <button type="button" class="pick-video-btn shrink-0 w-6 h-6 rounded-md border border-[color:var(--border)] flex items-center justify-center hover:border-brand-blue hover:text-brand-blue transition-colors" title="Choisir la vidéo dans la banque d'exercices">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3.5v11L16 14"/></svg>
-        </button>
-        <button type="button" class="rm-opt-btn text-red-400 hover:text-red-300 text-xs px-1" title="Supprimer">✕</button>
+        <div class="grid grid-cols-[1fr_auto] gap-1.5 items-center mb-1">
+          <input type="text" placeholder="Ex: genoux au sol, élastique fin..." class="opt-desc text-xs">
+          <button type="button" class="rm-opt-btn text-red-400 hover:text-red-300 text-xs px-1" title="Supprimer">✕</button>
+        </div>
+        <div class="grid grid-cols-[0.6fr_1fr_auto] gap-1.5 items-center">
+          <input type="text" placeholder="Reps (si différent)" class="opt-reps text-xs">
+          <input type="text" placeholder="Lien vidéo" class="opt-video text-xs">
+          <button type="button" class="pick-video-btn shrink-0 w-6 h-6 rounded-md border border-[color:var(--border)] flex items-center justify-center hover:border-brand-blue hover:text-brand-blue transition-colors" title="Choisir la vidéo dans la banque d'exercices">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3.5v11L16 14"/></svg>
+          </button>
+        </div>
       `;
       row.querySelector('.opt-desc').value = opt.description || '';
+      row.querySelector('.opt-reps').value = opt.reps || '';
       row.querySelector('.opt-video').value = opt.lien_video || '';
       row.querySelector('.rm-opt-btn').addEventListener('click', () => row.remove());
       row.querySelector('.pick-video-btn').addEventListener('click', () => openVideoPicker(null, row.querySelector('.opt-video')));
@@ -536,10 +551,11 @@
               charge_rx: row.querySelector('.ex-charge-rx').value.trim(),
               estimation_temps: row.querySelector('.ex-temps').value.trim(),
               lien_video: row.querySelector('.ex-video').value.trim(),
-              options: Array.from(row.querySelectorAll('.opt-desc')).map((input, i) => ({
-                description: input.value.trim(),
-                lien_video: row.querySelectorAll('.opt-video')[i].value.trim()
-              })).filter(o => o.description || o.lien_video)
+              options: Array.from(row.querySelectorAll('.ex-options-list > div')).map(optRow => ({
+                description: optRow.querySelector('.opt-desc').value.trim(),
+                reps: optRow.querySelector('.opt-reps').value.trim(),
+                lien_video: optRow.querySelector('.opt-video').value.trim()
+              })).filter(o => o.description || o.reps || o.lien_video)
             })).filter(e => e.nom || e.reps || e.charge_rx)
           : [];
         return {
@@ -549,6 +565,7 @@
           time_cap: div.querySelector('.bloc-timecap').value.trim(),
           mode: mode,
           texte_libre: mode === 'libre' ? div.querySelector('.bloc-texte-libre').value.trim() : '',
+          strategie: div.querySelector('.bloc-strategie').value.trim(),
           exercices: exercices
         };
       }).filter(b => b.titre || b.exercices.length || b.texte_libre);
