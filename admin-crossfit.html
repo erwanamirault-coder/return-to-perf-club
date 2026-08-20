@@ -157,6 +157,18 @@
 
   </main>
 
+  <!-- Modal sélecteur vidéo (banque d'exercices) -->
+  <div id="video-picker-overlay" class="hidden fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4">
+    <div class="w-full max-w-md rounded-2xl bg-[color:var(--card)] border border-[color:var(--border)] p-4 sm:p-5 max-h-[80vh] flex flex-col">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-heading uppercase text-sm font-bold tracking-wide">Choisir une vidéo</h3>
+        <button id="video-picker-close-btn" type="button" class="text-[color:var(--fg-40)] hover:text-[color:var(--fg)] text-lg leading-none">✕</button>
+      </div>
+      <input type="text" id="video-picker-search" placeholder="Rechercher un mouvement..." class="mb-3">
+      <div id="video-picker-results" class="flex-1 overflow-y-auto flex flex-col gap-0.5"></div>
+    </div>
+  </div>
+
   <script src="theme.js"></script>
   <script src="supabase-config.js"></script>
   <script>
@@ -370,32 +382,133 @@
       ex = ex || {};
       const list = blocDiv.querySelector('.bloc-exercices-list');
       const row = document.createElement('div');
-      row.className = 'grid grid-cols-[1.4fr_0.7fr_0.9fr_1fr_auto] gap-1.5 items-center';
+      row.className = 'ex-row rounded-lg border border-[color:var(--border)] p-2 bg-[color:var(--card)]';
       row.innerHTML = `
-        <input type="text" placeholder="Exercice" class="ex-nom text-xs">
-        <input type="text" placeholder="Reps/cal/m" class="ex-reps text-xs">
-        <input type="text" placeholder="Charge" class="ex-charge text-xs">
-        <input type="text" placeholder="Lien vidéo (optionnel)" class="ex-video text-xs">
-        <button type="button" class="rm-ex-btn text-red-400 hover:text-red-300 text-xs px-1" title="Supprimer">✕</button>
+        <div class="grid grid-cols-[1.5fr_0.65fr_0.75fr_auto] gap-1.5 items-center">
+          <div class="flex items-center gap-1">
+            <input type="text" placeholder="Exercice" class="ex-nom text-xs">
+            <button type="button" class="pick-video-btn shrink-0 w-6 h-6 rounded-md border border-[color:var(--border)] flex items-center justify-center hover:border-brand-blue hover:text-brand-blue transition-colors" title="Choisir la vidéo dans la banque d'exercices">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3.5v11L16 14"/></svg>
+            </button>
+          </div>
+          <input type="text" placeholder="Reps/cal/m" class="ex-reps text-xs">
+          <input type="text" placeholder="Charge Rx" class="ex-charge-rx text-xs">
+          <button type="button" class="rm-ex-btn text-red-400 hover:text-red-300 text-xs px-1" title="Supprimer">✕</button>
+        </div>
+        <input type="text" placeholder="Lien vidéo" class="ex-video text-xs mt-1.5">
+
+        <div class="ex-options-wrap mt-1.5">
+          <button type="button" class="toggle-options-btn text-[11px] font-semibold text-[color:var(--fg-50)] hover:text-brand-blue transition-colors">+ Options pour ce mouvement</button>
+          <div class="ex-options-list hidden flex flex-col gap-1.5 mt-1.5 pl-2 border-l-2 border-[color:var(--border)]"></div>
+        </div>
       `;
       row.querySelector('.ex-nom').value = ex.nom || '';
       row.querySelector('.ex-reps').value = ex.reps || '';
-      row.querySelector('.ex-charge').value = ex.charge || '';
+      row.querySelector('.ex-charge-rx').value = ex.charge_rx || ex.charge || '';
       row.querySelector('.ex-video').value = ex.lien_video || '';
       row.querySelector('.rm-ex-btn').addEventListener('click', () => row.remove());
+      row.querySelector('.pick-video-btn').addEventListener('click', () => openVideoPicker(row));
+
+      const optToggle = row.querySelector('.toggle-options-btn');
+      const optList = row.querySelector('.ex-options-list');
+      optToggle.addEventListener('click', () => {
+        const opening = optList.classList.contains('hidden');
+        optList.classList.toggle('hidden');
+        optToggle.textContent = optList.classList.contains('hidden') ? '+ Options pour ce mouvement' : '− Masquer les options';
+        if (opening && !optList.children.length) addOptionRow(row);
+      });
+      (ex.options || []).forEach(opt => addOptionRow(row, opt));
+      if (ex.options && ex.options.length) {
+        optList.classList.remove('hidden');
+        optToggle.textContent = '− Masquer les options';
+      }
+
       list.appendChild(row);
     }
+
+    function addOptionRow(exRow, opt) {
+      opt = opt || {};
+      const list = exRow.querySelector('.ex-options-list');
+      const row = document.createElement('div');
+      row.className = 'grid grid-cols-[1.4fr_1fr_auto] gap-1.5 items-center';
+      row.innerHTML = `
+        <input type="text" placeholder="Ex: Scaled — genoux au sol" class="opt-desc text-xs">
+        <input type="text" placeholder="Lien vidéo (optionnel)" class="opt-video text-xs">
+        <button type="button" class="rm-opt-btn text-red-400 hover:text-red-300 text-xs px-1" title="Supprimer">✕</button>
+      `;
+      row.querySelector('.opt-desc').value = opt.description || '';
+      row.querySelector('.opt-video').value = opt.lien_video || '';
+      row.querySelector('.rm-opt-btn').addEventListener('click', () => row.remove());
+      list.appendChild(row);
+    }
+
+    // ---------- Sélecteur vidéo (banque d'exercices) ----------
+    let videoPickerTargetRow = null;
+    let bankExercicesCache = null;
+
+    async function ensureBankLoaded() {
+      if (bankExercicesCache) return bankExercicesCache;
+      const { data, error } = await supabaseClient.from('banque_exercices').select('id, categorie, nom, lien_video').order('nom', { ascending: true });
+      bankExercicesCache = error ? [] : (data || []);
+      return bankExercicesCache;
+    }
+
+    async function openVideoPicker(row) {
+      videoPickerTargetRow = row;
+      document.getElementById('video-picker-overlay').classList.remove('hidden');
+      document.getElementById('video-picker-search').value = '';
+      document.getElementById('video-picker-search').focus();
+      const bank = await ensureBankLoaded();
+      renderVideoPickerResults(bank, '');
+    }
+    function closeVideoPicker() {
+      document.getElementById('video-picker-overlay').classList.add('hidden');
+      videoPickerTargetRow = null;
+    }
+    function renderVideoPickerResults(bank, filter) {
+      const f = filter.trim().toLowerCase();
+      const filtered = f ? bank.filter(b => b.nom.toLowerCase().includes(f) || (b.categorie || '').toLowerCase().includes(f)) : bank;
+      const list = document.getElementById('video-picker-results');
+      if (!filtered.length) { list.innerHTML = `<p class="text-xs text-[color:var(--fg-40)] text-center py-6">Aucun résultat.</p>`; return; }
+      list.innerHTML = filtered.slice(0, 80).map(b => `
+        <button type="button" class="video-pick-item w-full text-left px-3 py-2 rounded-lg hover:bg-[color:var(--bg)] transition-colors flex items-center justify-between gap-2" data-id="${b.id}">
+          <span class="text-sm">${escapeHtml(b.nom)}</span>
+          <span class="text-[10px] uppercase tracking-wide text-[color:var(--fg-40)]">${escapeHtml(b.categorie || '')}</span>
+        </button>
+      `).join('');
+      list.querySelectorAll('.video-pick-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const item = filtered.find(b => String(b.id) === btn.dataset.id);
+          if (item && videoPickerTargetRow) {
+            const nomInput = videoPickerTargetRow.querySelector('.ex-nom');
+            if (!nomInput.value.trim()) nomInput.value = item.nom;
+            videoPickerTargetRow.querySelector('.ex-video').value = item.lien_video || '';
+          }
+          closeVideoPicker();
+        });
+      });
+    }
+    document.getElementById('video-picker-search').addEventListener('input', async (e) => {
+      const bank = await ensureBankLoaded();
+      renderVideoPickerResults(bank, e.target.value);
+    });
+    document.getElementById('video-picker-close-btn').addEventListener('click', closeVideoPicker);
+    document.getElementById('video-picker-overlay').addEventListener('click', (e) => { if (e.target.id === 'video-picker-overlay') closeVideoPicker(); });
 
     function getBlocsFromForm() {
       return Array.from(document.querySelectorAll('.bloc-card')).map(div => {
         const mode = div.dataset.mode || 'structure';
         const exercices = mode === 'structure'
-          ? Array.from(div.querySelectorAll('.bloc-exercices-list > div')).map(row => ({
+          ? Array.from(div.querySelectorAll('.ex-row')).map(row => ({
               nom: row.querySelector('.ex-nom').value.trim(),
               reps: row.querySelector('.ex-reps').value.trim(),
-              charge: row.querySelector('.ex-charge').value.trim(),
-              lien_video: row.querySelector('.ex-video').value.trim()
-            })).filter(e => e.nom || e.reps || e.charge)
+              charge_rx: row.querySelector('.ex-charge-rx').value.trim(),
+              lien_video: row.querySelector('.ex-video').value.trim(),
+              options: Array.from(row.querySelectorAll('.opt-desc')).map((input, i) => ({
+                description: input.value.trim(),
+                lien_video: row.querySelectorAll('.opt-video')[i].value.trim()
+              })).filter(o => o.description || o.lien_video)
+            })).filter(e => e.nom || e.reps || e.charge_rx)
           : [];
         return {
           titre: div.querySelector('.bloc-titre').value.trim(),
