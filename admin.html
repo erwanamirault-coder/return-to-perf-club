@@ -1249,8 +1249,8 @@
 
               <div class="ex-simple-sets grid grid-cols-3 gap-2">
                 <input type="number" placeholder="Séries" class="ex-series-simple px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-                <input type="text" placeholder="Répétitions" class="ex-reps-simple px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
-                <input type="text" placeholder="Charge" class="ex-charge-simple px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+                <input type="text" placeholder="Répétitions (ou 12,10,8)" class="ex-reps-simple px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
+                <input type="text" placeholder="Charge (ou 80,82,85)" class="ex-charge-simple px-3 py-2 rounded-lg bg-[color:var(--card)] border border-[color:var(--border)] text-sm outline-none focus:border-brand-blue">
               </div>
 
               <div class="ex-advanced-sets hidden mt-1.5">
@@ -1407,12 +1407,24 @@
       const goingAdvanced = advanced.classList.contains('hidden');
 
       if (goingAdvanced) {
-        // On bascule vers le mode détaillé : si le mode simple avait des valeurs, on les reprend comme 1ère ligne
+        // On bascule vers le mode détaillé : on reprend les valeurs du mode simple,
+        // en éclatant les listes séparées par virgule ("12,10,8" → 3 lignes distinctes)
         const s = Number(card.querySelector('.ex-series-simple').value) || 1;
         const reps = card.querySelector('.ex-reps-simple').value.trim();
         const charge = card.querySelector('.ex-charge-simple').value.trim();
+        const splitList = str => str.split(',').map(v => v.trim()).filter(v => v !== '');
+        const repsList = splitList(reps);
+        const chargeList = splitList(charge);
+        const isRepsList = repsList.length > 1;
+        const isChargeList = chargeList.length > 1;
+        const count = (isRepsList || isChargeList) ? Math.max(repsList.length, chargeList.length, s) : Math.max(s, 1);
         clearSetRows(card);
-        for (let i = 0; i < Math.max(s, 1); i++) addSetRow(card, reps, charge);
+        for (let i = 0; i < count; i++) {
+          addSetRow(card,
+            isRepsList ? (repsList[i] ?? repsList[repsList.length - 1] ?? '') : reps,
+            isChargeList ? (chargeList[i] ?? chargeList[chargeList.length - 1] ?? '') : charge
+          );
+        }
         simple.classList.add('hidden');
         advanced.classList.remove('hidden');
         btn.textContent = '↩ Revenir au mode simple';
@@ -1511,11 +1523,27 @@
           }))
           .filter(s => s.repetitions !== '' || s.charge !== '' || s.repos !== '' || s.rpe !== '');
       }
-      // Mode simple : on réplique la même série N fois (repos/RPE communs, définis plus bas dans le formulaire)
+      // Mode simple : si "12,10,8" est saisi (virgules), chaque valeur devient sa propre série.
+      // Sinon (une seule valeur, ou "8-12" en range libre), on réplique la même série N fois.
       const n = Number(card.querySelector('.ex-series-simple').value) || 0;
       const reps = card.querySelector('.ex-reps-simple').value.trim();
       const charge = card.querySelector('.ex-charge-simple').value.trim();
       if (n <= 0 || (reps === '' && charge === '')) return [];
+
+      const splitList = str => str.split(',').map(s => s.trim()).filter(s => s !== '');
+      const repsList = splitList(reps);
+      const chargeList = splitList(charge);
+      const isRepsList = repsList.length > 1;
+      const isChargeList = chargeList.length > 1;
+
+      if (isRepsList || isChargeList) {
+        const count = Math.max(isRepsList ? repsList.length : 0, isChargeList ? chargeList.length : 0, n);
+        return Array.from({ length: count }, (_, i) => ({
+          repetitions: isRepsList ? (repsList[i] ?? repsList[repsList.length - 1] ?? '') : reps,
+          charge: isChargeList ? (chargeList[i] ?? chargeList[chargeList.length - 1] ?? '') : charge
+        }));
+      }
+
       return Array.from({ length: n }, () => ({ repetitions: reps, charge: charge }));
     }
 
