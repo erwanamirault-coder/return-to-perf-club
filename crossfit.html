@@ -224,11 +224,22 @@
             ${b.duree ? `⏱ ${escapeHtml(b.duree)}` : ''}${b.duree && b.time_cap ? ' · ' : ''}${b.time_cap ? `Time cap ${escapeHtml(b.time_cap)}` : ''}
           </p>
           ${(b.exercices && b.exercices.length) ? `
-            <ul class="flex flex-col gap-1">
+            <ul class="flex flex-col gap-2">
               ${b.exercices.map(ex => `
-                <li class="text-sm flex items-center justify-between gap-2">
-                  <span>${ex.lien_video ? `<a href="${escapeHtml(ex.lien_video)}" target="_blank" class="text-brand-blue hover:underline">${escapeHtml(ex.nom)}</a>` : escapeHtml(ex.nom)}</span>
-                  <span class="text-[color:var(--fg-50)] text-xs whitespace-nowrap">${escapeHtml(ex.reps || '')}${ex.charge ? ` @ ${escapeHtml(ex.charge)}` : ''}</span>
+                <li>
+                  <div class="text-sm flex items-center justify-between gap-2">
+                    <span>${ex.lien_video ? `<a href="${escapeHtml(ex.lien_video)}" target="_blank" class="text-brand-blue hover:underline">${escapeHtml(ex.nom)}</a>` : escapeHtml(ex.nom)}</span>
+                    <span class="text-[color:var(--fg-50)] text-xs whitespace-nowrap">${escapeHtml(ex.reps || '')}${(ex.charge_rx || ex.charge) ? ` · Rx ${escapeHtml(ex.charge_rx || ex.charge)}` : ''}</span>
+                  </div>
+                  ${(ex.options && ex.options.length) ? `
+                    <ul class="mt-1 pl-3 border-l-2 border-[color:var(--border)] flex flex-col gap-0.5">
+                      ${ex.options.map(opt => `
+                        <li class="text-xs text-[color:var(--fg-50)]">
+                          ${opt.lien_video ? `<a href="${escapeHtml(opt.lien_video)}" target="_blank" class="text-brand-blue hover:underline">${escapeHtml(opt.description)}</a>` : escapeHtml(opt.description)}
+                        </li>
+                      `).join('')}
+                    </ul>
+                  ` : ''}
                 </li>
               `).join('')}
             </ul>
