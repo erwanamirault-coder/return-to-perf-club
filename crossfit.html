@@ -204,13 +204,13 @@
 
       document.getElementById('wod-blocs').innerHTML = (w.blocs || []).map(b => `
         <div class="rounded-lg border border-[color:var(--border)] p-3.5">
-          <div class="flex items-center justify-between mb-1 gap-2">
+          <div class="flex items-center justify-between mb-3 gap-2">
             <p class="text-sm font-semibold">${escapeHtml(b.titre || '')}</p>
-            <span class="badge-format">${escapeHtml(CROSSFIT_FORMAT_LABELS[b.format] || b.format || '')}</span>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="badge-format">${escapeHtml(CROSSFIT_FORMAT_LABELS[b.format] || b.format || '')}</span>
+              ${(b.duree || b.time_cap) ? `<span class="text-xs font-semibold text-[color:var(--fg-50)] whitespace-nowrap">${escapeHtml(b.duree || '')}${b.duree && b.time_cap ? ' · ' : ''}${b.time_cap ? `Cap ${escapeHtml(b.time_cap)}` : ''}</span>` : ''}
+            </div>
           </div>
-          <p class="text-xs text-[color:var(--fg-50)] mb-3">
-            ${b.duree ? `⏱ ${escapeHtml(b.duree)}` : ''}${b.duree && b.time_cap ? ' · ' : ''}${b.time_cap ? `Time cap ${escapeHtml(b.time_cap)}` : ''}
-          </p>
           ${(b.exercices && b.exercices.length) ? `
             <div class="flex flex-col divide-y divide-[color:var(--border)]">
               ${b.exercices.map(ex => `
@@ -224,7 +224,7 @@
                   </div>
                   ${(ex.options && ex.options.length) ? `
                     <details class="mt-1 ml-[76px]">
-                      <summary class="text-xs text-[color:var(--fg-40)] cursor-pointer select-none">Options</summary>
+                      <summary class="text-xs text-[color:var(--fg-40)] cursor-pointer select-none">Adaptation</summary>
                       <ul class="mt-1 flex flex-col gap-0.5">
                         ${ex.options.map(opt => `
                           <li class="text-xs text-[color:var(--fg-50)]">
