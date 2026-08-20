@@ -40,6 +40,16 @@
   input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   .date-chip { padding: 8px 14px; border-radius: 9999px; font-size: 12.5px; font-weight: 600; border: 1px solid var(--border); color: var(--fg-60); white-space: nowrap; }
   .date-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .week-day-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 2px 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); cursor: pointer; }
+  .week-day-btn:hover { border-color: var(--accent); }
+  .week-day-btn.selected { background: var(--accent); border-color: var(--accent); }
+  .week-day-btn.selected .week-day-label, .week-day-btn.selected .week-day-num { color: #fff; }
+  .week-day-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--fg-40); }
+  .week-day-num { font-size: 14px; font-weight: 700; color: var(--fg); }
+  .week-day-btn.today:not(.selected) .week-day-num { color: var(--accent); }
+  .week-day-dot { width: 5px; height: 5px; border-radius: 9999px; background: transparent; }
+  .week-day-dot.visible { background: var(--accent); }
+  .week-day-btn.selected .week-day-dot.visible { background: #fff; }
 </style>
 </head>
 <body class="min-h-screen">
@@ -70,7 +80,18 @@
       <p class="text-sm text-[color:var(--fg-60)] mt-1">Voici tes séances CrossFit.</p>
     </div>
 
-    <div id="dates-strip" class="flex gap-2 mb-6 overflow-x-auto pb-1"></div>
+    <div class="mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <button id="week-prev-btn" type="button" class="w-8 h-8 rounded-full border border-[color:var(--border)] flex items-center justify-center hover:border-brand-blue transition-colors" aria-label="Semaine précédente">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
+        </button>
+        <p id="week-label" class="text-xs font-semibold text-[color:var(--fg-50)] uppercase tracking-wide"></p>
+        <button id="week-next-btn" type="button" class="w-8 h-8 rounded-full border border-[color:var(--border)] flex items-center justify-center hover:border-brand-blue transition-colors" aria-label="Semaine suivante">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+      <div id="week-days" class="grid grid-cols-7 gap-1.5"></div>
+    </div>
 
     <div id="wod-display" class="hidden">
       <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-5 sm:p-6 mb-6">
@@ -130,6 +151,8 @@
 
     let currentMembre = null;
     let availableWods = [];
+    let wodsByDate = {};
+    let currentWeekMonday = null;
     let selectedWod = null;
 
     function escapeHtml(str) {
@@ -165,37 +188,92 @@
 
     async function loadAvailableWods() {
       // RLS ne renvoie que les WOD visibles par ce membre (public ou assigné explicitement)
-      const { data, error } = await supabaseClient.from('crossfit_wods').select('*').order('date_seance', { ascending: false }).limit(30);
+      const { data, error } = await supabaseClient.from('crossfit_wods').select('*').order('date_seance', { ascending: false }).limit(200);
       if (error) { console.error(error); return; }
       availableWods = data || [];
-      renderDatesStrip();
-      if (availableWods.length) selectWod(availableWods[0]);
+      wodsByDate = {};
+      availableWods.forEach(w => { wodsByDate[w.date_seance] = w; });
+
+      const todayKey = toDateKey(new Date());
+      const sortedAsc = [...availableWods].sort((a, b) => a.date_seance.localeCompare(b.date_seance));
+      const initial = wodsByDate[todayKey] || sortedAsc.find(w => w.date_seance >= todayKey) || sortedAsc[sortedAsc.length - 1] || null;
+
+      currentWeekMonday = mondayOf(initial ? new Date(initial.date_seance + 'T00:00:00') : new Date());
+      renderWeekStrip();
+
+      if (initial) selectWod(initial);
       else {
+        selectedWod = null;
         document.getElementById('no-wod-message').classList.remove('hidden');
         document.getElementById('wod-display').classList.add('hidden');
       }
     }
 
-    function renderDatesStrip() {
-      const strip = document.getElementById('dates-strip');
-      strip.innerHTML = availableWods.map(w => `
-        <button class="date-chip" data-id="${w.id}">${formatDateFr(w.date_seance)}</button>
-      `).join('');
-      strip.querySelectorAll('.date-chip').forEach(btn => {
+    function toDateKey(d) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+    function mondayOf(d) {
+      const day = d.getDay();
+      const diff = (day === 0 ? -6 : 1 - day);
+      const monday = new Date(d);
+      monday.setDate(d.getDate() + diff);
+      monday.setHours(0, 0, 0, 0);
+      return monday;
+    }
+
+    document.getElementById('week-prev-btn').addEventListener('click', () => {
+      currentWeekMonday.setDate(currentWeekMonday.getDate() - 7);
+      renderWeekStrip();
+    });
+    document.getElementById('week-next-btn').addEventListener('click', () => {
+      currentWeekMonday.setDate(currentWeekMonday.getDate() + 7);
+      renderWeekStrip();
+    });
+
+    function renderWeekStrip() {
+      const labels = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+      const todayKey = toDateKey(new Date());
+      const days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(currentWeekMonday);
+        d.setDate(currentWeekMonday.getDate() + i);
+        return d;
+      });
+
+      document.getElementById('week-label').textContent =
+        `${days[0].toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} – ${days[6].toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`;
+
+      document.getElementById('week-days').innerHTML = days.map((d, i) => {
+        const key = toDateKey(d);
+        const has = !!wodsByDate[key];
+        const isSelected = selectedWod && selectedWod.date_seance === key;
+        const isToday = key === todayKey;
+        return `
+          <button type="button" class="week-day-btn ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}" data-date="${key}">
+            <span class="week-day-label">${labels[i]}</span>
+            <span class="week-day-num">${d.getDate()}</span>
+            <span class="week-day-dot ${has ? 'visible' : ''}"></span>
+          </button>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.week-day-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          const w = availableWods.find(x => x.id === btn.dataset.id);
-          selectWod(w);
+          const wod = wodsByDate[btn.dataset.date];
+          if (wod) {
+            selectWod(wod);
+          } else {
+            selectedWod = null;
+            document.getElementById('wod-display').classList.add('hidden');
+            document.getElementById('no-wod-message').classList.remove('hidden');
+            renderWeekStrip();
+          }
         });
       });
     }
 
-    function markActiveChip() {
-      document.querySelectorAll('.date-chip').forEach(btn => btn.classList.toggle('active', btn.dataset.id === selectedWod.id));
-    }
-
     async function selectWod(w) {
       selectedWod = w;
-      markActiveChip();
+      renderWeekStrip();
       document.getElementById('no-wod-message').classList.add('hidden');
       document.getElementById('wod-display').classList.remove('hidden');
 
