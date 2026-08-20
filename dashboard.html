@@ -143,6 +143,17 @@
         <span class="block text-sm text-[color:var(--fg-50)]">Ta position par rapport à la moyenne de l'équipe, mouvement par mouvement.</span>
       </a>
 
+      <a id="carte-crossfit" href="crossfit.html" class="hidden dash-card rounded-xl border border-[color:var(--border-strong)] p-6">
+        <div class="w-11 h-11 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center mb-4">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>
+            <rect x="2" y="9" width="4" height="6" rx="1"/><rect x="18" y="9" width="4" height="6" rx="1"/>
+          </svg>
+        </div>
+        <span class="block font-heading uppercase font-semibold mb-2">Programmation CrossFit</span>
+        <span class="block text-sm text-[color:var(--fg-50)]">Le WOD du jour, et l'espace pour poster ton résultat.</span>
+      </a>
+
       <a href="messages.html" class="dash-card block rounded-xl border border-[color:var(--border-strong)] p-6">
         <div class="w-11 h-11 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center mb-4">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -226,6 +237,20 @@
         const equipeStatsLien = document.getElementById('carte-stats-equipe');
         equipeStatsLien.classList.remove('hidden');
         equipeStatsLien.classList.add('block');
+      }
+
+      // Si ce compte est relié à une fiche membre CrossFit, on affiche la carte dédiée
+      // (indépendant de la programmation perso : une personne peut avoir les deux)
+      const { data: membreCrossfit } = await supabaseClient
+        .from('crossfit_membres')
+        .select('id')
+        .ilike('email', user.email)
+        .maybeSingle();
+
+      if (membreCrossfit) {
+        const crossfitCard = document.getElementById('carte-crossfit');
+        crossfitCard.classList.remove('hidden');
+        crossfitCard.classList.add('block');
       }
     }
 
