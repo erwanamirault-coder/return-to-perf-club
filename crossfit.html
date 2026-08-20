@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrossFit — Return To Perf</title>
+<meta name="theme-color" content="#0F4CA9">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon-32.png">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            black: '#000000', white: '#FFFFFF',
+            blue: { light: '#69A0F2', DEFAULT: '#2D7AED', dark: '#0F4CA9' }
+          }
+        },
+        fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Poppins', 'sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Poppins', sans-serif; }
+  h1, h2, h3, .font-heading { font-family: 'Oswald', sans-serif; }
+  .badge-format { display: inline-flex; align-items: center; padding: 3px 11px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); }
+  input[type=text], select, textarea {
+    width: 100%; padding: 9px 11px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); font-size: 13.5px; outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  .date-chip { padding: 8px 14px; border-radius: 9999px; font-size: 12.5px; font-weight: 600; border: 1px solid var(--border); color: var(--fg-60); white-space: nowrap; }
+  .date-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <header class="sticky top-0 z-50 bg-[color:var(--bg)]/95 backdrop-blur flex items-center justify-between px-6 sm:px-10 py-4 border-b border-[color:var(--border)]">
+    <a href="index.html" class="flex items-center gap-3">
+      <img src="logo.png" alt="Erwan Amirault" class="h-7 w-auto">
+      <div class="leading-tight">
+        <p class="font-heading uppercase font-bold text-sm tracking-wide">Return To Perf</p>
+        <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-50)]">Espace CrossFit</p>
+      </div>
+    </a>
+    <div class="flex items-center gap-5 text-sm">
+      <a href="dashboard.html" class="hidden sm:inline text-[color:var(--fg-60)] hover:text-[color:var(--fg)] transition-colors">Mon espace</a>
+      <button id="theme-toggle" class="w-9 h-9 rounded-full border border-[color:var(--border-strong)] flex items-center justify-center hover:border-brand-blue transition-colors shrink-0"></button>
+    </div>
+  </header>
+
+  <div id="not-linked" class="hidden max-w-md mx-auto mt-24 text-center px-6">
+    <p class="text-sm text-[color:var(--fg-60)]">Ton compte n'est pas encore rattaché à l'espace CrossFit.</p>
+    <p class="text-xs text-[color:var(--fg-40)] mt-2">Contacte ton coach pour qu'il t'ajoute avec cette adresse email.</p>
+  </div>
+
+  <main id="main-content" class="px-6 py-10 max-w-3xl mx-auto hidden">
+
+    <div class="mb-6">
+      <h1 class="font-heading uppercase text-2xl font-bold leading-tight">Salut <span id="membre-prenom"></span> 👋</h1>
+      <p class="text-sm text-[color:var(--fg-60)] mt-1">Voici tes séances CrossFit.</p>
+    </div>
+
+    <div id="dates-strip" class="flex gap-2 mb-6 overflow-x-auto pb-1"></div>
+
+    <div id="wod-display" class="hidden">
+      <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-5 sm:p-6 mb-6">
+        <h2 class="font-heading uppercase text-xl font-bold mb-1" id="wod-titre"></h2>
+        <p class="text-xs text-[color:var(--fg-50)] mb-4" id="wod-date-label"></p>
+        <div id="wod-blocs" class="flex flex-col gap-4"></div>
+        <div id="wod-notes-wrap" class="hidden mt-4 rounded-lg bg-[color:var(--bg)] p-3 text-sm text-[color:var(--fg-70)]">
+          <p class="text-[10px] uppercase tracking-widest text-[color:var(--fg-40)] font-semibold mb-1">Note du coach</p>
+          <p id="wod-notes-text"></p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-5 sm:p-6 mb-6">
+        <h2 class="font-heading uppercase text-sm font-bold mb-3 tracking-wide">Mon retour</h2>
+        <div class="grid sm:grid-cols-2 gap-3 mb-3">
+          <div>
+            <label class="text-xs font-semibold text-[color:var(--fg-50)] mb-1 block">Résultat</label>
+            <input type="text" id="retour-resultat" placeholder="Ex: 12:34, 5 rounds + 3 reps, 220 reps...">
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-[color:var(--fg-50)] mb-1 block">RPE</label>
+            <select id="retour-rpe">
+              <option value="">—</option>
+            </select>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="text-xs font-semibold text-[color:var(--fg-50)] mb-1 block">Ressenti</label>
+          <select id="retour-ressenti">
+            <option value="">—</option>
+            <option value="Facile">Facile</option>
+            <option value="Correct">Correct</option>
+            <option value="Difficile">Difficile</option>
+            <option value="Très difficile">Très difficile</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="text-xs font-semibold text-[color:var(--fg-50)] mb-1 block">Commentaire</label>
+          <textarea id="retour-commentaire" rows="2" placeholder="Sensations, douleurs, adaptations..."></textarea>
+        </div>
+        <button id="save-retour-btn" class="px-4 py-2 rounded-lg bg-brand-blue hover:bg-brand-blue-dark transition-colors text-white text-xs font-semibold">Envoyer mon retour</button>
+        <p id="retour-status" class="hidden text-xs text-[color:var(--accent)] font-medium mt-2"></p>
+      </div>
+
+      <div class="rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-5 sm:p-6">
+        <h2 class="font-heading uppercase text-sm font-bold mb-3 tracking-wide">Résultats de l'équipe</h2>
+        <div id="equipe-resultats" class="flex flex-col divide-y divide-[color:var(--border)]"></div>
+        <p id="equipe-resultats-empty" class="hidden text-center text-sm text-[color:var(--fg-40)] py-4">Personne n'a encore posté son résultat.</p>
+      </div>
+    </div>
+
+    <p id="no-wod-message" class="hidden text-center text-sm text-[color:var(--fg-40)] py-16">Pas de séance programmée à cette date.</p>
+
+  </main>
+
+  <script src="theme.js"></script>
+  <script src="supabase-config.js"></script>
+  <script>
+    const CROSSFIT_FORMAT_LABELS = {
+      LIBRE: 'Libre', AMRAP: 'AMRAP', EMOM: 'EMOM', EMOM_MONTANT: 'EMOM montant',
+      FOR_TIME: 'For Time', CHIPPER: 'Chipper', TABATA: 'Tabata', DEATH_BY: 'Death By',
+      MAX_EFFORT: 'Max Effort', RONDS_FOR_TIME: 'X Rounds For Time', INTERVAL: 'Intervalle',
+      ECHAUFFEMENT: 'Échauffement'
+    };
+
+    let currentMembre = null;
+    let availableWods = [];
+    let selectedWod = null;
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str).replace(/[&<>"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]));
+    }
+
+    // Remplit le select RPE 1 à 10
+    document.getElementById('retour-rpe').innerHTML = `<option value="">—</option>` +
+      Array.from({ length: 10 }, (_, i) => i + 1).map(n => `<option value="${n}">${n}</option>`).join('');
+
+    function formatDateFr(d, opts) {
+      const date = new Date(d + 'T00:00:00');
+      return date.toLocaleDateString('fr-FR', opts || { weekday: 'short', day: 'numeric', month: 'short' });
+    }
+
+    async function init() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) { window.location.href = 'login.html'; return; }
+
+      const { data: membre, error } = await supabaseClient
+        .from('crossfit_membres')
+        .select('*')
+        .ilike('email', user.email)
+        .maybeSingle();
+
+      if (error || !membre) {
+        document.getElementById('not-linked').classList.remove('hidden');
+        return;
+      }
+      currentMembre = membre;
+      document.getElementById('membre-prenom').textContent = membre.prenom;
+      document.getElementById('main-content').classList.remove('hidden');
+
+      await loadAvailableWods();
+    }
+
+    async function loadAvailableWods() {
+      // RLS ne renvoie que les WOD visibles par ce membre (public ou assigné explicitement)
+      const { data, error } = await supabaseClient.from('crossfit_wods').select('*').order('date_seance', { ascending: false }).limit(30);
+      if (error) { console.error(error); return; }
+      availableWods = data || [];
+      renderDatesStrip();
+      if (availableWods.length) selectWod(availableWods[0]);
+      else {
+        document.getElementById('no-wod-message').classList.remove('hidden');
+        document.getElementById('wod-display').classList.add('hidden');
+      }
+    }
+
+    function renderDatesStrip() {
+      const strip = document.getElementById('dates-strip');
+      strip.innerHTML = availableWods.map(w => `
+        <button class="date-chip" data-id="${w.id}">${formatDateFr(w.date_seance)}</button>
+      `).join('');
+      strip.querySelectorAll('.date-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const w = availableWods.find(x => x.id === btn.dataset.id);
+          selectWod(w);
+        });
+      });
+    }
+
+    function markActiveChip() {
+      document.querySelectorAll('.date-chip').forEach(btn => btn.classList.toggle('active', btn.dataset.id === selectedWod.id));
+    }
+
+    async function selectWod(w) {
+      selectedWod = w;
+      markActiveChip();
+      document.getElementById('no-wod-message').classList.add('hidden');
+      document.getElementById('wod-display').classList.remove('hidden');
+
+      document.getElementById('wod-titre').textContent = w.titre;
+      document.getElementById('wod-date-label').textContent = formatDateFr(w.date_seance, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+      document.getElementById('wod-blocs').innerHTML = (w.blocs || []).map(b => `
+        <div class="rounded-lg border border-[color:var(--border)] p-3.5">
+          <div class="flex items-center justify-between mb-2 gap-2">
+            <p class="text-sm font-semibold">${escapeHtml(b.titre || '')}</p>
+            <span class="badge-format">${escapeHtml(CROSSFIT_FORMAT_LABELS[b.format] || b.format || '')}</span>
+          </div>
+          <p class="text-xs text-[color:var(--fg-50)] mb-2">
+            ${b.duree ? `⏱ ${escapeHtml(b.duree)}` : ''}${b.duree && b.time_cap ? ' · ' : ''}${b.time_cap ? `Time cap ${escapeHtml(b.time_cap)}` : ''}
+          </p>
+          ${(b.exercices && b.exercices.length) ? `
+            <ul class="flex flex-col gap-1">
+              ${b.exercices.map(ex => `
+                <li class="text-sm flex items-center justify-between gap-2">
+                  <span>${ex.lien_video ? `<a href="${escapeHtml(ex.lien_video)}" target="_blank" class="text-brand-blue hover:underline">${escapeHtml(ex.nom)}</a>` : escapeHtml(ex.nom)}</span>
+                  <span class="text-[color:var(--fg-50)] text-xs whitespace-nowrap">${escapeHtml(ex.reps || '')}${ex.charge ? ` @ ${escapeHtml(ex.charge)}` : ''}</span>
+                </li>
+              `).join('')}
+            </ul>
+          ` : (b.texte_libre ? `<p class="text-sm whitespace-pre-line">${escapeHtml(b.texte_libre)}</p>` : '')}
+        </div>
+      `).join('');
+
+      const notesWrap = document.getElementById('wod-notes-wrap');
+      if (w.notes_coach) {
+        document.getElementById('wod-notes-text').textContent = w.notes_coach;
+        notesWrap.classList.remove('hidden');
+      } else notesWrap.classList.add('hidden');
+
+      await loadMonRetour();
+      await loadResultatsEquipe();
+    }
+
+    async function loadMonRetour() {
+      const { data } = await supabaseClient.from('crossfit_retours').select('*')
+        .eq('wod_id', selectedWod.id).eq('membre_id', currentMembre.id).maybeSingle();
+      document.getElementById('retour-resultat').value = data?.resultat || '';
+      document.getElementById('retour-rpe').value = data?.rpe || '';
+      document.getElementById('retour-ressenti').value = data?.ressenti || '';
+      document.getElementById('retour-commentaire').value = data?.commentaire || '';
+    }
+
+    document.getElementById('save-retour-btn').addEventListener('click', async () => {
+      const payload = {
+        wod_id: selectedWod.id,
+        membre_id: currentMembre.id,
+        resultat: document.getElementById('retour-resultat').value.trim(),
+        rpe: document.getElementById('retour-rpe').value,
+        ressenti: document.getElementById('retour-ressenti').value,
+        commentaire: document.getElementById('retour-commentaire').value.trim(),
+        updated_at: new Date().toISOString()
+      };
+      const { error } = await supabaseClient.from('crossfit_retours').upsert(payload, { onConflict: 'wod_id,membre_id' });
+      if (error) { alert("Erreur : " + error.message); return; }
+      const status = document.getElementById('retour-status');
+      status.textContent = 'Retour envoyé ✓';
+      status.classList.remove('hidden');
+      setTimeout(() => status.classList.add('hidden'), 2500);
+      loadResultatsEquipe();
+    });
+
+    async function loadResultatsEquipe() {
+      const { data: retours } = await supabaseClient.from('crossfit_retours').select('*, crossfit_membres(prenom, nom)').eq('wod_id', selectedWod.id).order('created_at', { ascending: true });
+      const wrap = document.getElementById('equipe-resultats');
+      const empty = document.getElementById('equipe-resultats-empty');
+      wrap.innerHTML = '';
+      if (!retours || !retours.length) { empty.classList.remove('hidden'); return; }
+      empty.classList.add('hidden');
+      retours.forEach(r => {
+        const nomMembre = r.crossfit_membres ? `${r.crossfit_membres.prenom} ${r.crossfit_membres.nom}` : 'Membre';
+        const row = document.createElement('div');
+        row.className = 'py-2 flex items-center justify-between gap-2';
+        row.innerHTML = `
+          <span class="text-sm font-medium">${escapeHtml(nomMembre)}</span>
+          <span class="text-sm text-[color:var(--fg-60)]">${escapeHtml(r.resultat || '—')}${r.rpe ? ` · RPE ${escapeHtml(r.rpe)}` : ''}</span>
+        `;
+        wrap.appendChild(row);
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
