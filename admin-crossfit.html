@@ -568,8 +568,12 @@
 
       let wodId = editingWodId;
       if (wodId) {
-        const { error } = await supabaseClient.from('crossfit_wods').update(payload).eq('id', wodId);
+        const { data: updatedRows, error } = await supabaseClient.from('crossfit_wods').update(payload).eq('id', wodId).select();
         if (error) { alert("Erreur : " + error.message); return; }
+        if (!updatedRows || !updatedRows.length) {
+          alert("La modification n'a pas été enregistrée (0 ligne mise à jour). Vérifie que tu es bien connecté avec le compte admin (erwan20b@gmail.com), puis réessaie.");
+          return;
+        }
       } else {
         const { data, error } = await supabaseClient.from('crossfit_wods').insert(payload).select().single();
         if (error) { alert("Erreur : " + error.message); return; }
